@@ -3,8 +3,8 @@
 The basement pump listener started as this board: an ESP32-S3-CAM running
 MicroPython, streaming continuous mic PCM to `POST :8090/ingest`. It has
 been quiet since ~2026-08-11; the live audio source is now **xiaomic1**
-(XIAO S3 Sense, `firmware/miclogger/`) feeding the same server through
-`pump/xiaomic_pumpbridge.py`. The pump server still accepts this board's
+(XIAO S3 Sense, `dustycam/sensors/miclogger/`) feeding the same server through
+`~/code/slugsense/listener/xiaomic_pumpbridge.py`. The pump server still accepts this board's
 ingest and OTA endpoints unchanged, so it can be dropped back in.
 
 ## What's here

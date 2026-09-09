@@ -15,8 +15,8 @@ sarg: `sarg ask "ESP32-S3-CAM <symptom>"`.
 Two earlier tracks on the **Waveshare ESP32-S3-CAM** — a MicroPython
 capture/uplink logger and an ESP-IDF person-detection app — were archived
 on 2026-09-03 under `archive/` (moved as-is from `software/`, nothing
-rewritten). The Waveshare board itself now runs the basement pump listener
-in `~/code/sensorhub/pump`.
+rewritten). The Waveshare board itself became the basement pump listener, whose
+server-side code now lives in `~/code/slugsense/listener`.
 
 ## Layout
 
@@ -25,10 +25,9 @@ in `~/code/sensorhub/pump`.
 | `camera.toml` | Manifest (id `goouuu1`, runtime espidf, power wake_cycle). |
 | `software/camlogger/` | The firmware (ESP-IDF 5.5): `main/`, `Makefile` (Docker build, `ota-deploy`), `sdkconfig.defaults`, `sdkconfig.secrets` (gitignored, hand-filled from `~/.dusty`). |
 | `software/tools/` | Host-side tooling: `findport.py`, `monitor.py`, `mp` (mpremote wrapper), `server.py` (image collection), `autolabel.py` + `train.py` (the YOLO-teacher / tiny-student loop over `/hd2/datasets/wavesharecam/`). |
-| `software/classify/` | Host-side day-classification / fingerprinting scripts over the dataset. |
 | `hardware/` | Case CAD for the GOOUUU board (`case/`) and pin facts. |
 | `tests/` | Host tests — empty since the archive; the brightness test went with the MicroPython logger. |
-| `archive/` | Waveshare-era code: `src/` (MicroPython logger), `persondet_app/` (ESP-IDF person detection), `wavecam_firmware/` (binaries), `server/pump_server.py`, the old `Makefile` and one-off scripts, `tests/test_brightness.py`. Reference only; nothing here is deployed. |
+| `archive/` | Waveshare-era code: `src/` (MicroPython logger), `persondet_app/` (ESP-IDF person detection), `wavecam_firmware/` (binaries), the old `Makefile` and one-off scripts, `tests/test_brightness.py`. Reference only; nothing here is deployed. |
 
 ## Workflow
 
