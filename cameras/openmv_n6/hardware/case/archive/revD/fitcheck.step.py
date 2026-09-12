@@ -1,9 +1,8 @@
 """Review-only cutaway: the three case parts (half-sectioned at the lens axis)
-with the real N6 board model, the bq25185 charger model, the DC jack
-envelope, the battery and the cable/plug mocks in place.
+with the real N6 board model and the battery mock in place.
 
 NOT a printable artifact — it exists so the fit can be inspected visually and
-so interference can be re-checked (check.py) after any parameter change.
+so board/case interference can be re-checked after any parameter change.
 """
 
 import importlib.util
@@ -19,21 +18,8 @@ _n6 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_n6)
 
 
-def reference_parts():
-    """Every non-printed occurrence in the fit-check, labelled."""
-    parts = list(_n6.gen_step().children)
-    parts.append(C.charger_mock())
-    parts.append(C.jack_mock())
-    parts.extend(C.charger_plug_mocks())
-    parts.append(C.load_cable_mock())
-    parts.append(C.batt_cable_mock())
-    parts.append(C.battery_mock())
-    parts.append(C.sd_card_mock())
-    parts.append(C.usb_plug_mock())
-    return parts
-
-
 def gen_step():
+    cut = Pos(C.CX, C.CY, 4.75) * Box(60, 90, 90, align=(Align.MIN,) * 3)
     cut = Pos(C.CX, -40, -40) * Box(60, 100, 100, align=(Align.MIN,) * 3)
 
     parts = []
@@ -44,7 +30,13 @@ def gen_step():
         p.label = label + "_sectioned"
         parts.append(p)
 
-    parts.extend(reference_parts())
+    for child in _n6.gen_step().children:
+        parts.append(child)
+
+    parts.append(C.battery_mock())
+    parts.append(C.sd_card_mock())
+    parts.append(C.usb_plug_mock())
+    parts.append(C.battery_cable_mock())
 
     asm = Compound(children=parts)
     asm.label = "n6_case_fitcheck"

@@ -1,0 +1,12 @@
+  microsd_socket_bottom x microsd_card_mock: 125.400 mm^3  (mated, reference-internal)
+  charger_jst_plug_1_mock x load_cable_mock: 6.270 mm^3  (mated, reference-internal)
+  charger_jst_plug_2_mock x batt_cable_mock: 4.400 mm^3  (mated, reference-internal)
+static pairs checked: 74/74
+jack end -> charger edge (Y): 8.00
+jack end -> battery (Y):      3.23
+jack nut top -> plate back (Z): 1.00
+jack nut bottom -> bay floor (Z): 0.87
+charger comps -> battery (Z): -1.50 (negative = clear)
+slide-in sweep: 24 moving occurrences, 31 steps of 1.0 mm, vs front_cup + jack
+sweep steps completed: 31/31, worst intersection 0.00000 mm^3
+CHECK PASSED

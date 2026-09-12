@@ -2,16 +2,21 @@
 
 The board runs bare; the case is the only design work.
 
-## Case: [`case/`](case/) — 3-part printed case with a 1S LiPo bay
+## Case: [`case/`](case/) — 3-part printed case with a bq25185 solar charger and 1S LiPo
 
 Moved in from `~/cad/openmv-n6-case` on 2026-09-03 (designed 2026-08-12, rev
-B–D on 2026-09-02). Front cup, camera plate and back cup, parametric
-build123d in `case/caselib.py` with one `*.step.py` generator per part and
-`fitcheck.step.py` for the sectioned review assembly; STEP/STL outputs and
-`snap-*.png` renders sit beside them. `case/ref/` holds the N6 board model
-(`openmv-n6.py` / `.step`, measured from OpenMV's GLB) and `DIMENSIONS.md`,
-the frame every part is built in. Not printed yet. Regenerate with the
-`cad` skill; review with `cad-viewer`.
+B–D on 2026-09-02, rev E on 2026-09-12). Front cup, camera plate and back
+cup, parametric build123d in `case/caselib.py` with one `*.step.py`
+generator per part and `fitcheck.step.py` for the sectioned review
+assembly; STEP/STL outputs and `snap-*.png` renders sit beside them.
+Rev E carries the Adafruit 6091 bq25185 charger on the back of the plate,
+a panel-mount DC barrel jack up through the bottom wall under it, and the
+battery behind the charger; `case/check.py` is the fail-closed
+interference check (static pairs + slide-in sweep). `case/ref/` holds the N6
+board model (`openmv-n6.py` / `.step`, measured from OpenMV's GLB),
+`DIMENSIONS.md`, and the charger's part facts (`bq25185-part.yaml`; the
+vendor STEP itself is fetched with `sarg cad get`, not committed). Not
+printed yet. Regenerate with the `cad` skill; review with `cad-viewer`.
 
 ## History: how the enclosure was unblocked
 
