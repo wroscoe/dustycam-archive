@@ -1,12 +1,26 @@
-"""puckcase v1 — XIAO ESP32S3 Sense camera case that plugs into the power puck.
+"""puckcase v2 — XIAO ESP32S3 Sense camera case that plugs into the power puck.
 
 Geometry library for the three printed parts (front_plate, ring, back_plate)
 plus the reference occurrences used by check.py / fitcheck.step.py.
+
+v2 (DESIGN_v2.md) redesigns the board bay after the v1 coupon print:
+  * the base PCB carries pin HEADERS (body on the back, pins ~6 proud), so
+    nothing may bear on the back face along the long edges and nothing may sit
+    within 1.0 outside them -> v1's LEDGE / BLOCK / POST features are gone and
+    BACK_GAP grows from 3.0 to 9.0.
+  * the board is held by its two header-free ends (hooks + centre ledge at the
+    far end, bridge + snap tongue at the USB end), by the expansion PCB's long
+    edges (side rails with crush ribs) and by the camera head (collar).
+  * the board drops 3.5 (BOARD_DROP) so the SD card gets a 4.0 roof.
 
 Frame (case-local, per DESIGN.md):
   X  0 at the -X outer face .. 47.21
   Y  0 at the bottom outer face .. 80.80 (up)
   Z  0 at the outer FRONT face, +Z toward the puck.
+
+Print orientation matters for every bay feature: the ring stands on its BACK
+MOUTH (Z_PLATE on the bed), so increasing case Z is DOWN and any face whose
+normal points +Z is an overhang.
 
 The puck's own frame is ours shifted by Z_BACK - caselib.Z_TUBE0, so the puck
 tube's front mouth face lands on Z_BACK.  Everything the case shares with the
@@ -23,8 +37,8 @@ import sys
 from pathlib import Path
 
 from build123d import (  # noqa: F401
-    Align, Box, Circle, Compound, Cylinder, Location, Plane, Pos, Rot,
-    RectangleRounded, extrude, import_step, loft,
+    Align, Box, Circle, Compound, Cylinder, Location, Plane, Pos, Rectangle,
+    Rot, RectangleRounded, Vector, Wire, extrude, import_step, loft, make_face,
 )
 
 HERE = Path(__file__).resolve().parent
@@ -67,16 +81,17 @@ BAY_X0, BAY_Y0, BAY_X1, BAY_Y1, R_BAY = P.BAY_X0, P.BAY_Y0, P.BAY_X1, P.BAY_Y1, 
 Y_SHOULDER = OUT_H - R_OUT                 # 74.80  outline break / eave root
 
 # ---------------------------------------------------------------------------
-# Z stack
+# Z stack  (DESIGN_v2 §3 "Placement and depth")
 # ---------------------------------------------------------------------------
 PLATE_T = 2.40                             # front plate, Z 0..2.40
 LENS_GAP = 1.00
 Z_B0 = PLATE_T + LENS_GAP + B.STACK_TOP    # 17.36  PCB bottom (board z = 0)
-WIRE_GAP = 3.00                            # PCB underside -> back plate face
-Z_PLATE = Z_B0 + WIRE_GAP                  # 20.36  ring back mouth / plate front
+BACK_GAP = 9.00                            # was WIRE_GAP 3.00; header body 2.5
+#                                            + 6.0 pin tails + 0.5 to the plate
+Z_PLATE = Z_B0 + BACK_GAP                  # 26.36  ring back mouth / plate front
 BACK_T = 4.00
-Z_BACK = Z_PLATE + BACK_T                  # 24.36  puck tube front mouth face
-PUCK_LIP_Z0, PUCK_LIP_Z1 = Z_BACK, Z_BACK + LIP_ENG          # 24.36 .. 31.86
+Z_BACK = Z_PLATE + BACK_T                  # 30.36  puck tube front mouth face
+PUCK_LIP_Z0, PUCK_LIP_Z1 = Z_BACK, Z_BACK + LIP_ENG          # 30.36 .. 37.86
 
 EAVE = 8.00
 Z_EAVE = -EAVE                             # -8.00  eave front edge
@@ -88,7 +103,7 @@ FRONT_LIP = 6.00
 FRONT_LIP_Z0, FRONT_LIP_Z1 = PLATE_T, PLATE_T + FRONT_LIP    # 2.40 .. 8.40
 FRONT_RIB_H = 4.90
 
-Z_TUBE_SHIFT = Z_BACK - P.Z_TUBE0          # 21.96  puck frame -> case frame
+Z_TUBE_SHIFT = Z_BACK - P.Z_TUBE0          # 27.96  puck frame -> case frame
 
 # ---------------------------------------------------------------------------
 # Board placement (board -> case)
@@ -97,14 +112,13 @@ Z_TUBE_SHIFT = Z_BACK - P.Z_TUBE0          # 21.96  puck frame -> case frame
 # board z -> case -Z.  That triple is IMPROPER (determinant -1): it is a
 # mirror, not a rigid placement, so it cannot be built.  With "USB end up"
 # (x -> -Y) and "lens forward" (z -> -Z) fixed, handedness forces
-# board y -> case -X.  The lens axis is kept on CX (the contract's
-# LENS_HOLE centre and X_B0 = CX - 8.25 intent); the consequence is that the
-# board bay is mirrored about CX relative to the literal DESIGN.md numbers.
+# board y -> case -X.  The lens axis is kept on CX; the consequence is that
+# the board bay is mirrored about CX relative to the literal DESIGN numbers.
 # The bay itself is symmetric about board y = 8.89 (every bay feature is
 # given "(mirror 17.78)"), so only its case-X position changes.
 X_B0 = CX + B.CAM_C[1]                     # 31.855  case X of board y = 0
-Y_B0 = OUT_H - WALL - 3.61                 # 74.79   case Y of board x = 0
-POCKET_GAP = 0.50
+BOARD_DROP = 3.50                          # v2: card roof 0.5 -> 4.0
+Y_B0 = OUT_H - WALL - 3.61 - BOARD_DROP    # 71.29   case Y of board x = 0
 
 PCB_L, PCB_W, PCB_T = B.PCB_L, B.PCB_W, B.PCB_T          # 20.95, 17.78, 1.25
 PCB_R = B.PCB_R
@@ -137,40 +151,134 @@ def bmirror(y0, y1):
     return BOARD_MIRROR_Y - y1, BOARD_MIRROR_Y - y0
 
 
+def bX(by):
+    """board y -> case X."""
+    return X_B0 - by
+
+
+def bY(bx):
+    """board x -> case Y."""
+    return Y_B0 - bx
+
+
+def bZ(bz):
+    """board z -> case Z."""
+    return Z_B0 - bz
+
+
 # derived board landmarks, in the case frame
 PCB_X0, PCB_X1 = X_B0 - PCB_W, X_B0                       # 14.075 .. 31.855
-PCB_Y0, PCB_Y1 = Y_B0 - PCB_L, Y_B0                       # 53.84 .. 74.79
+PCB_Y0, PCB_Y1 = Y_B0 - PCB_L, Y_B0                       # 50.34 .. 71.29
 PCB_Z_TOP = Z_B0 - PCB_T                                  # 16.11 (toward front)
-LENS_XC, LENS_YC = board_to_case(B.CAM_C[0], B.CAM_C[1])[:2]   # 23.605, 71.26
+LENS_XC, LENS_YC = board_to_case(B.CAM_C[0], B.CAM_C[1])[:2]   # 23.605, 67.76
 LENS_TIP_Z = Z_B0 - B.STACK_TOP                           # 3.40
+CARD_TIP_Y = bY(B.SD_CARD[0])                             # 74.40
+CARD_ROOF = IN_Y1 - CARD_TIP_Y                            # 4.00
 
 # ---------------------------------------------------------------------------
-# Ring bay (all in board coordinates; DESIGN.md "Parameters")
+# Bay geometry — DESIGN_v2 §3.  Board coordinates unless the name says case.
 # ---------------------------------------------------------------------------
-BAY_T, BAY_Z0 = 1.60, 9.00
-BAY_FACE_Y = (-POCKET_GAP, PCB_W + POCKET_GAP)            # -0.50, 18.28
-BAY_BX0, BAY_BX1 = -3.61, 22.50                           # board-x run of the bay
-LEDGE_REACH = 1.45
-LEDGE_BX0, LEDGE_BX1 = -0.40, 21.30
-BLOCK_BX = (-3.61, -0.40)
-BLOCK_BY = (-0.50, 1.90)
-BLOCK_Z0 = 12.00
-STOP_BX = (21.30, 22.50)
+SIDE_CLR = 1.50            # wall inner face from the PCB long edge
+BAY_T = 1.60               # bay wall thickness
+BAY_BX0, BAY_BX1 = -7.11, 23.20         # board-x run of the side walls
+SIDE_BY = (-SIDE_CLR - BAY_T, -SIDE_CLR)               # -3.10 .. -1.50
+SIDE_BZ = (-9.00, 11.80)                # to the collar's front face
+BAY_IN_X = (X_B0 - (BOARD_MIRROR_Y - SIDE_BY[0]), X_B0 - SIDE_BY[1])   # 12.575, 33.355
+
+# the front plate's top lip band (case Y LIP_Y1-LIP_WALL .. LIP_Y1, Z .. 8.40)
+# runs right through the side walls' forward extension -> clip it.
+# DEVIATION (v2): DESIGN_v2 gives the side walls one Z range (5.56..26.36) over
+# the whole run Y 48.09..78.40.  At Y > 76.65 that is inside the front plate's
+# lip band (Z 2.40..8.40), a hard interference DESIGN_v2 does not mention.  The
+# walls keep the full forward reach only where the collar needs it (Y <= 76.35,
+# 0.30 clear of the lip band) and start at Z 8.70 (0.30 clear of the lip nose)
+# for the last 2.05 up to the top wall.
+SIDE_LIP_CLR = 0.30
+SIDE_FWD_Y1 = (LIP_Y1 - LIP_WALL) - SIDE_LIP_CLR       # 76.35
+SIDE_BACK_Z0 = FRONT_LIP_Z1 + SIDE_LIP_CLR             # 8.70
+
+# DEVIATION (v2): DESIGN_v2 §3 calls the far-end wall "low ... so the antenna
+# cable can cross it", but low in BOARD z means case Z 11.36..26.36 — a full
+# barrier from the board's front face to the back mouth.  With side walls, a
+# far-end wall and a USB-end wall the bay is a closed box: neither the LOAD
+# lead (off the header pins) nor the U.FL coax can reach the cavity below.
+# A 4.5 x 4.5 wire notch is cut through the +X side wall behind the rails,
+# opening onto the back mouth so it prints as a bridged slot.
+WIRE_NOTCH_Y = (52.30, 56.80)
+WIRE_NOTCH_Z0 = 21.86
+
+FAR_BX = (21.60, 23.20)                 # far-end wall
+FAR_BZ = (-9.00, 6.00)                  # low: nothing in front of z 6
+
+STOP_BX = (21.15, 21.60)                # far-end stop ribs
 STOP_BY = (-0.50, 3.50)
-STOP_Z0 = 13.73
-HOOK_BX = (20.00, 22.50)
-# DEVIATION: DESIGN.md gives HOOK y -0.50..2.00; mirrored that starts at
-# board y 15.78 and clips the B2B connector (y to 15.34) by 0.06 at the
-# board-y pocket extreme.  Pulled back to 1.60 -> 0.34 clear at the extreme.
+STOP_BZ = (-9.00, 3.60)
+
+HOOK_BX = (20.00, 21.60)
 HOOK_BY = (-0.50, 1.60)
-HOOK_Z0, HOOK_Z1 = STOP_Z0, 15.91                         # 0.20 over the PCB top
-POST_BX = (-0.10, 2.50)
-# DEVIATION: DESIGN.md gives POST y -0.20..1.80; at the board-y pocket
-# extreme that overlaps the RST/BOOT buttons (y 2.16 / 15.61) by 0.14.
-# Pulled back to 1.36 -> 0.30 clear at the extreme (DESIGN's "buttons to the
-# blocks/posts >= 0.3").  Landing area on the PCB stays well over 1 mm^2.
-POST_BY = (-0.20, 1.36)
-POST_Z1 = 16.01                                           # 0.10 over the PCB top
+HOOK_BZ = (1.40, 3.60)                  # underside 0.15 over the PCB top
+HOOK_CHAMFER = 0.50                     # entry chamfer, back-inner edge
+
+LEDGE_BX = (19.70, 21.60)               # centre ledge, behind the PCB
+LEDGE_BY = (5.00, 13.00)                # between the header rows
+LEDGE_BZ = (-9.00, -0.10)               # 0.10 under the PCB back face
+# DEVIATION (v2): DESIGN_v2 gives the ledge a flat face 0.10 behind the PCB
+# over its whole 1.25 reach plus a 0.50 entry chamfer.  Rotating the board to
+# the 13 deg insertion tilt lifts its back face by reach*sin13 -> a flat face
+# may only reach 0.10/sin13 = 0.444 before the tilted PCB bites it (measured:
+# 0.25 mm^3 at 1.25 reach).  The flat bearing keeps the contract's 0.10 gap
+# over LEDGE_FLAT (0.30 under the PCB, 2.4 mm^2 of bearing) and the rest of
+# the reach becomes a 45 deg entry ramp — a bigger version of the 0.5 entry
+# chamfer the contract asks for, in the same place.
+LEDGE_FLAT = 0.30                       # flat bearing reach under the PCB
+LEDGE_RAMP_DEG = 45.0
+
+USB_BX = (-1.60, -0.40)                 # USB-end wall
+USB_BZ = (-9.00, 9.00)
+
+WIN_BY = (3.90, 13.85)                  # USB-C shell window
+WIN_BZ = (-0.10, 4.56)
+BRIDGE_BZ = (4.56, 6.50)                # the wall band over the window
+# DEVIATION (v2): the camera head (8.0 square in the vendor STEP, board
+# x -0.47..7.53) reaches 0.07 past the USB-end wall's inner face, so feeding
+# it straight back into the collar window clips the bridge band by 0.07
+# (0.18 mm^3).  The bridge's inner face is recessed 0.30 over the shell
+# window's width; it bears on the shell's TOP face, so 0.90 of depth there is
+# still 8 mm^2 of bearing.
+BRIDGE_RELIEF = 0.30
+NOTCH_BY = (2.20, 13.90)                # SD card notch
+NOTCH_BZ = (6.50, 9.00)
+
+TONGUE_BY = (6.00, 12.00)               # snap tongue
+TONGUE_BX = (-1.10, -0.20)              # 0.9 thick
+TONGUE_BZ = (-8.80, -0.10)              # root at the bed, free end at the PCB
+SLIT_W = 0.80
+SLIT_BY = (TONGUE_BY[0] - SLIT_W, TONGUE_BY[0])        # 5.20 .. 6.00
+SLIT_BY2 = (TONGUE_BY[1], TONGUE_BY[1] + SLIT_W)       # 12.00 .. 12.80
+LIP_BX = (-0.20, 0.40)                  # lip: 0.40 over the PCB back edge
+LIP_BZ = (-0.60, -0.10)
+LIP_RAMP = 0.60                         # 45 deg ramp on the lip's back side
+TONGUE_T = TONGUE_BX[1] - TONGUE_BX[0]                 # 0.90
+TONGUE_L = TONGUE_BZ[1] - TONGUE_BZ[0]                 # 8.70
+TONGUE_DEFL = 0.60                      # deflection at the lip on insertion
+
+RAIL_BX = (8.00, 17.00)                 # side rails on the expansion edges
+RAIL_BY = 0.35                          # rail face (mirror 17.43)
+RAIL_BZ = (4.20, 5.60)
+RAIL_UNDER_BZ = 2.35                    # 45 deg underside back to the wall
+RIB_PROUD = 0.25                        # -> 0.10 nominal crush per side
+RIB_H = 1.40
+RIB_BX = ((8.50, 12.50), (13.00, 17.00))
+
+COLLAR_BX = (-1.60, 9.80)               # collar plate
+COLLAR_FRONT_BX1 = -2.30                # front part reaches further
+COLLAR_BZ = (9.00, 11.80)
+COLLAR_STEP_BZ = 10.50                  # window/bore step = head top + 0.2
+COLLAR_WIN = 8.60                       # square window around the head
+COLLAR_WIN_CHAMFER = 0.60
+COLLAR_BORE_D = 8.25                    # barrel 7.84 + 0.4
+FPC_RELIEF_BX = (7.83, 9.80)
+FPC_RELIEF_BZ = 9.50
 
 LENS_HOLE_D = 7.50
 LENS_CHAMFER = 0.60
@@ -184,26 +292,64 @@ PILOT_D, PILOT_DEPTH = 1.70, 3.40
 CORD_SLOT_W, CORD_SLOT_H = 4.50, 3.00
 CORD_SLOT_R = 1.499        # r1.5 stadium; 1.5 exactly is rejected by RectangleRounded
 CORD_SLOT_XC = 13.00
-CORD_SLOT_Z0, CORD_SLOT_Z1 = 16.86, 19.86
-CORD_SLOT_ZC = (CORD_SLOT_Z0 + CORD_SLOT_Z1) / 2          # 18.36
+CORD_SLOT_Z0, CORD_SLOT_Z1 = Z_PLATE - 3.50, Z_PLATE - 0.50    # 22.86 .. 25.86
+CORD_SLOT_ZC = (CORD_SLOT_Z0 + CORD_SLOT_Z1) / 2               # 24.36
 
-# DEVIATION: DESIGN.md puts the tie post at (13.0, 9.0) — directly over the
-# cord slot (X 10.75..15.25), which leaves no path for the lead to both wrap
-# it and exit, and leaves the post as a second, unattached solid.  Moved
-# +5.0 in X ("tie post beside it") and webbed to the bottom wall.
+# DEVIATION (v1, kept): DESIGN.md puts the tie post at (13.0, 9.0) — directly
+# over the cord slot (X 10.75..15.25), which leaves no path for the lead to
+# both wrap it and exit, and leaves the post as a second, unattached solid.
+# Moved +5.0 in X ("tie post beside it") and webbed to the bottom wall.
 TIE_POST_D = 4.00
 TIE_POST_XC, TIE_POST_YC = 18.00, 9.00
-TIE_POST_Z0 = 14.36
+TIE_POST_Z0 = Z_PLATE - 6.00                                   # 20.36
 TIE_WEB_W = 2.00
 
-SCREW_D, SCREW_L = 2.00, 8.00
+SCREW_D, SCREW_L = 2.00, 12.00          # v2: M2 x 12 (bosses are 10.5 long)
 SCREW_HEAD_D, SCREW_HEAD_T = 4.00, 1.50
 
 # lead + antenna envelopes (estimates, per DESIGN.md "Purchased parts")
 LEAD_W, LEAD_T = 3.40, 1.70
 ANT_L, ANT_W, ANT_T = 25.00, 12.00, 1.50
 
+# header mock (DESIGN_v2 §1; not in the vendor STEP)
+HDR_BODY_W = 2.54                       # across the pin row
+HDR_BODY_L = 17.78                      # along the row
+HDR_BODY_H = 2.50                       # on the PCB back, board z -2.5..0
+HDR_BY = (-1.00, 1.54)                  # body span, mirror 16.24..18.78
+HDR_BX = (1.585, 19.365)
+HDR_PIN = 0.64
+HDR_PIN_Z = -8.50                       # pin tails, board z 0 .. -8.5
+HDR_PIN_BY = 0.27                       # pin row centre (mirror 17.51)
+HDR_PIN_BX = B.CASTELL_X                # 2.855 + 2.54 i, i = 0..6
+
 VENDOR_STEP = _REF / "xiao" / "amz-xiao-esp32s3-sense.step"
+
+
+# ---------------------------------------------------------------------------
+# small geometry helpers
+# ---------------------------------------------------------------------------
+def prism_x(pts_yz, x0, x1):
+    """A polygon given as case (Y, Z) points, swept from case X x0 to x1."""
+    faces = [make_face(Wire.make_polygon([Vector(x, y, z) for y, z in pts_yz],
+                                         close=True)) for x in (x0, x1)]
+    return loft(faces)
+
+
+def prism_y(pts_xz, y0, y1):
+    """A polygon given as case (X, Z) points, swept from case Y y0 to y1."""
+    faces = [make_face(Wire.make_polygon([Vector(x, y, z) for x, z in pts_xz],
+                                         close=True)) for y in (y0, y1)]
+    return loft(faces)
+
+
+def bay_box(bx0, bx1, by0, by1, cz0, cz1):
+    """Board-x / board-y extents with an explicit case-Z range."""
+    x0, y0, _, dx, dy, _ = bspan(bx0, bx1, by0, by1, 0, 0)
+    return box_at(x0, y0, cz0, dx, dy, cz1 - cz0)
+
+
+def _sq_at(cx, cy, side, z):
+    return Plane.XY.offset(z) * Pos(cx, cy) * Rectangle(side, side)
 
 
 # ---------------------------------------------------------------------------
@@ -224,11 +370,10 @@ def _front_ribs(z0, height):
 
 
 def front_plate():
-    """Weather face.  Prints outer-face down (Z = 0 on the bed), posts + lip up.
+    """Weather face.  Prints outer-face down (Z = 0 on the bed), lip up.
 
-    Outline: the full OUT rounded rect for Y <= Y_SHOULDER; above that it is
-    the LIP rect (IN inset by LIP_GAP) so the plate's top plugs in under the
-    ring's eave.  The 6.0 lip merges with that top plug region.
+    v2: the posts are gone (the bay holds the board), so the plate is outline
+    + lip + ribs + the chamfered lens hole at the new LENS_YC.
     """
     keep = box_at(-5.0, -5.0, -5.0, OUT_W + 10.0, Y_SHOULDER + 5.0, 20.0)
     keep += prism(LIP_X0, LIP_Y0, LIP_X1, LIP_Y1, R_LIP, -5.0, FRONT_LIP_Z1 + 1.0)
@@ -243,11 +388,6 @@ def front_plate():
                   FRONT_LIP_Z0, FRONT_LIP_Z1 + 1.0)
     part += _front_ribs(FRONT_LIP_Z0, FRONT_RIB_H)
 
-    # two posts onto the PCB's USB-end corners
-    for by0, by1 in (POST_BY, bmirror(*POST_BY)):
-        part += bbox_case(POST_BX[0], POST_BX[1], by0, by1,
-                          Z_B0 - POST_Z1, Z_B0 - PLATE_T)
-
     # lens hole + outer-face chamfer
     part -= cyl_at(LENS_XC, LENS_YC, -1.0, LENS_HOLE_D, PLATE_T + 2.0)
     part -= Pos(LENS_XC, LENS_YC) * loft([
@@ -258,15 +398,154 @@ def front_plate():
     return part
 
 
-def bay_box(bx0, bx1, by0, by1, cz0, cz1):
-    """Board-x / board-y extents with an explicit case-Z range."""
-    x0, y0, _, dx, dy, _ = bspan(bx0, bx1, by0, by1, 0, 0)
-    return box_at(x0, y0, cz0, dx, dy, cz1 - cz0)
+# --- ring sub-assemblies ---------------------------------------------------
+def _side_walls():
+    """The two long walls, SIDE_CLR clear of the PCB's long edges, hanging
+    from the ring's top wall.  Two Z bands so the forward reach clears the
+    front plate's lip band (see SIDE_FWD_Y1)."""
+    out = None
+    for by0, by1 in (SIDE_BY, bmirror(*SIDE_BY)):
+        x0, _, _, dx, _, _ = bspan(0, 0, by0, by1, 0, 0)
+        back = box_at(x0, bY(BAY_BX1), SIDE_BACK_Z0, dx,
+                      IN_Y1 - bY(BAY_BX1), Z_PLATE - SIDE_BACK_Z0)
+        fwd = box_at(x0, bY(BAY_BX1), bZ(SIDE_BZ[1]), dx,
+                     SIDE_FWD_Y1 - bY(BAY_BX1), SIDE_BACK_Z0 - bZ(SIDE_BZ[1]))
+        s = back + fwd
+        out = s if out is None else out + s
+    return out
 
 
-def ring():
+def _far_end():
+    """Far-end wall + stop ribs + hooks + centre ledge, with the two 0.5
+    entry chamfers that guide the tilted board's far edge into the groove."""
+    part = bay_box(FAR_BX[0], FAR_BX[1], SIDE_BY[1], bmirror(*SIDE_BY)[0],
+                   bZ(FAR_BZ[1]), bZ(FAR_BZ[0]))
+
+    for by0, by1 in (STOP_BY, bmirror(*STOP_BY)):
+        part += bay_box(STOP_BX[0], STOP_BX[1], by0, by1,
+                        bZ(STOP_BZ[1]), bZ(STOP_BZ[0]))
+
+    for by0, by1 in (HOOK_BY, bmirror(*HOOK_BY)):
+        hook = bay_box(HOOK_BX[0], HOOK_BX[1], by0, by1,
+                       bZ(HOOK_BZ[1]), bZ(HOOK_BZ[0]))
+        # entry chamfer on the hook's back-inner edge (case +Y / +Z corner)
+        ye, ze = bY(HOOK_BX[0]), bZ(HOOK_BZ[0])
+        c = HOOK_CHAMFER
+        x0, _, _, dx, _, _ = bspan(0, 0, by0, by1, 0, 0)
+        hook -= prism_x([(ye, ze), (ye - c, ze), (ye, ze - c)],
+                        x0 - 0.5, x0 + dx + 0.5)
+        part += hook
+
+    # centre ledge: flat bearing at the PCB's far edge, 45 deg entry ramp
+    y_out, y_in = bY(LEDGE_BX[1]), bY(LEDGE_BX[0])          # 49.69 .. 51.59
+    y_flat = bY(PCB_L - LEDGE_FLAT)                          # 50.64
+    z_face, z_back = bZ(LEDGE_BZ[1]), bZ(LEDGE_BZ[0])        # 17.46 .. 26.36
+    z_ramp = z_face + (y_in - y_flat)                        # 45 deg
+    lx0, _, _, ldx, _, _ = bspan(0, 0, LEDGE_BY[0], LEDGE_BY[1], 0, 0)
+    part += prism_x([(y_out, z_face), (y_flat, z_face), (y_in, z_ramp),
+                     (y_in, z_back), (y_out, z_back)], lx0, lx0 + ldx)
+    return part
+
+
+def _rails(ribs=True):
+    """Side rails bearing on the expansion PCB's long edges, with a 45 deg
+    printable underside and two crush ribs each."""
+    out = None
+    for sign, rail_by in ((+1, RAIL_BY), (-1, bmirror(RAIL_BY, RAIL_BY)[0])):
+        face_x = bX(rail_by)                       # 31.505 / 14.425
+        wall_x = bX(SIDE_BY[1]) if sign > 0 else bX(bmirror(*SIDE_BY)[0])
+        z_tip0, z_tip1 = bZ(RAIL_BZ[1]), bZ(RAIL_BZ[0])      # 11.76 .. 13.16
+        z_root = bZ(RAIL_UNDER_BZ)                            # 15.01
+        pts = [(face_x, z_tip0), (wall_x, z_tip0), (wall_x, z_root),
+               (face_x, z_tip1)]
+        rail = prism_y(pts, bY(RAIL_BX[1]), bY(RAIL_BX[0]))
+        for rbx0, rbx1 in (RIB_BX if ribs else ()):
+            ribl = rbx1 - rbx0
+            rib = fits.edge_crush_rib(RIB_H, length=ribl, proud=RIB_PROUD)
+            # canonical rib: base on y = 0, protrudes +Y, runs z 0..height,
+            # centred on x = 0.  Put its base on the rail face, protruding
+            # toward the board (case -X for the +y rail), running along case Y.
+            yc = (bY(rbx0) + bY(rbx1)) / 2
+            rz = 90 if sign > 0 else -90
+            rail += Pos(face_x, yc, z_tip0) * Rot(0, 0, rz) * rib
+        out = rail if out is None else out + rail
+    return out
+
+
+def _collar():
+    """Lens collar: the sheet that captures the camera head (8.6 window +
+    0.6 back chamfer), steps at the head top and bores Ø8.25 for the barrel."""
+    x0, x1 = BAY_IN_X                                       # 12.575 .. 33.355
+    y0, y1 = bY(COLLAR_BX[1]), bY(COLLAR_BX[0])             # 61.49 .. 72.89
+    z0, z1 = bZ(COLLAR_BZ[1]), bZ(COLLAR_BZ[0])             # 5.56 .. 8.36
+    z_step = bZ(COLLAR_STEP_BZ)                             # 6.86
+    part = box_at(x0, y0, z0, x1 - x0, y1 - y0, z1 - z0)
+    part += box_at(x0, y1, z0, x1 - x0, bY(COLLAR_FRONT_BX1) - y1, z_step - z0)
+
+    # FPC roll relief: back face raised to board z 9.5 over board x 7.83..9.8
+    ry0, ry1 = bY(FPC_RELIEF_BX[1]), bY(FPC_RELIEF_BX[0])   # 61.49 .. 63.46
+    part -= box_at(LENS_XC - COLLAR_WIN / 2, ry0, bZ(FPC_RELIEF_BZ),
+                   COLLAR_WIN, ry1 - ry0, z1 - bZ(FPC_RELIEF_BZ) + 0.01)
+
+    # square window around the head, with the 45 deg entry chamfer at the back
+    w, c = COLLAR_WIN, COLLAR_WIN_CHAMFER
+    part -= box_at(LENS_XC - w / 2, LENS_YC - w / 2, z_step, w, w, z1 - z_step)
+    part -= loft([_sq_at(LENS_XC, LENS_YC, w, z1 - c),
+                  _sq_at(LENS_XC, LENS_YC, w + 2 * c, z1)])
+
+    # barrel bore through the front part
+    part -= cyl_at(LENS_XC, LENS_YC, z0 - 1.0, COLLAR_BORE_D,
+                   (z_step - z0) + 1.0)
+    return part
+
+
+def _usb_end_wall():
+    """The USB-end wall (shell window, bridge band, card notch) and the snap
+    tongue cut out of it.  Returns (solid, cuts, tongue)."""
+    x0, x1 = BAY_IN_X
+    wy0, wy1 = bY(USB_BX[1]), bY(USB_BX[0])                 # 71.69 .. 72.89
+    wall = box_at(x0, wy0, bZ(USB_BZ[1]), x1 - x0, wy1 - wy0,
+                  bZ(USB_BZ[0]) - bZ(USB_BZ[1]))
+
+    cy0, cy1 = wy0 - 0.50, wy1 + 0.50                       # through the wall
+    # DEVIATION (v2): the shell window runs from board z 4.56 all the way to
+    # the tongue root (z -8.8) instead of stopping at the PCB plane (z -0.1).
+    # At the 13 deg insertion tilt the USB-C shell sweeps ~3.6 behind the PCB
+    # plane and cut 1.55 mm^3 into the wall on either side of the slits; the
+    # wall behind the PCB does nothing there (the PCB's +Y stop is the wall
+    # OUTSIDE the window's X range) so it is simply opened.
+    cuts = bay_box(USB_BX[0] - 1.0, USB_BX[1] + 1.0, WIN_BY[0], WIN_BY[1],
+                   bZ(WIN_BZ[1]), bZ(TONGUE_BZ[0]))
+    cuts += bay_box(USB_BX[0] - 1.0, USB_BX[1] + 1.0, NOTCH_BY[0], NOTCH_BY[1],
+                    bZ(NOTCH_BZ[1]), bZ(NOTCH_BZ[0]))
+    cuts += bay_box(USB_BX[1], USB_BX[1] - BRIDGE_RELIEF, WIN_BY[0], WIN_BY[1],
+                    bZ(BRIDGE_BZ[1]), bZ(BRIDGE_BZ[0]))
+    # tongue pocket + the two slits
+    for by0, by1 in (TONGUE_BY, SLIT_BY, SLIT_BY2):
+        cuts += box_at(bX(by1), cy0, bZ(TONGUE_BZ[1]), by1 - by0, cy1 - cy0,
+                       bZ(TONGUE_BZ[0]) - bZ(TONGUE_BZ[1]))
+
+    # the tongue itself: 0.9 thick, rooted in the wall at the bed end
+    tx0, tdx = bX(TONGUE_BY[1]), TONGUE_BY[1] - TONGUE_BY[0]
+    ty0, ty1 = bY(TONGUE_BX[1]), bY(TONGUE_BX[0])           # 71.49 .. 72.39
+    tongue = box_at(tx0, ty0, bZ(TONGUE_BZ[1]), tdx, ty1 - ty0,
+                    Z_PLATE - bZ(TONGUE_BZ[1]))
+    # lip: 0.4 over the PCB back edge, 45 deg ramp underneath (print + cam)
+    ly0, ly1 = bY(LIP_BX[1]), bY(LIP_BX[0])                 # 70.89 .. 71.49
+    lz0, lz1 = bZ(LIP_BZ[1]), bZ(LIP_BZ[0])                 # 17.46 .. 17.96
+    tongue += prism_x([(ly1, lz0), (ly0, lz0), (ly0, lz1),
+                       (ly1, lz1 + LIP_RAMP)], tx0, tx0 + tdx)
+    return wall, cuts, tongue
+
+
+def ring(ribs=True, tongue=True):
     """Body + eave + board bay + screw bosses.  Prints standing on its back
-    mouth (Z = Z_PLATE on the bed), eave up."""
+    mouth (Z = Z_PLATE on the bed), eave up.
+
+    `ribs=False` / `tongue=False` build the RIGID ring only — the rail crush
+    ribs and the snap tongue are the only features designed to interfere with
+    the board, so check.py measures them separately against a rigid ring.
+    """
     part = prism(OUT_X0, OUT_Y0, OUT_X1, OUT_Y1, R_OUT, PLATE_T, Z_PLATE, ct=EFOOT)
     part -= prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, PLATE_T - 1.0, Z_PLATE + 1.0)
     part -= flare_down(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, PLATE_T, LEADIN)
@@ -282,19 +561,13 @@ def ring():
     part -= box_at(IN_X0 + R_IN, IN_Y1, DRIP_Z0,
                    (IN_X1 - R_IN) - (IN_X0 + R_IN), DRIP_D, DRIP_W)
 
-    # --- board bay, hanging from the top wall
-    for face_y, inward in ((BAY_FACE_Y[0], -1), (BAY_FACE_Y[1], +1)):
-        wy0, wy1 = sorted((face_y, face_y + inward * BAY_T))
-        part += bay_box(BAY_BX0, BAY_BX1, wy0, wy1, BAY_Z0, Z_PLATE)
-        ly0, ly1 = sorted((face_y, face_y - inward * LEDGE_REACH))
-        part += bay_box(LEDGE_BX0, LEDGE_BX1, ly0, ly1, Z_B0, Z_PLATE)
-
-    for by0, by1 in (BLOCK_BY, bmirror(*BLOCK_BY)):
-        part += bay_box(BLOCK_BX[0], BLOCK_BX[1], by0, by1, BLOCK_Z0, Z_PLATE)
-    for by0, by1 in (STOP_BY, bmirror(*STOP_BY)):
-        part += bay_box(STOP_BX[0], STOP_BX[1], by0, by1, STOP_Z0, Z_PLATE)
-    for by0, by1 in (HOOK_BY, bmirror(*HOOK_BY)):
-        part += bay_box(HOOK_BX[0], HOOK_BX[1], by0, by1, HOOK_Z0, HOOK_Z1)
+    # --- board bay
+    part += _side_walls()
+    part += _far_end()
+    wall, wall_cuts, tongue_solid = _usb_end_wall()
+    part += wall
+    part += _collar()
+    part += _rails(ribs=ribs)
 
     # --- screw bosses, each fused to its corner by a square fill
     for bx, by in BOSS_XY:
@@ -310,13 +583,35 @@ def ring():
                    TIE_WEB_W, TIE_POST_YC - IN_Y0, Z_PLATE - TIE_POST_Z0)
 
     # --- cuts
+    part -= wall_cuts
+    part -= box_at(BAY_IN_X[1] - 0.5, WIRE_NOTCH_Y[0], WIRE_NOTCH_Z0,
+                   (BAY_IN_X[1] + BAY_T + 0.5) - (BAY_IN_X[1] - 0.5),
+                   WIRE_NOTCH_Y[1] - WIRE_NOTCH_Y[0],
+                   (Z_PLATE + 0.5) - WIRE_NOTCH_Z0)
     for bx, by in BOSS_XY:
         part -= cyl_at(bx, by, BOSS_Z0 - 1.0, BOSS_BORE, (Z_PLATE - BOSS_Z0) + 2.0)
     part -= slot_y(CORD_SLOT_XC, CORD_SLOT_ZC, CORD_SLOT_W, CORD_SLOT_H,
                    OUT_Y0 - 1.0, IN_Y0 + 1.0, r=CORD_SLOT_R)
 
+    if tongue:
+        part += tongue_solid
+
     part.label = "ring"
     return part
+
+
+def rail_ribs():
+    """The four rail crush ribs alone (the designed 0.10/side interference)."""
+    part = _rails(ribs=True) - _rails(ribs=False)
+    part.label = "rail_crush_ribs"
+    return part
+
+
+def tongue_only():
+    """The snap tongue alone (the one compliant retention feature)."""
+    _, _, tongue = _usb_end_wall()
+    tongue.label = "snap_tongue"
+    return tongue
 
 
 def back_plate():
@@ -344,35 +639,107 @@ def _vendor_solids():
     return tuple(import_step(str(VENDOR_STEP)).solids())
 
 
-def xiao_vendor(pre=None, post=None, label="xiao_vendor"):
+def _is_head(solid):
+    """The flex-mounted OV3660 head + lens: the only vendor solids that reach
+    above board z 9.0.  DESIGN_v2 §1: the head is held ONLY by its flex, so it
+    travels with the collar, not with the PCB."""
+    return solid.bounding_box().max.Z > 9.0
+
+
+def _is_card(solid):
+    """True for a vendor solid that lies (in board coords) inside the inserted
+    microSD card's box — used to model 'card not fitted'."""
+    b = solid.bounding_box()
+    x0, y0, z0 = B.SD_CARD[0], B.SD_CARD[1], B.SD_CARD[4]
+    x1, y1, z1 = B.SD_CARD[2], B.SD_CARD[3], B.SD_CARD[5]
+    return (b.min.X >= x0 - 0.3 and b.max.X <= x1 + 0.3 and
+            b.min.Y >= y0 - 0.3 and b.max.Y <= y1 + 0.3 and
+            b.min.Z >= z0 - 0.3 and b.max.Z <= z1 + 0.3)
+
+
+VENDOR_PARTS = ("all", "board", "pcb", "head", "card")
+
+
+def xiao_vendor(pre=None, post=None, label="xiao_vendor", parts="all"):
     """The vendor XIAO STEP placed in the case frame.
 
     `pre` is an extra Location applied in the BOARD frame (tilt insertion),
     `post` one applied in the CASE frame (pocket-extreme shifts).  The full
     transform is baked into EVERY solid: a Location applied to a multi-solid
     Compound is silently ignored by Shape.intersect() in this build123d.
+
+    `parts` selects which vendor solids to place:
+      all    everything (the board as delivered, card inserted)
+      board  everything except the flex-mounted head and the microSD card
+      pcb    everything except the head (card fitted)
+      head   the flex-mounted camera head + lens only
+      card   the inserted microSD card only
     """
+    if parts not in VENDOR_PARTS:
+        raise ValueError(f"parts={parts!r} not in {VENDOR_PARTS}")
     loc = BOARD_LOC if pre is None else BOARD_LOC * pre
     if post is not None:
         loc = post * loc
-    part = Compound(children=[loc * s for s in _vendor_solids()])
+    sel = {
+        "all": lambda s: True,
+        "board": lambda s: not _is_head(s) and not _is_card(s),
+        "pcb": lambda s: not _is_head(s),
+        "head": _is_head,
+        "card": _is_card,
+    }[parts]
+    solids = [s for s in _vendor_solids() if sel(s)]
+    if not solids:
+        raise ValueError(f"no vendor solids selected for parts={parts!r}")
+    part = Compound(children=[loc * s for s in solids])
     part.label = label
     return part
 
 
-def xiao_envelope():
+def xiao_envelope(pre=None, post=None, skip=(), label="xiao_envelope"):
     """The measured feature boxes from ref/tripodcase/xiao_board_ref.py,
-    placed in the case frame, one labelled solid per feature."""
+    placed in the case frame, one labelled solid per feature.  Far lighter
+    than the 103-solid vendor STEP, so review models use it.
+
+    `pre` / `post` as in xiao_vendor(); `skip` drops features by label
+    substring (e.g. ("camera_head", "lens", "microsd_card_inserted"))."""
+    loc = BOARD_LOC if pre is None else BOARD_LOC * pre
+    if post is not None:
+        loc = post * loc
     src = B.gen_step()
     out = []
     for child in src.children:
+        if any(k in child.label for k in skip):
+            continue
         for s in child.solids():
-            p = BOARD_LOC * s
+            p = loc * s
             p.label = f"env_{child.label}"
             p.color = getattr(child, "color", None)
             out.append(p)
     part = Compound(children=out)
-    part.label = "xiao_envelope"
+    part.label = label
+    return part
+
+
+def header_mock(inflate=0.0, label="header_mock"):
+    """The pin headers DESIGN_v2 §1 assumes: two 2.54 x 17.78 x 2.5 bodies on
+    the PCB back (board z -2.5..0) plus 2 x 7 pins 0.64 square down to
+    z -8.5.  Every solid is baked (see xiao_vendor)."""
+    g = inflate
+    out = []
+    for by0, by1 in (HDR_BY, bmirror(*HDR_BY)):
+        s = bbox_case(HDR_BX[0] - g, HDR_BX[1] + g, by0 - g, by1 + g,
+                      -HDR_BODY_H - g, 0.0 + g)
+        s.label = "hdr_body"
+        out.append(s)
+    for pin_y in (HDR_PIN_BY, BOARD_MIRROR_Y - HDR_PIN_BY):
+        for i, px in enumerate(HDR_PIN_BX):
+            s = bbox_case(px - HDR_PIN / 2 - g, px + HDR_PIN / 2 + g,
+                          pin_y - HDR_PIN / 2 - g, pin_y + HDR_PIN / 2 + g,
+                          HDR_PIN_Z - g, 0.0 + g)
+            s.label = f"hdr_pin_{i}"
+            out.append(s)
+    part = Compound(children=out)
+    part.label = label
     return part
 
 
@@ -385,45 +752,110 @@ def puck_tube():
     return part
 
 
-# --- LOAD lead route: BAT pads under the PCB -> down the plate face ->
-#     beside the tie post -> out the cord slot.
-LEAD_Z0 = 17.66
-LEAD_RUN_XC = CX
-LEAD_TURN_Y = 45.00
+# --- LOAD lead route: soldered to 5V/GND at the far end of the -y header
+#     row -> out through the side-wall wire notch -> down the +X corridor ->
+#     across below the tie post -> out the cord slot.
+LEAD_PINS = (6, 7)                  # 1-based in the row: 5V / GND, far end
+LEAD_ZC = CORD_SLOT_ZC              # centred on the cord slot
+LEAD_Z0 = LEAD_ZC - LEAD_T / 2      # 23.51
+LEAD_CORRIDOR_X = 35.30             # outside the bay's +X side wall (34.955)
+LEAD_TURN_Y = 11.40                 # clear of the tie post (Y 7..11)
 LEAD_EXIT_XC = CORD_SLOT_XC
+LEAD_NOTCH_YC = sum(WIRE_NOTCH_Y) / 2
 
 
 def lead_mock():
+    """LOAD lead: soldered to the last two pins of the -y header row, out
+    through the side-wall wire notch, down the +X corridor, across below the
+    tie post and out the cord slot."""
     z, t, w = LEAD_Z0, LEAD_T, LEAD_W
-    part = box_at(LEAD_RUN_XC - w / 2, LEAD_TURN_Y, z, w, PCB_Y1 - 0.79 - LEAD_TURN_Y, t)
+    x_pad = bX(HDR_PIN_BY)
+    y_pins = sorted(bY(HDR_PIN_BX[i - 1]) for i in LEAD_PINS)
+    x_far = LEAD_CORRIDOR_X + w
+    part = box_at(x_pad - w / 2, y_pins[0] - HDR_PIN, z, w,
+                  (y_pins[1] + HDR_PIN) - (y_pins[0] - HDR_PIN), t)
+    part += box_at(x_pad - w / 2, LEAD_NOTCH_YC - w / 2, z,
+                   x_far - (x_pad - w / 2), w, t)
+    part += box_at(LEAD_CORRIDOR_X, LEAD_TURN_Y, z, w,
+                   (LEAD_NOTCH_YC + w / 2) - LEAD_TURN_Y, t)
     part += box_at(LEAD_EXIT_XC - w / 2, LEAD_TURN_Y, z,
-                   (LEAD_RUN_XC + w / 2) - (LEAD_EXIT_XC - w / 2), w, t)
+                   x_far - (LEAD_EXIT_XC - w / 2), w, t)
     part += box_at(LEAD_EXIT_XC - w / 2, -5.0, z, w, LEAD_TURN_Y + w + 5.0, t)
     part.label = "load_lead_mock"
     return part
 
 
+ANT_Y0, ANT_Y1 = 15.00, 40.00       # DESIGN_v2 §3: below the bay
+
+
 def antenna_mock():
     """25 x 12 x 1.5 flex flag, stuck to the back plate's front face below
-    the bay."""
-    part = box_at(16.0, 20.0, Z_PLATE - 0.06 - ANT_T, ANT_L, ANT_W, ANT_T)
+    the bay (DESIGN_v2 §3 'Antenna')."""
+    part = box_at(CX - ANT_W / 2, ANT_Y0, Z_PLATE - 0.06 - ANT_T,
+                  ANT_W, ANT_Y1 - ANT_Y0, ANT_T)
     part.label = "antenna_mock"
     return part
 
 
-def screw_mocks():
-    """4 x M2 x 8 pan head, driven from the boss tops into the back plate."""
+UFL_PLUG_Z = 1.30                   # plug adds 1.3 above the jack
+CABLE_D = 1.20
+CABLE_BX = (17.00, 20.00)           # board-x run over the -y edge
+CABLE_BZ = (6.00, 7.20)             # clear of the expansion edge and the rail
+
+
+def ufl_plug_mock(inflate=0.0):
+    """The mating U.FL plug that clips onto the jack — the 1.3 it adds on top
+    of the vendor jack (the jack itself is already in the vendor STEP)."""
+    g = inflate
+    x0, y0, x1, y1, _, z1 = B.UFL
+    part = bbox_case(x0 - g, x1 + g, y0 - g, y1 + g, z1 - g, z1 + UFL_PLUG_Z + g)
+    part.label = "ufl_plug_mock"
+    return part
+
+
+def cable_mock(inflate=0.0):
+    """Ø1.2 coax leaving the U.FL plug over the board's -y edge, rising clear
+    of the expansion edge before it crosses the low far-end wall."""
+    g = inflate
+    part = bbox_case(CABLE_BX[0] - g, CABLE_BX[1] + g,
+                     -CABLE_D / 2 - g, CABLE_D / 2 + g,
+                     CABLE_BZ[0] - g, CABLE_BZ[1] + g)
+    part.label = "ufl_cable_mock"
+    return part
+
+
+def button_mocks(inflate=0.0):
+    g = inflate
     out = []
-    for i, (bx, by) in enumerate(BOSS_XY):
-        s = cyl_at(bx, by, BOSS_Z0, SCREW_D, SCREW_L)
-        s += cyl_at(bx, by, BOSS_Z0 - SCREW_HEAD_T, SCREW_HEAD_D, SCREW_HEAD_T)
-        s.label = f"screw_m2x8_{i + 1}"
+    for k, t in B.BUTTONS.items():
+        x0, y0, x1, y1, z0, z1 = t
+        s = bbox_case(x0 - g, x1 + g, y0 - g, y1 + g, z0 - g, z1 + g)
+        s.label = f"button_{k.lower()}"
         out.append(s)
     return out
 
 
-def tilt_loc(deg):
+def screw_mocks():
+    """4 x M2 x 12 pan head, driven from the boss tops into the back plate."""
+    out = []
+    for i, (bx, by) in enumerate(BOSS_XY):
+        s = cyl_at(bx, by, BOSS_Z0, SCREW_D, SCREW_L)
+        s += cyl_at(bx, by, BOSS_Z0 - SCREW_HEAD_T, SCREW_HEAD_D, SCREW_HEAD_T)
+        s.label = f"screw_m2x12_{i + 1}"
+        out.append(s)
+    return out
+
+
+# DEVIATION (v2): v1 pivoted the insertion tilt about the PCB-TOP far corner.
+# That drives the PCB's back-far corner 0.28 further in at 13 deg and bites
+# the stop ribs (0.06 mm^3) for a motion the board cannot make — the far edge
+# is already against them.  v2 pivots about the corner that actually beds in
+# the groove, the PCB's BACK far corner (board x = PCB_L, z = 0).
+TILT_PIVOT_Z = 0.0
+
+
+def tilt_loc(deg, pivot_z=TILT_PIVOT_Z):
     """Insertion tilt: rotate the board about the line through its far-edge
-    PCB-top corners (board x = PCB_L, z = PCB_T, along board y), raising the
-    USB end out of the bay while the far edge stays under the hooks."""
-    return Pos(PCB_L, 0, PCB_T) * Rot(0, deg, 0) * Pos(-PCB_L, 0, -PCB_T)
+    PCB-back corners (board x = PCB_L, z = pivot_z, along board y), raising
+    the USB end out of the bay while the far edge stays in the groove."""
+    return Pos(PCB_L, 0, pivot_z) * Rot(0, deg, 0) * Pos(-PCB_L, 0, -pivot_z)

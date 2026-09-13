@@ -1,88 +1,181 @@
-# puckcase v1 — check output
+# puckcase v2 — check output
 
-Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`:
+Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`, exit 0.
+`check.py` implements DESIGN_v2.md §6; see README.md "Deviations" for the four
+places where §6's literal wording and §3's parameter tables disagree and which
+one the check follows.
+
+Two contract-level WARNINGs are printed at the end and are **not** geometry
+failures — they need a decision from the design owner:
+
+* the microSD card cannot be fitted at all (it blocks tilt insertion, and
+  in-situ insertion needs 5.28 mm of travel against a 4.00 mm roof);
+* M2 × 12 engages only 1.50 mm of the back plate.
 
 ```
 $ ~/.claude/skills/cad/.venv/bin/python check.py
 ==============================================================================
-puckcase v1 — fail-closed fit check
+puckcase v2 — fail-closed fit check (DESIGN_v2.md §6)
 ==============================================================================
 
--- printable solids
-front_plate  solids=1 valid=True volume= 10911.54 mm^3
-             bbox=(-0.000, -0.000, -0.000) .. (47.210, 78.500, 16.010)
-ring         solids=1 valid=True volume= 13344.12 mm^3
-             bbox=(-0.000, -0.000, -8.000) .. (47.210, 80.800, 20.360)
+-- 1. printable solids
+front_plate  solids=1 valid=True volume= 10801.14 mm^3
+             bbox=(-0.000, -0.000, -0.000) .. (47.210, 78.500, 8.400)
+ring         solids=1 valid=True volume= 19623.48 mm^3
+             bbox=(-0.000, -0.000, -8.000) .. (47.210, 80.800, 26.360)
 back_plate   solids=1 valid=True volume= 17787.13 mm^3
-             bbox=(-0.000, -0.000, 20.360) .. (47.210, 80.800, 31.860)
+             bbox=(-0.000, -0.000, 26.360) .. (47.210, 80.800, 37.860)
 
--- designed crush reference (power_puck front_plate x tube)
+-- 2. designed crush references
 power_puck front_plate x tube (6 ribs, 6.4 tall): 15.4400 mm^3
 front_plate x ring expected (same 6 ribs, 4.9 tall): 11.8213 mm^3 +/- 10 %
-back_plate x puck_tube expected: 15.4400 mm^3 +/- 2 % (same lip, same tube)
+back_plate x puck_tube expected: 15.4400 mm^3 +/- 2 %
+4 rail crush ribs x expansion PCB edges: 1.1808 mm^3 (0.10/side nominal)
+LOAD lead x header pins (soldered joint, 2 pins): 1.3926 mm^3
 
--- 11 occurrences, 20 bound-overlapping pairs
-  front_plate      x ring               11.4800 mm^3  (designed crush)
+-- 3. 14 occurrences, 23 bound-overlapping pairs
+  front_plate      x ring               11.4800 mm^3  (designed contact)
   front_plate      x xiao_vendor         0.0000 mm^3  (clear)
-  front_plate      x screw_m2x8_1        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  front_plate      x screw_m2x8_2        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  front_plate      x screw_m2x8_3        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  front_plate      x screw_m2x8_4        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
   ring             x back_plate          0.0000 mm^3  (clear)
-  ring             x xiao_vendor         0.0000 mm^3  (clear)
+  ring             x xiao_vendor         1.1808 mm^3  (designed contact)
+  ring             x header_mock         0.0000 mm^3  (clear)
+  ring             x ufl_plug_mock       0.0000 mm^3  (clear)
+  ring             x ufl_cable_mock      0.0000 mm^3  (clear)
   ring             x load_lead_mock      0.0000 mm^3  (clear)
   ring             x antenna_mock        0.0000 mm^3  (clear)
-  ring             x screw_m2x8_1        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  ring             x screw_m2x8_2        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  ring             x screw_m2x8_3        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  ring             x screw_m2x8_4        0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x puck_tube          15.4400 mm^3  (designed crush)
-  back_plate       x screw_m2x8_1        3.2783 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x8_2        3.2783 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x8_3        3.2783 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x8_4        3.2783 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  ring             x screw_m2x12_1       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  ring             x screw_m2x12_2       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  ring             x screw_m2x12_3       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  ring             x screw_m2x12_4       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x puck_tube          15.4400 mm^3  (designed contact)
+  back_plate       x screw_m2x12_1       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_2       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_3       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_4       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  xiao_vendor      x header_mock         0.0000 mm^3  (clear)
+  xiao_vendor      x ufl_plug_mock       0.0000 mm^3  (clear)
+  xiao_vendor      x ufl_cable_mock      0.0000 mm^3  (clear)
+  header_mock      x load_lead_mock      1.3926 mm^3  (designed contact)
   load_lead_mock   x antenna_mock        0.0000 mm^3  (clear)
-static pairs checked: 20/20   screw mated volume total: 13.113 mm^3
+static pairs checked: 23/23   screw mated volume total: 5.231 mm^3
 
 ring x back_plate: 0.00000 mm^3 (expect 0 — screws are the only contact)
 
--- vendor XIAO STEP vs the printed parts (per-solid, transform baked)
-  nominal                front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-  case X +0.50           front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-  case X -0.50           front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-  case Y +0.40           front_plate 0.0000   ring 0.0011*   back_plate 0.0000   (expect 0)
-  case Y -0.35           front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-  case X +0.50 Y +0.40   front_plate 0.0000   ring 0.0037*   back_plate 0.0000   (expect 0)
-  case X +0.50 Y -0.35   front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-  case X -0.50 Y +0.40   front_plate 0.0000   ring 0.0037*   back_plate 0.0000   (expect 0)
-  case X -0.50 Y -0.35   front_plate 0.0000   ring 0.0000   back_plate 0.0000   (expect 0)
-board positions checked: 9/9   (* = stop-face contact sliver, <= 0.01 mm^3)
+-- 4. board (PCB assembly, head + card excluded) vs the printed parts
+   rigid ring = ring without the rail crush ribs and without the snap tongue
+  Y -0.20 (stop ribs)  X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8435
+  Y -0.20 (stop ribs)  X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y -0.20 (stop ribs)  X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8435
+  Y nominal            X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y nominal            X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y nominal            X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.20              X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.20              X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y +0.20              X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.40 (USB wall)   X -0.15          ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.40 (USB wall)   X 0.00           ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y +0.40 (USB wall)   X +0.15 (rails)  ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+board positions checked: 12/12   (cells are board/header interference, expect 0)
+  camera head (collar-located, nominal) x ring_rigid   0.0000 mm^3
+  camera head (collar-located, nominal) x front_plate  0.0000 mm^3
+  camera head (collar-located, nominal) x back_plate   0.0000 mm^3
+  microSD card (fitted, nominal) x ring_rigid   0.0000 mm^3
+  microSD card (fitted, nominal) x front_plate  0.0000 mm^3
+  microSD card (fitted, nominal) x back_plate   0.0000 mm^3
 
--- tilt insertion (board rotated about its far-edge PCB-top corner line)
-   6 deg   ring 0.0000   back_plate 0.0000   (expect 0)
-   8 deg   ring 0.0000   back_plate 0.0000   (expect 0)
-  10 deg   ring 0.0000   back_plate 0.0000   (expect 0)
+-- 5. tilt insertion (board rotated about its far-edge PCB-back corner line)
+  -13 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.0334 (deliberate crush)   (expect 0)
+   -8 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.2146 (deliberate crush)   (expect 0)
+   -4 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.6431 (deliberate crush)   (expect 0)
+  far-edge groove at 13 deg: slot 1.500 vs 1.25*cos13 + 0.80*sin13 = 1.398
+  head 1.30 short of the window (front face Z 9.66, +6.26 back) x ring: 0.0000 mm^3
+  head fed straight back 0..8.0 in 33 steps x ring: worst 0.0000 mm^3  (expect 0)
 
--- numeric gaps
-  hook underside -> PCB top (Z)                     0.200   (contract 0.20)
-  front post -> PCB top (Z)                         0.100   (contract 0.10)
-  ledge overlap under the PCB                       0.950   (contract 0.95)
-  board play along the case Y (board x)             0.750   (contract 0.75)
-  board play along the case X (board y)             1.000   (contract 1.00)
-  lens tip -> plate inner face (Z)                  1.000   (contract 1.00)
-  card tip -> top wall inner face (Y)               0.497   (contract 0.50)
-  screw head -> front lip nose (Z)                  5.960
-  lens tip radial -> hole wall, nominal             0.750
-  eave brow half-angle from the lens tip (deg)     32.060
-  RST/BOOT button -> front post (board y, extreme)    0.300
-  expansion board -> stop rib front face (Z)        0.550
-  eave proud of the front plate face (Z)            8.000   (contract 8.00)
+-- 6. named clearances (DESIGN_v2 §6.3)
+  collar window -> head, per side                   0.300   (contract >= 0.15)
+  collar bore -> lens barrel, radial                0.205   (contract >= 0.15)
+  collar step -> head top (Z)                       0.200   (contract >= 0.15)
+  collar back face -> SD card top                   0.500   (contract >= 0.50)
+  collar back face -> SD socket                     0.970   (contract >= 0.50)
+  collar relief -> FPC roll                         0.750   (contract >= 0.50)
+  bridge face -> USB-C shell top                    0.100   (contract == 0.10)
+  hook underside -> PCB top                         0.150   (contract == 0.15)
+  ledge face -> PCB back                            0.100   (contract == 0.10)
+  tongue lip -> PCB back                            0.100   (contract == 0.10)
+  rail face -> expansion PCB edge                   0.150   (contract == 0.15)
+  rail rib crest into the expansion edge (crush)    0.100   (contract == 0.10)
+  rib crest -> FPC socket (board y)                 0.220   (contract == 0.22)
+  far-end wall -> expansion PCB overhang            0.350   (contract == 0.35)
+  stop rib -> PCB far edge                          0.200   (contract == 0.20)
+  USB-end wall -> PCB end edge                      0.400   (contract == 0.40)
+  card tip -> top wall inner face (roof)            4.000   (contract == 4.00)
+  lens tip -> plate inner face (Z)                  1.000   (contract == 1.00)
+  eave proud of the front plate face (Z)            8.000   (contract == 8.00)
 
--- front-plate post landing area on the PCB
-  post 1: 2.635 mm^2 on the PCB   (require >= 1.00)
-  post 2: 2.635 mm^2 on the PCB   (require >= 1.00)
+   0.30-clearance proofs (mock inflated by 0.3, expect 0 interference)
+     header body + pins       x all printed: 0.0000 mm^3
+     U.FL plug (+1.3 z)       x all printed: 0.0000 mm^3
+     U.FL cable path Ø1.2     x all printed: 0.0000 mm^3
+     button_rst               x all printed: 0.0000 mm^3
+     button_boot              x all printed: 0.0000 mm^3
 
--- checks run: printable solids + bounds; crush reference; static pair sweep; ring x back_plate; XIAO vs printed, nominal + extremes; tilt insertion 6/8/10 deg; numeric gaps; post landing area
+-- 7. snap tongue (DESIGN_v2 §6.5)
+  lip reach over the PCB back edge                0.400   (contract == 0.40)
+  free gap beside the tongue, -X                  1.850   (contract >= 0.80)
+  free gap beside the tongue, +X                  2.100   (contract >= 0.80)
+  tongue thickness                                0.900   (contract == 0.90)
+  tongue free length                              8.700   (contract == 8.70)
+  outer-fibre strain at 0.60 deflection (%)       1.070   (contract <= 1.50)
+
+-- 8. eave brow, card roof, screws
+  eave brow angle above the lens axis (deg)      43.025   (contract >= 40.00)
+  card roof to the top wall inner face            4.000   (contract >= 3.50)
+  boss bore diameter                              2.200   (contract == 2.20)
+  pilot diameter                                  1.700   (contract == 1.70)
+  pilot depth                                     3.400   (contract == 3.40)
+  boss length (screw head -> back plate)         10.500   (contract == 10.50)
+  M2 x 12 tip short of the pilot bottom           1.900   (contract >= 0.30)
+  M2 x 12 thread engagement in the back plate     1.500   (contract == 1.50)
+WARN M2 x 12 engages only 1.50 mm of the back plate (bosses are 10.5 long).  DESIGN_v2 §5's alternative — counterbore Ø4.4 x 4.5 in a Ø6.5 boss and keep M2 x 8 — or M2 x 14 would give 3.5 mm.
+
+-- 9. overhang audit: planar faces steeper than 45 deg from vertical, in each part's print orientation
+  front_plate: 1 faces, 1.3 mm^2 (bed at Z 0.00, -Z is down; first-layer faces excluded)
+         1.25 mm^2  n.down=1.00  X 20.61..26.61  Y 78.25..78.50  Z 2.40..2.40
+  ring: 15 faces, 251.4 mm^2 (bed at Z 26.36, +Z is down; first-layer faces excluded)
+       118.17 mm^2  n.down=1.00  X 12.57..33.36  Y 61.49..72.89  Z 8.36..8.36
+        28.48 mm^2  n.down=1.00  X 1.80..45.41  Y 74.80..79.00  Z 2.40..2.40
+        28.17 mm^2  n.down=1.00  X 6.00..41.21  Y 78.40..79.20  Z -6.50..-6.50
+        20.50 mm^2  n.down=1.00  X 19.30..27.91  Y 63.46..72.06  Z 6.86..6.86
+        16.08 mm^2  n.down=1.00  X 19.30..27.91  Y 61.49..63.36  Z 7.86..7.86
+        14.55 mm^2  n.down=1.00  X 12.57..33.36  Y 72.89..73.59  Z 6.86..6.86
+         8.95 mm^2  n.down=1.00  X 18.01..27.96  Y 71.99..72.89  Z 12.80..12.80
+         7.20 mm^2  n.down=1.00  X 33.36..34.95  Y 52.30..56.80  Z 21.86..21.86
+         3.60 mm^2  n.down=1.00  X 12.25..13.75  Y 0.00..2.40  Z 22.86..22.86
+         1.37 mm^2  n.down=1.00  X 30.25..32.36  Y 50.14..50.79  Z 15.96..15.96
+         1.36 mm^2  n.down=1.00  X 13.57..15.68  Y 50.14..50.79  Z 15.96..15.96
+         0.75 mm^2  n.down=1.00  X 31.25..31.51  Y 54.29..58.29  Z 13.16..13.16
+         0.75 mm^2  n.down=1.00  X 31.25..31.50  Y 58.79..62.79  Z 13.16..13.16
+         0.75 mm^2  n.down=1.00  X 14.43..14.68  Y 58.79..62.79  Z 13.16..13.16
+         0.75 mm^2  n.down=1.00  X 14.42..14.68  Y 54.29..58.29  Z 13.16..13.16
+  back_plate: 4 faces, 9.1 mm^2 (bed at Z 26.36, -Z is down; first-layer faces excluded)
+         2.27 mm^2  n.down=1.00  X 5.65..7.35  Y 5.65..7.35  Z 29.76..29.76
+         2.27 mm^2  n.down=1.00  X 39.86..41.56  Y 5.65..7.35  Z 29.76..29.76
+         2.27 mm^2  n.down=1.00  X 5.65..7.35  Y 73.45..75.15  Z 29.76..29.76
+         2.27 mm^2  n.down=1.00  X 39.86..41.56  Y 73.45..75.15  Z 29.76..29.76
+
+-- 10. insertion feasibility
+  microSD card swept through the tilt range x ring: 8.01 mm^3 (the bridge band)
+  in-situ card insertion: needs 5.28 mm of straight travel, the roof gives 4.00 mm
+  head swung rigidly with the PCB at -4 deg x ring: 1.89 mm^3 (it is flex-mounted, so it is fed in separately)
+WARN DESIGN_v2 §2's order 'SD card in; tilt the board ~13 deg' is not buildable: the card sweeps 8.0 mm^3 through the bridge band at any tilt > ~1 deg, and it cannot be fitted after the board either (5.28 mm of travel needed, 4.00 available).  Needs a contract decision: drop the bridge (the collar step already stops the USB end), or drop the board another 1.5 for the roof.
+WARN the camera head cannot swing in with the PCB (1.9 mm^3 into the collar/bridge at -4 deg); it must be fed into the collar window by hand — consistent with DESIGN_v2 §1 'held only by its flex'.
+
+-- checks run: printable solids + bounds; crush references; static pair sweep; ring x back_plate; board/header/head/card vs printed, nominal + play extremes; tilt insertion -13/-8/-4 deg + groove + head entry; named clearances; 0.30 clearance proofs; snap tongue; brow / roof / screws; overhang audit; insertion feasibility
+
+3 WARNING(S) — contract-level, not geometry:
+ * M2 x 12 engages only 1.50 mm of the back plate (bosses are 10.5 long).  DESIGN_v2 §5's alternative — counterbore Ø4.4 x 4.5 in a Ø6.5 boss and keep M2 x 8 — or M2 x 14 would give 3.5 mm.
+ * DESIGN_v2 §2's order 'SD card in; tilt the board ~13 deg' is not buildable: the card sweeps 8.0 mm^3 through the bridge band at any tilt > ~1 deg, and it cannot be fitted after the board either (5.28 mm of travel needed, 4.00 available).  Needs a contract decision: drop the bridge (the collar step already stops the USB end), or drop the board another 1.5 for the roof.
+ * the camera head cannot swing in with the PCB (1.9 mm^3 into the collar/bridge at -4 deg); it must be fed into the collar window by hand — consistent with DESIGN_v2 §1 'held only by its flex'.
 
 CHECK PASSED
 exit 0
