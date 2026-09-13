@@ -183,7 +183,8 @@ BAY_T = 1.60               # bay wall thickness
 BAY_BX0, BAY_BX1 = -7.11, 23.20         # board-x run of the side walls
 SIDE_BY = (-SIDE_CLR - BAY_T, -SIDE_CLR)               # -3.10 .. -1.50
 SIDE_BZ = (-9.00, 11.80)                # to the collar's front face
-BAY_IN_X = (X_B0 - (BOARD_MIRROR_Y - SIDE_BY[0]), X_B0 - SIDE_BY[1])   # 12.575, 33.355
+# the two side walls' INNER faces (the bay's clear width)
+BAY_IN_X = (X_B0 - (BOARD_MIRROR_Y - SIDE_BY[1]), X_B0 - SIDE_BY[1])   # 12.575, 33.355
 
 # the front plate's top lip band (case Y LIP_Y1-LIP_WALL .. LIP_Y1, Z .. 8.40)
 # runs right through the side walls' forward extension -> clip it.
@@ -246,20 +247,26 @@ LEDGE_RAMP_DEG = 45.0
 # Consequence: there is no rigid +Y stop any more.  The tongues' faces at
 # board x -0.2 are a soft stop, so the board's Y play is 0.20 to the far-end
 # stop ribs and 0.20 to the tongue faces.
-USB_STRIP_BX = (-1.60, -0.20)           # root strip, board x
-USB_STRIP_BZ = (-9.00, -8.80)
+# v2.3: the root strip grows from 0.2 to 1.5 tall.  A 0.2-tall bar has
+# I ~ 0.001 mm^4 per mm of width and would have taken the whole hinge rotation
+# instead of the tongue's blade.
+USB_STRIP_BX = (-1.60, -0.20)           # root strip, board x (1.40 thick)
+USB_STRIP_BZ = (-9.00, -7.50)           # 1.50 tall
 USB_OPEN_BZ = (-0.10, 9.00)             # fully open from the lip to the collar
 
 TONGUE_BYS = ((-0.50, 3.90), (13.88, 18.28))   # the two tongues, board y
-TONGUE_BX = (-1.10, -0.20)              # 0.9 thick
-TONGUE_BZ = (-8.80, -0.10)              # root at the strip, free end at the PCB
+TONGUE_BX = (-1.00, -0.20)              # v2.3: 0.8 thick
+TONGUE_BZ = (-7.50, -0.10)              # v2.3: 7.4 free, rooted in the strip
 LIP_BX = (-0.20, 0.40)                  # lip: 0.40 over the PCB back edge
 LIP_BZ = (-0.60, -0.10)
 LIP_RAMP = 0.60                         # 45 deg ramp on the lip's back side
-TONGUE_T = TONGUE_BX[1] - TONGUE_BX[0]                 # 0.90
-TONGUE_L = TONGUE_BZ[1] - TONGUE_BZ[0]                 # 8.70
+TONGUE_T = TONGUE_BX[1] - TONGUE_BX[0]                 # 0.80
+TONGUE_L = TONGUE_BZ[1] - TONGUE_BZ[0]                 # 7.40
 TONGUE_DEFL = 0.60                      # deflection at the lip on insertion
+STRIP_T = USB_STRIP_BX[1] - USB_STRIP_BX[0]            # 1.40, along case Y
+STRIP_H = USB_STRIP_BZ[1] - USB_STRIP_BZ[0]            # 1.50, along case Z
 E_PETG = 2000.0                         # MPa, for the snap force estimate
+NU_PETG = 0.35
 PCB_STRAIGHT_BY = (PCB_R, PCB_W - PCB_R)               # 1.906 .. 15.874
 
 RAIL_BX = (8.00, 17.00)                 # side rails on the expansion edges

@@ -142,7 +142,7 @@ def overhang_faces(part, up_is_minus_z, bed_z):
 
 def main():
     print("=" * 78)
-    print("puckcase v2.2 — fail-closed fit check (DESIGN_v2.md §6 + §9)")
+    print("puckcase v2.3 — fail-closed fit check (DESIGN_v2.md §6 + §9)")
     print("=" * 78)
 
     # ------------------------------------------------------------------
@@ -473,7 +473,7 @@ def main():
     # ------------------------------------------------------------------
     # 7. the snap tongue
     # ------------------------------------------------------------------
-    print("\n-- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues in v2.2)")
+    print("\n-- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues, v2.3 root)")
     pcb_solid = next(sld for sld in L.xiao_envelope().children
                      if sld.label == "env_base_pcb")
     reach = L.LIP_BX[1]
@@ -514,8 +514,10 @@ def main():
     t_rows = [("lip reach over the PCB back edge", reach, 0.40, "=="),
               ("free gap, tongue 2 -> -X side wall", gap_lo, 0.80, ">="),
               ("free gap, tongue 1 -> +X side wall", gap_hi, 0.80, ">="),
-              ("tongue thickness", L.TONGUE_T, 0.90, "=="),
-              ("tongue free length", L.TONGUE_L, 8.70, "=="),
+              ("tongue thickness", L.TONGUE_T, 0.80, "=="),
+              ("tongue free length", L.TONGUE_L, 7.40, "=="),
+              ("root strip height", L.STRIP_H, 1.50, "=="),
+              ("root strip thickness", L.STRIP_T, 1.40, "=="),
               ("clear of the USB-C shell, tongue 1 (board y)",
                B.USB[1] - L.TONGUE_BYS[0][1], 0.50, ">="),
               ("clear of the USB-C shell, tongue 2 (board y)",
@@ -530,6 +532,41 @@ def main():
             fail(f"{name}: {got:.3f} < {want:.2f}")
         if op == "<=" and got > want + 1e-9:
             fail(f"{name}: {got:.3f} > {want:.2f}")
+    # v2.3: the root strip must not be the hinge.  Report both compliance
+    # modes of the strip that carries both tongue roots.
+    force1 = total_force / 2.0
+    moment = force1 * L.TONGUE_L
+    span = L.BAY_IN_X[1] - L.BAY_IN_X[0]
+    xc = (L.bX(L.TONGUE_BYS[0][1]) + L.bX(L.TONGUE_BYS[0][0])) / 2.0
+    a = min(L.BAY_IN_X[1] - xc, xc - L.BAY_IN_X[0])
+    b = span - a
+    i_strip = L.STRIP_H * L.STRIP_T ** 3 / 12.0
+    d_bend = force1 * a ** 3 * b ** 3 / (3.0 * L.E_PETG * i_strip * span ** 3)
+    big, small = max(L.STRIP_T, L.STRIP_H), min(L.STRIP_T, L.STRIP_H)
+    ratio = big / small
+    beta = 0.1406 + (0.1661 - 0.1406) * min(1.0, (ratio - 1.0) / 0.2)
+    j_strip = beta * big * small ** 3
+    g_mod = L.E_PETG / (2.0 * (1.0 + L.NU_PETG))
+    k_tors = g_mod * j_strip * (1.0 / a + 1.0 / b)
+    d_tors = (moment / k_tors) * L.TONGUE_L
+    k_t = force1 / L.TONGUE_DEFL
+    k_s = force1 / (d_bend + d_tors)
+    k_series = 1.0 / (1.0 / k_t + 1.0 / k_s)
+    f_series = k_series * L.TONGUE_DEFL
+    print(f"\n  root strip: {L.STRIP_T:.2f} thick x {L.STRIP_H:.2f} tall, "
+          f"wall to wall over {span:.2f}, carrying both tongue roots")
+    print(f"     strip BENDING under the root shear {force1:.2f} N "
+          f"(fixed-fixed, load at a = {a:.2f}): {d_bend:.4f} mm at the lip"
+          f"   (contract < 0.05)")
+    print(f"     strip TORSION under the root moment {moment:.2f} N.mm "
+          f"(J = {j_strip:.3f}, G = {g_mod:.0f}): {d_tors:.4f} mm at the lip")
+    print(f"     -> tongue alone {k_t:.2f} N/mm, strip {k_s:.2f} N/mm, "
+          f"series {k_series:.2f} N/mm; snap force at 0.6 of total travel "
+          f"{f_series:.2f} N per tongue")
+    if d_bend > 0.05:
+        fail(f"strip bending compliance {d_bend:.4f} >= 0.05 mm")
+    if L.STRIP_H < 1.40:
+        fail(f"root strip only {L.STRIP_H:.2f} tall — it would be the hinge")
     print("  removal: press BOTH tongues outward through the back mouth")
     note("snap tongue")
 

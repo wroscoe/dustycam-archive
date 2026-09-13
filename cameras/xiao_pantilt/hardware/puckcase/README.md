@@ -1,4 +1,4 @@
-# puckcase v2.2
+# puckcase v2.3
 
 A sealed, camera-only case for the Seeed XIAO ESP32S3 Sense that presses into
 the **power puck**'s front mouth in place of the puck's own front plate. Same
@@ -29,7 +29,9 @@ tongues**, one at each end of the PCB's end edge, because the USB-C shell
 sweeps through anything behind the PCB plane inside board y 4.41..13.35. Above
 the lip there is now **no wall at all** at the USB end; the collar sheet
 bridges wall to wall and the USB end's forward stop is the collar step acting
-through the camera head.
+through the camera head. **v2.3** (§9 E) grows the tongue root strip from 0.2
+to 1.5 mm tall and thins the tongues to 0.8 × 7.4 so the blade — not the strip
+— is the hinge.
 
 Contract: [`DESIGN_v2.md`](DESIGN_v2.md) (v1 is `DESIGN.md`, superseded).
 Deviations are listed at the bottom of this file and commented at their
@@ -44,7 +46,7 @@ case frame is `board_to_case()` / `bspan()` in `puckcase_lib.py`.
 | File | Job | Print orientation | Volume |
 |---|---|---|---|
 | `front_plate.step.py` → `front_plate.step` | Weather face: 2.4 plate, Ø7.5 lens hole at (23.605, 67.76) with a 0.6 × 45° chamfer, 6.0 lip with 6 crush ribs into the ring's front mouth. **No posts** | outer face on the bed (Z 0), lip up. No supports | 10 801 mm³ |
-| `ring.step.py` → `ring.step` | Body Z 2.4..26.36: 2.4 walls, top wall run 8.0 forward as the eave (drip groove underneath), the whole board bay, 4 screw bosses (9.0 long) with corner fills, cord slot, tie post, wire notch | standing on its **back mouth** (Z 26.36 on the bed), eave up | 19 236 mm³ |
+| `ring.step.py` → `ring.step` | Body Z 2.4..26.36: 2.4 walls, top wall run 8.0 forward as the eave (drip groove underneath), the whole board bay, 4 screw bosses (9.0 long) with corner fills, cord slot, tie post, wire notch | standing on its **back mouth** (Z 26.36 on the bed), eave up | 19 257 mm³ |
 | `back_plate.step.py` → `back_plate.step` | Coupling plate: 4.0 flat plate, the power puck's own front-plate lip on its back (6 crush ribs, identical geometry), 4 blind Ø1.7 × 3.4 M2 pilots on its front | front face on the bed (Z 26.36), lip up. No supports | 17 787 mm³ |
 | 4 × **M2 × 12** pan head self-tapping | ring → back plate (9.0 through the boss, 3.0 into the plate, tip 0.4 short of the pilot bottom) | purchased | — |
 | 1 × microSD, 1 × U.FL antenna pigtail + flag, LOAD lead | as v1 | purchased | — |
@@ -63,8 +65,8 @@ Bounding boxes: front_plate (0, 0, 0)–(47.210, 78.500, 8.400); ring
 | hooks | Y 49.69..51.29, X 30.255..32.355 / 13.575..15.675, Z 13.76..15.96 | PCB top at the far corners, 0.15 over |
 | centre ledge | Y 49.69..51.59, X 18.855..26.855, face Z 17.46 | PCB back at the far end, 0.10 under; 0.30 of flat bearing then a 45° entry ramp |
 | USB-end opening | the **full bay width**, X 12.575..33.355, Z 8.36..17.46 | nothing above the lip — it is the way in for the board, the USB-C shell and the card |
-| tongue root strip | X 12.575..33.355, Y 71.49..72.89, Z 26.16..26.36 | runs wall to wall at the bed; roots both tongues and ties the side walls together |
-| **snap tongue A** | X 27.955..32.355 (board y −0.50..3.90), Y 71.49..72.39, Z 17.46..26.36; lip Y 70.89..71.49, Z 17.46..17.96 with a 45° ramp | PCB back at the USB end, 0.10 under, 0.40 of lip over the straight end edge; face at Y 71.49 is the **soft** +Y stop, 0.20 |
+| tongue root strip | X 12.575..33.355, Y 71.49..72.89, **Z 24.86..26.36** (1.40 thick × **1.50 tall**) | runs wall to wall at the bed; roots both tongues and ties the side walls together. v2.3 grew it from 0.20 so the blade, not the strip, is the hinge |
+| **snap tongue A** | X 27.955..32.355 (board y −0.50..3.90), Y 71.49..**72.29** (**0.80** thick), Z 17.46..26.36 (**7.40** free); lip Y 70.89..71.49, Z 17.46..17.96 with a 45° ramp | PCB back at the USB end, 0.10 under, 0.40 of lip over the straight end edge; face at Y 71.49 is the **soft** +Y stop, 0.20 |
 | **snap tongue B** | X 13.575..17.975 (board y 13.88..18.28), otherwise as A | mirror; both are ≥ 0.50 clear of the USB-C shell span so they survive the insertion swing |
 | side rails | X 31.505 / 14.425 faces, Y 54.29..63.29, Z 11.76..13.16, 45° underside back to Z 15.01 | expansion PCB long edges, 0.15 + 2 crush ribs 0.25 proud (0.10 crush/side) |
 | collar | X 12.575..33.355, Y 61.49..72.89 (73.59 front), Z 5.56..8.36; 8.6 window with a 0.6 back chamfer, step at Z 6.86, Ø8.25 bore | the camera head (8 × 8 × 2.1) and the Ø7.84 barrel — and, through the head, the USB end's forward stop |
@@ -175,8 +177,9 @@ under it with 0.400 of reach and 1.1163 mm² of bearing each (1.994 mm of it on
 the straight end edge), collar step 0.200 over the head top (the USB-end
 forward stop), rails 0.150 with a 0.100 crush, collar 0.300/side round the head and
 0.205 round the barrel. Forward travel of the whole board 0.155 (hooks first).
-Brow 43.03°, card roof 4.000, tongue strain 1.07 % at 0.6 of deflection,
-snap force 1.46 N per tongue / 2.92 N total (E = 2000 MPa). Tongue bodies
+Brow 43.03°, card roof 4.000, tongue strain 1.315 % at 0.6 of deflection,
+snap force 1.67 N per tongue / 3.34 N total as a free cantilever, 0.86 N per
+tongue once the root strip's torsion is in series (E = 2000 MPa). Tongue bodies
 0.0000 against the swept board at every angle; only the cam ramps engage
 (1.36 mm³ at −2°, 1.46 at −4°).
 Screws: boss 9.000, engagement 3.000, tip 0.400 short of the pilot bottom,
@@ -199,7 +202,7 @@ driver access 0.0000 on all four axes.
 
 | File | What | Solid | Volume | Bounding box |
 |---|---|---|---|---|
-| `coupon_ring_bay.step.py` → `.stl` / `.3mf` | `ring ∩ (Y ≥ 44)`, flipped so the back mouth is on the bed | 1 valid | 11 418 mm³ | (0, −80.800, 0)–(47.210, −44.000, 34.360) |
+| `coupon_ring_bay.step.py` → `.stl` / `.3mf` | `ring ∩ (Y ≥ 44)`, flipped so the back mouth is on the bed | 1 valid | 11 439 mm³ | (0, −80.800, 0)–(47.210, −44.000, 34.360) |
 | `coupon_front_plate.step.py` → `.stl` / `.3mf` | `front_plate ∩ (Y ≥ 44)`, outer face down | 1 valid | 4 719 mm³ | (0, 44.000, 0)–(47.210, 78.500, 8.400) |
 
 Print both before committing to a full set: they carry every new feature (side
@@ -225,7 +228,7 @@ and the tongue lip's underside is its 45° cam ramp, so neither is flagged.
 
 ## Completion level
 
-**v2.2 modelled, checks passed with zero warnings, coupon not yet printed.**
+**v2.3 modelled, checks passed with zero warnings, coupon not yet printed.**
 The three parts are single valid solids with the contract's dimensions; they
 clear the real vendor board, the header mock, the U.FL plug and coax and the
 buttons at nominal and at every reachable play extreme; the board — **with the
@@ -233,8 +236,9 @@ microSD card fitted** — tilts in at 13° with zero interference and the two
 tongues are touched only on their cam ramps; the camera head feeds straight
 into the collar with no interference anywhere along its path; M2 × 12 gets
 3.0 mm of thread and the driver reaches every boss. Nothing here has been
-printed, and the two things the print has to settle are the tongues' 0.2 mm
-root ligament and the collar's 20.8 mm bridge. The puck lip is unproven too.
+printed, and the two things the print has to settle are the snap preload (the
+root strip is soft in torsion — see Open items) and the collar's 20.8 mm
+bridge. The puck lip is unproven too.
 
 ## Deviations from DESIGN_v2.md
 
@@ -310,11 +314,16 @@ Contract numbers the geometry reports rather than meets:
 
 ## Open items
 
-- **Both tongues root in the same 0.2 mm ligament** (board z −9.0..−8.8, the
-  strip that runs wall to wall at the bed). That is the contract's geometry; it
-  is a stress concentration and the first place a snap tongue fails. The strip
-  now also ties the two side walls together, so it carries more than the
-  tongues.
+- **The root strip is soft in torsion** (v2.3 fixed its bending, not its
+  twist). The tongue's root moment is about the X axis and the strip runs
+  along X, so the strip twists: J = 0.616 mm⁴, G = 741 MPa → 0.542 mm at the
+  lip against the blade's own 0.6. The two springs in series give 1.44 N/mm,
+  so the snap preload is **0.86 N per tongue** rather than 1.67, and the blade
+  sees about half the computed strain. Retention is unaffected — the lip's
+  0.4 engagement is geometric and a +Z load on the board is carried by the lip
+  in bearing, not by the spring. If more preload is wanted, thickening the
+  strip from 1.40 to 2.40 in board x (to x −2.6..−0.2, clear of the whole
+  swept board) roughly doubles its torsional rate → ~0.25 mm.
 - **There is no rigid +Y stop.** The tongue faces at board x −0.2 are a soft
   stop, so a hard shove on the USB end deflects the tongues rather than
   hitting a wall. Y play is 0.20 / 0.20; the far-end stop ribs are the only

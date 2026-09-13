@@ -1,27 +1,28 @@
-# puckcase v2.2 — check output
+# puckcase v2.3 — check output
 
 Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`, exit 0,
 **no warnings**.
 
-`check.py` implements DESIGN_v2.md §6 as amended by §9 (v2.1 and v2.2); see
+`check.py` implements DESIGN_v2.md §6 as amended by §9 (v2.1, v2.2, v2.3); see
 README.md "Deviations" for the places where §6's literal wording and §3's
 parameter tables disagree and which one the check follows.
 
-v2.1 cleared the microSD card and the M2 × 12 engagement. v2.2 cleared the
-last one: the single central snap tongue, which the USB-C shell swept through,
-is replaced by two pillar tongues outside the shell's span — their bodies are
-0.0000 mm³ against the full swept board at every insertion angle and only
-their cam ramps are touched.
+v2.3 grew the tongue root strip from 0.2 to 1.5 mm tall and thinned the
+tongues to 0.8 x 7.4 so the blade, not the strip, is the hinge. Group 7 now
+reports both compliance modes of the strip: bending 0.0161 mm at the lip
+(checked < 0.05) and torsion 0.542 mm, which is the governing mode and lowers
+the snap preload to 0.86 N per tongue — see DESIGN_v2 §9 E.
 
 ```
+$ ~/.claude/skills/cad/.venv/bin/python check.py
 ==============================================================================
-puckcase v2.2 — fail-closed fit check (DESIGN_v2.md §6 + §9)
+puckcase v2.3 — fail-closed fit check (DESIGN_v2.md §6 + §9)
 ==============================================================================
 
 -- 1. printable solids
 front_plate  solids=1 valid=True volume= 10801.14 mm^3
              bbox=(-0.000, -0.000, -0.000) .. (47.210, 78.500, 8.400)
-ring         solids=1 valid=True volume= 19235.61 mm^3
+ring         solids=1 valid=True volume= 19256.62 mm^3
              bbox=(-0.000, -0.000, -8.000) .. (47.210, 80.800, 26.360)
 back_plate   solids=1 valid=True volume= 17787.13 mm^3
              bbox=(-0.000, -0.000, 26.360) .. (47.210, 80.800, 37.860)
@@ -124,24 +125,31 @@ board positions checked: 9/9   (cells are board/header interference, expect 0)
      button_rst               x all printed: 0.0000 mm^3
      button_boot              x all printed: 0.0000 mm^3
 
--- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues in v2.2)
+-- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues, v2.3 root)
   tongue 1 (board y -0.50..+3.90, case X 27.955..32.355, 4.40 wide)
      lip bearing on the PCB back       1.1163 mm^2 (2.791 effective length)
      on the STRAIGHT end edge           1.994 mm   (require >= 1.90; PCB corners are R1.906)
-     snap force at 0.6 deflection       1.46 N     (E = 2000 MPa, PETG)
+     snap force at 0.6 deflection       1.67 N     (E = 2000 MPa, PETG)
   tongue 2 (board y +13.88..+18.28, case X 13.575..17.975, 4.40 wide)
      lip bearing on the PCB back       1.1163 mm^2 (2.791 effective length)
      on the STRAIGHT end edge           1.994 mm   (require >= 1.90; PCB corners are R1.906)
-     snap force at 0.6 deflection       1.46 N     (E = 2000 MPa, PETG)
+     snap force at 0.6 deflection       1.67 N     (E = 2000 MPa, PETG)
   lip reach over the PCB back edge                0.400   (contract == 0.40)
-  free gap, tongue 2 -> -X side wall              2.600   (contract >= 0.80)
+  free gap, tongue 2 -> -X side wall              1.000   (contract >= 0.80)
   free gap, tongue 1 -> +X side wall              1.000   (contract >= 0.80)
-  tongue thickness                                0.900   (contract == 0.90)
-  tongue free length                              8.700   (contract == 8.70)
+  tongue thickness                                0.800   (contract == 0.80)
+  tongue free length                              7.400   (contract == 7.40)
+  root strip height                               1.500   (contract == 1.50)
+  root strip thickness                            1.400   (contract == 1.40)
   clear of the USB-C shell, tongue 1 (board y)    0.510   (contract >= 0.50)
   clear of the USB-C shell, tongue 2 (board y)    0.530   (contract >= 0.50)
-  outer-fibre strain at 0.60 deflection (%)       1.070   (contract <= 1.50)
-  total snap force, both tongues (N)              2.923   (contract >= 0.00)
+  outer-fibre strain at 0.60 deflection (%)       1.315   (contract <= 1.50)
+  total snap force, both tongues (N)              3.336   (contract >= 0.00)
+
+  root strip: 1.40 thick x 1.50 tall, wall to wall over 20.78, carrying both tongue roots
+     strip BENDING under the root shear 1.67 N (fixed-fixed, load at a = 3.20): 0.0161 mm at the lip   (contract < 0.05)
+     strip TORSION under the root moment 12.34 N.mm (J = 0.616, G = 741): 0.5417 mm at the lip
+     -> tongue alone 2.78 N/mm, strip 2.99 N/mm, series 1.44 N/mm; snap force at 0.6 of total travel 0.86 N per tongue
   removal: press BOTH tongues outward through the back mouth
 
 -- 8. eave brow, card roof, screws

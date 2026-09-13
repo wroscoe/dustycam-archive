@@ -277,7 +277,38 @@ effective length), of which 1.994 mm is on the straight end edge. Strain
 1.070 % at 0.6 of deflection; snap force 1.46 N per tongue, 2.92 N total
 (E = 2000 MPa, PETG).
 
-### E. Open against this contract
-Nothing. `check.py` passes with no warnings. The remaining risks are process,
-not geometry — see README "Open items" (the 0.2 mm root ligament, the 20.8 mm
-collar bridge, the assumed header geometry).
+### E. v2.3 — the tongues must not hinge on the root strip (2026-09-13)
+v2.2 rooted both tongues in a 0.2 mm ligament: I ≈ 0.001 mm⁴ per mm of width,
+which would have taken the whole hinge rotation instead of the tongue blade.
+
+- **root strip z −9.0..−7.5** (1.50 tall, unchanged 1.40 thick at board
+  x −1.6..−0.2, still wall to wall and still tying the side walls together);
+- **tongue thickness 0.8** (board x −1.0..−0.2), **free length 7.4**
+  (z −7.5..−0.1);
+- lip unchanged: 0.4 reach, z −0.6..−0.1, 45° ramp behind it.
+
+Measured: strain **1.315 %** at 0.6 of deflection (≤ 1.5); snap force
+**1.67 N per tongue**, 3.34 N total, treating each tongue as a free cantilever
+(E = 2000 MPa, ν = 0.35, PETG).
+
+Strip compliance, tongue A's root at a = 3.20 from the +X wall, b = 17.58,
+free span 20.78:
+- **bending** under the root shear 1.67 N (fixed-fixed, I = 0.343 mm⁴):
+  **0.0161 mm** at the lip — negligible, as expected (< 0.05);
+- **torsion** under the root moment 12.34 N·mm is the *governing* mode, because
+  the tongue's root moment is about the X axis and the strip runs along X:
+  J = 0.616 mm⁴, G = 741 MPa → **0.542 mm** at the lip.
+
+So the strip and the blade are comparable springs in series (2.78 and
+2.99 N/mm): total rate 1.44 N/mm, i.e. **0.86 N per tongue** at 0.6 of travel
+rather than 1.67, and the blade sees only ~half the computed strain. This
+lowers the *preload*, not the retention: the lip's 0.4 engagement is geometric
+and a +Z load on the board is carried by the lip in bearing, not by the spring.
+If more preload is wanted, thickening the strip from 1.40 to 2.40 in board x
+(to x −2.6..−0.2, a region that is clear of the whole swept board) roughly
+doubles its torsional rate and brings the torsional term to ~0.25 mm.
+
+### F. Open against this contract
+Nothing fails. `check.py` passes with no warnings. Remaining process risks:
+the strip's torsional softness above (preload only), the collar's 20.8 mm
+bridge, and the assumed header geometry — see README "Open items".
