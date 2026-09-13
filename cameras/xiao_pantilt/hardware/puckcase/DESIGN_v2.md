@@ -177,3 +177,80 @@ far-end wall at the corner, drops into the cavity.
   If that board's edge has a component I don't know about, the rails move
   to x 8..14.
 - M2 × 12 screws, or keep M2 × 8 with counterbored Ø6.5 bosses.
+
+## 9. v2.1 amendments (2026-09-13) — the contract as built
+
+Two amendments from the design owner, plus the deviations the build forced.
+Everything above stands except where a line below overrides it.
+
+### A. The bridge band is deleted; the USB-end window is one opening
+The v2.0 bridge (§3 "BRIDGE", the wall band at z 4.56..6.5) made the microSD
+card unfittable: it swept 8 mm³ through the band at any tilt beyond ~1°, and
+it could not be fitted afterwards either (5.28 mm of straight travel needed
+past the socket mouth, 4.00 mm of roof). So:
+
+- the USB-end wall becomes **two side pillars**, board y −0.5..2.2 and
+  13.9..18.28, full height to the collar (z −9.0..9.0), plus the strip at
+  z −9.0..−8.8 that roots the snap tongue;
+- the shell window and the card notch **merge into one opening**, board
+  y 2.2..13.9 (the wider notch width), z −8.8..9.0 — tongue root to the
+  collar's back face;
+- §2's insertion order returns to "**SD card in**, then tilt the board in";
+- the USB end's **forward stop is now the collar step** (z 10.5, 0.20 over the
+  head top), acting through camera head → microSD socket → expansion PCB →
+  B2B connector → base PCB. The far-end hooks (0.15 over the PCB top) catch
+  first, so measured forward travel of the whole board is 0.155;
+- the two pillars are the PCB's rigid +Y stop (0.40) and are clear of the
+  entire swept board;
+- §6.3's "bridge–shell 0.10" is replaced by "collar step – head top 0.20";
+- the v2.0 bridge-relief deviation is withdrawn (there is no bridge).
+
+### B. Shorter bosses so M2 × 12 actually holds
+v2.0's 10.5 boss left only 1.5 mm of thread in the back plate.
+**BOSS_LEN = 9.00, BOSS_Z0 = Z_PLATE − 9.00 = 17.36**, Ø5.5 unchanged: M2 × 12
+engages the plate by 3.00 with the tip 0.40 short of the 3.4 pilot bottom.
+(The amendment proposed 8.3; that gives 3.7 of engagement into a 3.4 pilot,
+i.e. the screw bottoms out 0.30 past it. 9.00 is the value that satisfies both
+"engagement ≥ 3.0" and "tip ≥ 0.3 short".) Driver access down all four boss
+axes is clear from the front mouth (Ø5.5 column, Z 2.40..17.36, 0 mm³).
+
+### C. Deviations the build forced (each is `# DEVIATION`-commented in code)
+1. **Board y → case −X** — §3's mapping triple has determinant −1: a mirror,
+   not a rigid placement. Handedness forces it; the lens stays on CX.
+2. **Side walls in two Z bands** — one Z range over the whole run puts them
+   inside the front plate's lip band (Z 2.40..8.40). Full reach only to
+   Y 76.35; Z 8.70..26.36 above that.
+3. **Centre ledge: 0.30 flat bearing + a 45° entry ramp** — at 13° the PCB's
+   back face lifts reach·sin 13°, so a flat face 0.10 behind it may only reach
+   0.444. The 0.10 gap is kept where the ledge bears, at the PCB's far edge.
+4. *(withdrawn — was the bridge relief)*
+5. **A 4.5 × 4.5 wire notch through the +X side wall** (Y 52.30..56.80,
+   Z 21.86..26.36) — §3's "low" far-end wall is low in *board* z, i.e. case
+   Z 11.36..26.36, a full barrier; without the notch the bay is a closed box
+   and neither the LOAD lead nor the U.FL coax can reach the cavity below.
+6. **`tilt_loc` pivots about the PCB's back-far corner** — the v1 top-corner
+   pivot drives the far edge 0.28 further in and bites the stop ribs for a
+   motion the board cannot make.
+7. **`CORD_SLOT_R` 1.499** — `RectangleRounded` rejects r = h/2 exactly.
+8. **§6.2's ±0.3 along becomes the true stop faces, −0.20 / +0.40** — §2/§3
+   give 0.20 to the stop ribs and 0.40 to the USB-end pillars, so −0.30 is a
+   position the board cannot reach. Across stays ±0.15 (the rails).
+9. **The camera head is a separate occurrence from the PCB in the play and
+   tilt sweeps** — §1 says it is held only by its flex and §2 makes the collar
+   position the lens, so it is fed into the collar by hand rather than swung
+   in with the board (rigidly attached it puts 1.9 mm³ into the collar at
+   −4°). The **card is not** separate any more: since amendment A it is fitted
+   before insertion and rides with the PCB through every sweep.
+
+### D. Open against this contract
+**The snap tongue cannot survive the swing.** The USB-C shell stands 1.53
+proud of the PCB's end edge and is 4.2 tall, so once the USB end is lifted
+~2 mm its rear corner is behind the PCB's back plane at case Y 72.6..73.3 —
+past the tongue's back face (72.39). Measured tongue-body interference is
+0.98 mm³ at −2°, 2.11 at −4°, 4.79 at −8°, 6.66 at −13°; clearing it would
+need ~1.8 mm of deflection against a 0.6 design travel. Any tongue inside the
+shell's X span (18.505..27.445) has this problem. The fix is to move retention
+to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and
+13.575..17.955, both already proven clear of the whole swept board), at the
+cost of the rigid +Y stop over their width — **it needs a decision**, so v2.1
+ships the central tongue as specified and `check.py` reports the conflict.

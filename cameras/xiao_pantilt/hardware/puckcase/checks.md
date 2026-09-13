@@ -1,16 +1,18 @@
-# puckcase v2 — check output
+# puckcase v2.1 — check output
 
 Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`, exit 0.
-`check.py` implements DESIGN_v2.md §6; see README.md "Deviations" for the four
-places where §6's literal wording and §3's parameter tables disagree and which
-one the check follows.
+`check.py` implements DESIGN_v2.md §6 as amended by §9 (v2.1); see README.md
+"Deviations" for the places where §6's literal wording and §3's parameter
+tables disagree and which one the check follows.
 
-Two contract-level WARNINGs are printed at the end and are **not** geometry
-failures — they need a decision from the design owner:
+v2.1 cleared both of the v2.0 warnings: the microSD card is now fitted before
+insertion and sweeps clear (0.0000 mm³ at every tilt), and M2 × 12 engages the
+back plate by 3.000 with the tip 0.400 short of the pilot bottom.
 
-* the microSD card cannot be fitted at all (it blocks tilt insertion, and
-  in-situ insertion needs 5.28 mm of travel against a 4.00 mm roof);
-* M2 × 12 engages only 1.50 mm of the back plate.
+**One new, previously unmeasured conflict is reported as a WARNING**: the
+USB-C shell sweeps through the snap tongue's body during the insertion swing.
+That is a contract-level decision (DESIGN_v2 §9 D), not a geometry error, so
+it is warned rather than failed.
 
 ```
 $ ~/.claude/skills/cad/.venv/bin/python check.py
@@ -21,7 +23,7 @@ puckcase v2 — fail-closed fit check (DESIGN_v2.md §6)
 -- 1. printable solids
 front_plate  solids=1 valid=True volume= 10801.14 mm^3
              bbox=(-0.000, -0.000, -0.000) .. (47.210, 78.500, 8.400)
-ring         solids=1 valid=True volume= 19623.48 mm^3
+ring         solids=1 valid=True volume= 19362.50 mm^3
              bbox=(-0.000, -0.000, -8.000) .. (47.210, 80.800, 26.360)
 back_plate   solids=1 valid=True volume= 17787.13 mm^3
              bbox=(-0.000, -0.000, 26.360) .. (47.210, 80.800, 37.860)
@@ -48,20 +50,20 @@ LOAD lead x header pins (soldered joint, 2 pins): 1.3926 mm^3
   ring             x screw_m2x12_3       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
   ring             x screw_m2x12_4       0.0000 mm^3  (MATED: screw in its own boss/pilot, excluded)
   back_plate       x puck_tube          15.4400 mm^3  (designed contact)
-  back_plate       x screw_m2x12_1       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x12_2       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x12_3       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
-  back_plate       x screw_m2x12_4       1.3077 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_1       2.6154 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_2       2.6154 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_3       2.6154 mm^3  (MATED: screw in its own boss/pilot, excluded)
+  back_plate       x screw_m2x12_4       2.6154 mm^3  (MATED: screw in its own boss/pilot, excluded)
   xiao_vendor      x header_mock         0.0000 mm^3  (clear)
   xiao_vendor      x ufl_plug_mock       0.0000 mm^3  (clear)
   xiao_vendor      x ufl_cable_mock      0.0000 mm^3  (clear)
   header_mock      x load_lead_mock      1.3926 mm^3  (designed contact)
   load_lead_mock   x antenna_mock        0.0000 mm^3  (clear)
-static pairs checked: 23/23   screw mated volume total: 5.231 mm^3
+static pairs checked: 23/23   screw mated volume total: 10.462 mm^3
 
 ring x back_plate: 0.00000 mm^3 (expect 0 — screws are the only contact)
 
--- 4. board (PCB assembly, head + card excluded) vs the printed parts
+-- 4. board (PCB assembly + fitted microSD card, head excluded) vs the printed parts
    rigid ring = ring without the rail crush ribs and without the snap tongue
   Y -0.20 (stop ribs)  X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8435
   Y -0.20 (stop ribs)  X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
@@ -72,24 +74,29 @@ ring x back_plate: 0.00000 mm^3 (expect 0 — screws are the only contact)
   Y +0.20              X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
   Y +0.20              X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
   Y +0.20              X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.40 (USB wall)   X -0.15          ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.40 (USB wall)   X 0.00           ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
-  Y +0.40 (USB wall)   X +0.15 (rails)  ring_rigid 0.0263/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.40 (USB wall)   X -0.15          ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.40 (USB wall)   X 0.00           ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y +0.40 (USB wall)   X +0.15 (rails)  ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
 board positions checked: 12/12   (cells are board/header interference, expect 0)
   camera head (collar-located, nominal) x ring_rigid   0.0000 mm^3
   camera head (collar-located, nominal) x front_plate  0.0000 mm^3
   camera head (collar-located, nominal) x back_plate   0.0000 mm^3
-  microSD card (fitted, nominal) x ring_rigid   0.0000 mm^3
-  microSD card (fitted, nominal) x front_plate  0.0000 mm^3
-  microSD card (fitted, nominal) x back_plate   0.0000 mm^3
 
 -- 5. tilt insertion (board rotated about its far-edge PCB-back corner line)
-  -13 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.0334 (deliberate crush)   (expect 0)
-   -8 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.2146 (deliberate crush)   (expect 0)
-   -4 deg   ring_rigid 0.0000   back_plate 0.0000   rail ribs 0.6431 (deliberate crush)   (expect 0)
+   v2.1: the microSD card is FITTED and rides with the PCB
+    0 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 1.1808 (deliberate crush)
+   -4 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.6431 (deliberate crush)
+   -8 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.2146 (deliberate crush)
+  -13 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.0334 (deliberate crush)
   far-edge groove at 13 deg: slot 1.500 vs 1.25*cos13 + 0.80*sin13 = 1.398
-  head 1.30 short of the window (front face Z 9.66, +6.26 back) x ring: 0.0000 mm^3
-  head fed straight back 0..8.0 in 33 steps x ring: worst 0.0000 mm^3  (expect 0)
+
+   snap tongue during the swing (lip cam = designed, tongue BODY = must be 0):
+       0 deg   lip cam  0.0000   tongue body  0.0000
+      -2 deg   lip cam  0.4909   tongue body  0.9775
+      -4 deg   lip cam  0.6193   tongue body  2.1147
+      -8 deg   lip cam  0.0000   tongue body  4.7930
+     -13 deg   lip cam  0.1672   tongue body  6.6561
+WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.66 mm^3 at -13 deg, first contact at about -4 deg).  The shell stands 1.53 proud of the PCB's end edge and 4.2 tall, so once the USB end is lifted ~2 mm its rear corner is behind the PCB's back plane, at case Y 72.6..73.3 — past the tongue's back face (72.39).  Deflecting the tongue clear would need ~1.8 mm, three times its 0.6 design travel.  Any tongue inside the shell's X span (18.505..27.445) has this problem; the fix is to move retention to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and 13.575..17.955, both already proven clear of the whole swept board), which needs a contract decision.
 
 -- 6. named clearances (DESIGN_v2 §6.3)
   collar window -> head, per side                   0.300   (contract >= 0.15)
@@ -98,7 +105,7 @@ board positions checked: 12/12   (cells are board/header interference, expect 0)
   collar back face -> SD card top                   0.500   (contract >= 0.50)
   collar back face -> SD socket                     0.970   (contract >= 0.50)
   collar relief -> FPC roll                         0.750   (contract >= 0.50)
-  bridge face -> USB-C shell top                    0.100   (contract == 0.10)
+  collar step -> head top = USB-end forward stop    0.200   (contract == 0.20)
   hook underside -> PCB top                         0.150   (contract == 0.15)
   ledge face -> PCB back                            0.100   (contract == 0.10)
   tongue lip -> PCB back                            0.100   (contract == 0.10)
@@ -112,6 +119,9 @@ board positions checked: 12/12   (cells are board/header interference, expect 0)
   lens tip -> plate inner face (Z)                  1.000   (contract == 1.00)
   eave proud of the front plate face (Z)            8.000   (contract == 8.00)
 
+   forward travel of the board (head rigid on the PCB) before the ring catches it: 0.155 mm  (contract <= 0.35)
+      caught by the far-end hooks at 0.150, before the collar step at 0.200 — both stops, hooks first
+
    0.30-clearance proofs (mock inflated by 0.3, expect 0 interference)
      header body + pins       x all printed: 0.0000 mm^3
      U.FL plug (+1.3 z)       x all printed: 0.0000 mm^3
@@ -121,8 +131,8 @@ board positions checked: 12/12   (cells are board/header interference, expect 0)
 
 -- 7. snap tongue (DESIGN_v2 §6.5)
   lip reach over the PCB back edge                0.400   (contract == 0.40)
-  free gap beside the tongue, -X                  1.850   (contract >= 0.80)
-  free gap beside the tongue, +X                  2.100   (contract >= 0.80)
+  free gap beside the tongue, -X                  1.900   (contract >= 0.80)
+  free gap beside the tongue, +X                  3.800   (contract >= 0.80)
   tongue thickness                                0.900   (contract == 0.90)
   tongue free length                              8.700   (contract == 8.70)
   outer-fibre strain at 0.60 deflection (%)       1.070   (contract <= 1.50)
@@ -131,24 +141,29 @@ board positions checked: 12/12   (cells are board/header interference, expect 0)
   eave brow angle above the lens axis (deg)      43.025   (contract >= 40.00)
   card roof to the top wall inner face            4.000   (contract >= 3.50)
   boss bore diameter                              2.200   (contract == 2.20)
+  boss diameter                                   5.500   (contract == 5.50)
   pilot diameter                                  1.700   (contract == 1.70)
   pilot depth                                     3.400   (contract == 3.40)
-  boss length (screw head -> back plate)         10.500   (contract == 10.50)
-  M2 x 12 tip short of the pilot bottom           1.900   (contract >= 0.30)
-  M2 x 12 thread engagement in the back plate     1.500   (contract == 1.50)
-WARN M2 x 12 engages only 1.50 mm of the back plate (bosses are 10.5 long).  DESIGN_v2 §5's alternative — counterbore Ø4.4 x 4.5 in a Ø6.5 boss and keep M2 x 8 — or M2 x 14 would give 3.5 mm.
+  boss length (screw head -> back plate)          9.000   (contract == 9.00)
+  M2 x 12 thread engagement in the back plate     3.000   (contract >= 3.00)
+  M2 x 12 tip short of the pilot bottom           0.400   (contract >= 0.30)
+  screw head -> front lip nose (driver reach)     7.460   (contract >= 0.00)
+   driver access down each boss axis (Ø5.5 column, Z 2.40..17.36):
+     boss 1 at (6.50, 6.50): 0.0000 mm^3 (expect 0)
+     boss 2 at (40.71, 6.50): 0.0000 mm^3 (expect 0)
+     boss 3 at (6.50, 74.30): 0.0000 mm^3 (expect 0)
+     boss 4 at (40.71, 74.30): 0.0000 mm^3 (expect 0)
 
 -- 9. overhang audit: planar faces steeper than 45 deg from vertical, in each part's print orientation
   front_plate: 1 faces, 1.3 mm^2 (bed at Z 0.00, -Z is down; first-layer faces excluded)
          1.25 mm^2  n.down=1.00  X 20.61..26.61  Y 78.25..78.50  Z 2.40..2.40
-  ring: 15 faces, 251.4 mm^2 (bed at Z 26.36, +Z is down; first-layer faces excluded)
-       118.17 mm^2  n.down=1.00  X 12.57..33.36  Y 61.49..72.89  Z 8.36..8.36
+  ring: 14 faces, 244.9 mm^2 (bed at Z 26.36, +Z is down; first-layer faces excluded)
+       120.57 mm^2  n.down=1.00  X 12.57..33.36  Y 61.49..72.89  Z 8.36..8.36
         28.48 mm^2  n.down=1.00  X 1.80..45.41  Y 74.80..79.00  Z 2.40..2.40
         28.17 mm^2  n.down=1.00  X 6.00..41.21  Y 78.40..79.20  Z -6.50..-6.50
         20.50 mm^2  n.down=1.00  X 19.30..27.91  Y 63.46..72.06  Z 6.86..6.86
         16.08 mm^2  n.down=1.00  X 19.30..27.91  Y 61.49..63.36  Z 7.86..7.86
         14.55 mm^2  n.down=1.00  X 12.57..33.36  Y 72.89..73.59  Z 6.86..6.86
-         8.95 mm^2  n.down=1.00  X 18.01..27.96  Y 71.99..72.89  Z 12.80..12.80
          7.20 mm^2  n.down=1.00  X 33.36..34.95  Y 52.30..56.80  Z 21.86..21.86
          3.60 mm^2  n.down=1.00  X 12.25..13.75  Y 0.00..2.40  Z 22.86..22.86
          1.37 mm^2  n.down=1.00  X 30.25..32.36  Y 50.14..50.79  Z 15.96..15.96
@@ -164,18 +179,13 @@ WARN M2 x 12 engages only 1.50 mm of the back plate (bosses are 10.5 long).  DES
          2.27 mm^2  n.down=1.00  X 39.86..41.56  Y 73.45..75.15  Z 29.76..29.76
 
 -- 10. insertion feasibility
-  microSD card swept through the tilt range x ring: 8.01 mm^3 (the bridge band)
-  in-situ card insertion: needs 5.28 mm of straight travel, the roof gives 4.00 mm
-  head swung rigidly with the PCB at -4 deg x ring: 1.89 mm^3 (it is flex-mounted, so it is fed in separately)
-WARN DESIGN_v2 §2's order 'SD card in; tilt the board ~13 deg' is not buildable: the card sweeps 8.0 mm^3 through the bridge band at any tilt > ~1 deg, and it cannot be fitted after the board either (5.28 mm of travel needed, 4.00 available).  Needs a contract decision: drop the bridge (the collar step already stops the USB end), or drop the board another 1.5 for the roof.
-WARN the camera head cannot swing in with the PCB (1.9 mm^3 into the collar/bridge at -4 deg); it must be fed into the collar window by hand — consistent with DESIGN_v2 §1 'held only by its flex'.
+  microSD card fitted, swept through the tilt range x ring: 0.0000 mm^3  (v2.1: the bridge band is gone)
+  head swung rigidly with the PCB at -4 deg x ring: 1.89 mm^3 (it is flex-mounted, so it is fed into the collar separately — see group 5)
 
--- checks run: printable solids + bounds; crush references; static pair sweep; ring x back_plate; board/header/head/card vs printed, nominal + play extremes; tilt insertion -13/-8/-4 deg + groove + head entry; named clearances; 0.30 clearance proofs; snap tongue; brow / roof / screws; overhang audit; insertion feasibility
+-- checks run: printable solids + bounds; crush references; static pair sweep; ring x back_plate; pcb/header/head vs printed, nominal + play extremes; tilt insertion 0/-4/-8/-13 deg + groove + tongue swing + head entry; named clearances; 0.30 clearance proofs; snap tongue; brow / roof / screws; overhang audit; insertion feasibility
 
-3 WARNING(S) — contract-level, not geometry:
- * M2 x 12 engages only 1.50 mm of the back plate (bosses are 10.5 long).  DESIGN_v2 §5's alternative — counterbore Ø4.4 x 4.5 in a Ø6.5 boss and keep M2 x 8 — or M2 x 14 would give 3.5 mm.
- * DESIGN_v2 §2's order 'SD card in; tilt the board ~13 deg' is not buildable: the card sweeps 8.0 mm^3 through the bridge band at any tilt > ~1 deg, and it cannot be fitted after the board either (5.28 mm of travel needed, 4.00 available).  Needs a contract decision: drop the bridge (the collar step already stops the USB end), or drop the board another 1.5 for the roof.
- * the camera head cannot swing in with the PCB (1.9 mm^3 into the collar/bridge at -4 deg); it must be fed into the collar window by hand — consistent with DESIGN_v2 §1 'held only by its flex'.
+1 WARNING(S) — contract-level, not geometry:
+ * the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.66 mm^3 at -13 deg, first contact at about -4 deg).  The shell stands 1.53 proud of the PCB's end edge and 4.2 tall, so once the USB end is lifted ~2 mm its rear corner is behind the PCB's back plane, at case Y 72.6..73.3 — past the tongue's back face (72.39).  Deflecting the tongue clear would need ~1.8 mm, three times its 0.6 design travel.  Any tongue inside the shell's X span (18.505..27.445) has this problem; the fix is to move retention to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and 13.575..17.955, both already proven clear of the whole swept board), which needs a contract decision.
 
 CHECK PASSED
 exit 0

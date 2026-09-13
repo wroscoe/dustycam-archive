@@ -15,9 +15,10 @@ the vendor STEP is split into
   head   the flex-mounted OV3660 head + lens: located by the COLLAR, so it
          does not travel with the PCB and does not swing with it on insertion
   card   the inserted microSD card
-  board  everything else — the rigid PCB assembly that the bay must hold
-so play and tilt sweeps move `board`, and the head is checked where the collar
-holds it.  See INSERTION FEASIBILITY for what that costs.
+  pcb    everything except the head — the rigid assembly the bay must hold,
+         WITH the card fitted (v2.1: the card goes in before the board does)
+so play and tilt sweeps move `pcb`, and the head is checked where the collar
+holds it.  See INSERTION FEASIBILITY.
 
 Any exception, NaN, split printable solid, unexpected volume or unrun check
 fails the run with exit code 1.  An exception is never mapped to 0.
@@ -254,8 +255,8 @@ def main():
     # ------------------------------------------------------------------
     # 4. board vs the printed parts, nominal + play extremes
     # ------------------------------------------------------------------
-    print("\n-- 4. board (PCB assembly, head + card excluded) vs the printed "
-          "parts")
+    print("\n-- 4. board (PCB assembly + fitted microSD card, head excluded) "
+          "vs the printed parts")
     print("   rigid ring = ring without the rail crush ribs and without the "
           "snap tongue")
     rigid = L.ring(ribs=False, tongue=False)
@@ -275,7 +276,7 @@ def main():
     for ytag, dy in ALONG:
         for xtag, dx in ACROSS:
             post = None if (dx == 0.0 and dy == 0.0) else Pos(dx, dy, 0)
-            b = L.xiao_vendor(post=post, parts="board", label="board")
+            b = L.xiao_vendor(post=post, parts="pcb", label="pcb")
             h = L.header_mock()
             if post is not None:
                 h = L.header_mock()
@@ -288,7 +289,7 @@ def main():
                 ih = intersect_vol(p, h)
                 cells.append(f"{p.label} {iv:.4f}/{ih:.4f}")
                 if iv > limit:
-                    fail(f"board (Y {dy:+.2f} X {dx:+.2f}) x {p.label} = "
+                    fail(f"pcb (Y {dy:+.2f} X {dx:+.2f}) x {p.label} = "
                          f"{iv:.4f} mm^3 (limit {limit})")
                 if ih > limit:
                     fail(f"header (Y {dy:+.2f} X {dx:+.2f}) x {p.label} = "
@@ -296,9 +297,9 @@ def main():
             tv = intersect_vol(tongue, b)
             rv = intersect_vol(ribs, b)
             if tv > CONTACT_TOL:
-                fail(f"tongue x board (Y {dy:+.2f} X {dx:+.2f}) = {tv:.4f}")
+                fail(f"tongue x pcb (Y {dy:+.2f} X {dx:+.2f}) = {tv:.4f}")
             if rv > 3.0:
-                fail(f"rail ribs x board (Y {dy:+.2f} X {dx:+.2f}) = {rv:.4f}")
+                fail(f"rail ribs x pcb (Y {dy:+.2f} X {dx:+.2f}) = {rv:.4f}")
             runs += 1
             print(f"  Y {ytag:18s} X {xtag:14s} " + "  ".join(cells)
                   + f"  tongue {tv:.4f}  ribs {rv:.4f}")
@@ -314,37 +315,36 @@ def main():
               f"{iv:.4f} mm^3")
         if iv > TOL:
             fail(f"camera head x {p.label} = {iv:.4f} mm^3")
-    card = L.xiao_vendor(parts="card", label="microsd_card")
-    for p in (rigid, front, back):
-        iv = intersect_vol(p, card)
-        print(f"  microSD card (fitted, nominal) x {p.label:12s} "
-              f"{iv:.4f} mm^3")
-        if iv > TOL:
-            fail(f"microSD card x {p.label} = {iv:.4f} mm^3")
-    note("board/header/head/card vs printed, nominal + play extremes")
+    note("pcb/header/head vs printed, nominal + play extremes")
 
     # ------------------------------------------------------------------
     # 5. tilt insertion
     # ------------------------------------------------------------------
     print("\n-- 5. tilt insertion (board rotated about its far-edge PCB-back "
           "corner line)")
+    print("   v2.1: the microSD card is FITTED and rides with the PCB")
     tilt_runs = 0
-    for ang in (-13, -8, -4):
-        b = L.xiao_vendor(pre=L.tilt_loc(ang), parts="board",
-                          label=f"board_tilt_{ang}")
+    for ang in (0, -4, -8, -13):
+        pre = None if ang == 0 else L.tilt_loc(ang)
+        b = L.xiao_vendor(pre=pre, parts="pcb", label=f"pcb_tilt_{ang}")
+        c = L.xiao_vendor(pre=pre, parts="card", label=f"card_tilt_{ang}")
         row = []
         for p in (rigid, back):
             iv = intersect_vol(p, b)
             row.append(f"{p.label} {iv:.4f}")
             if iv > TOL:
-                fail(f"tilt {ang} deg x {p.label} = {iv:.4f} mm^3")
+                fail(f"tilt {ang} deg pcb+card x {p.label} = {iv:.4f} mm^3")
+        cv = intersect_vol(rigid, c)
+        row.append(f"card alone {cv:.4f}")
+        if cv > TOL:
+            fail(f"tilt {ang} deg card x ring = {cv:.4f} mm^3")
         crush = intersect_vol(ribs, b)
         row.append(f"rail ribs {crush:.4f} (deliberate crush)")
         if crush > 3.0:
             fail(f"tilt {ang} deg rail crush = {crush:.4f} mm^3")
         tilt_runs += 1
-        print(f"  {ang:3d} deg   " + "   ".join(row) + "   (expect 0)")
-    if tilt_runs != 3:
+        print(f"  {ang:3d} deg   " + "   ".join(row))
+    if tilt_runs != 4:
         fail("not every tilt angle was checked")
 
     # the far edge in the groove at 13 deg: hook underside -> ledge face
@@ -355,29 +355,39 @@ def main():
     if slot < need:
         fail(f"groove {slot:.3f} < required {need:.3f}")
 
-    # the flex-mounted head fed straight back into the collar window
-    SHORT = 1.30
-    win_z = L.bZ(L.COLLAR_BZ[0])             # window entry plane, Z 8.36
-    z_nom = _bb(L.xiao_vendor(parts="head"))[2]
-    dz_short = (win_z + SHORT) - z_nom
-    hs = L.xiao_vendor(parts="head", post=Pos(0, 0, dz_short),
-                       label="head_short")
-    iv = intersect_vol(rigid, hs)
-    print(f"  head {SHORT:.2f} short of the window (front face Z "
-          f"{win_z + SHORT:.2f}, +{dz_short:.2f} back) x ring: {iv:.4f} mm^3")
-    if iv > TOL:
-        fail(f"head {SHORT} short of the window x ring = {iv:.4f}")
-    steps = [i * 0.25 for i in range(0, 33)]
-    worst = 0.0
-    for dz in steps:
-        worst = max(worst, intersect_vol(
-            rigid, L.xiao_vendor(parts="head", post=Pos(0, 0, dz),
-                                 label=f"head_{dz}")))
-    print(f"  head fed straight back 0..{steps[-1]:.1f} in "
-          f"{len(steps)} steps x ring: worst {worst:.4f} mm^3  (expect 0)")
-    if worst > TOL:
-        fail(f"head straight-in sweep hits the ring: {worst:.4f} mm^3")
-    note("tilt insertion -13/-8/-4 deg + groove + head entry")
+    # the snap tongue during the swing: the lip cam is designed, the BODY is not
+    print("\n   snap tongue during the swing (lip cam = designed, "
+          "tongue BODY = must be 0):")
+    lip_zone = L.box_at(L.bX(L.TONGUE_BY[1]), L.bY(L.LIP_BX[1]) - 0.10,
+                        L.bZ(L.LIP_BZ[0]) - 0.10,
+                        L.TONGUE_BY[1] - L.TONGUE_BY[0],
+                        (L.bY(L.TONGUE_BX[1]) - L.bY(L.LIP_BX[1])) + 0.10,
+                        (L.bZ(L.LIP_BZ[1]) + L.LIP_RAMP + 0.10)
+                        - (L.bZ(L.LIP_BZ[0]) - 0.10))
+    body = tongue - lip_zone
+    worst_body = 0.0
+    for ang in (0, -2, -4, -8, -13):
+        pre = None if ang == 0 else L.tilt_loc(ang)
+        b = L.xiao_vendor(pre=pre, parts="pcb", label=f"pcb_{ang}")
+        bv = intersect_vol(body, b)
+        lv = intersect_vol(tongue, b) - bv
+        worst_body = max(worst_body, bv)
+        print(f"     {ang:3d} deg   lip cam {lv:7.4f}   tongue body {bv:7.4f}")
+    if worst_body > CONTACT_TOL:
+        warn("the USB-C shell sweeps THROUGH the snap tongue's body during the "
+             f"swing ({worst_body:.2f} mm^3 at -13 deg, first contact at about "
+             "-4 deg).  The shell stands 1.53 proud of the PCB's end edge and "
+             "4.2 tall, so once the USB end is lifted ~2 mm its rear corner is "
+             "behind the PCB's back plane, at case Y 72.6..73.3 — past the "
+             "tongue's back face (72.39).  Deflecting the tongue clear would "
+             "need ~1.8 mm, three times its 0.6 design travel.  Any tongue "
+             "inside the shell's X span (18.505..27.445) has this problem; the "
+             "fix is to move retention to a pair of tongues cut from the "
+             "USB-end pillars (X 29.655..32.355 and 13.575..17.955, both "
+             "already proven clear of the whole swept board), which needs a "
+             "contract decision.")
+
+    note("tilt insertion 0/-4/-8/-13 deg + groove + tongue swing + head entry")
 
     # ------------------------------------------------------------------
     # 6. named clearances
@@ -397,7 +407,10 @@ def main():
         ("collar back face -> SD socket", L.COLLAR_BZ[0] - B.SD_SOCKET[5],
          0.50, ">="),
         ("collar relief -> FPC roll", L.FPC_RELIEF_BZ - B.FPC_ROLL[5], 0.50, ">="),
-        ("bridge face -> USB-C shell top", L.BRIDGE_BZ[0] - B.USB[5], 0.10, "=="),
+        # v2.1: the bridge is gone; the USB end's forward stop is the collar
+        # step, acting through head -> SD socket -> expansion PCB -> B2B -> PCB
+        ("collar step -> head top = USB-end forward stop",
+         L.COLLAR_STEP_BZ - B.HEAD_TOP, 0.20, "=="),
         ("hook underside -> PCB top", L.PCB_Z_TOP - L.bZ(L.HOOK_BZ[0]), 0.15, "=="),
         ("ledge face -> PCB back", L.bZ(L.LEDGE_BZ[1]) - L.Z_B0, 0.10, "=="),
         ("tongue lip -> PCB back", L.bZ(L.LIP_BZ[1]) - L.Z_B0, 0.10, "=="),
@@ -423,6 +436,28 @@ def main():
     note("named clearances")
 
     # inflated-mock proofs: every listed part 0.30 clear of every printed part
+    # v2.1 check (b): forward travel of the whole board (head rigid) before
+    # the collar step catches it
+    step = 0.005
+    travel = None
+    allb = None
+    for i in range(1, 201):
+        dz = i * step
+        allb = L.xiao_vendor(post=Pos(0, 0, -dz), parts="all",
+                             label=f"all_fwd_{dz}")
+        if intersect_vol(rigid, allb) > TOL:
+            travel = dz
+            break
+    print(f"\n   forward travel of the board (head rigid on the PCB) before "
+          f"the ring catches it: {travel:.3f} mm  (contract <= 0.35)")
+    print(f"      caught by the far-end hooks at "
+          f"{L.PCB_Z_TOP - L.bZ(L.HOOK_BZ[0]):.3f}, before the collar step at "
+          f"{L.COLLAR_STEP_BZ - B.HEAD_TOP:.3f} — both stops, hooks first")
+    if travel is None:
+        fail("forward travel sweep never contacted the ring")
+    elif travel > 0.35 + 1e-9:
+        fail(f"forward travel {travel:.3f} > 0.35")
+
     print(f"\n   0.30-clearance proofs (mock inflated by {CLEAR}, expect 0 "
           f"interference)")
     inflated = [("header body + pins", L.header_mock(inflate=CLEAR)),
@@ -446,8 +481,8 @@ def main():
     # ------------------------------------------------------------------
     print("\n-- 7. snap tongue (DESIGN_v2 §6.5)")
     reach = L.LIP_BX[1]
-    slit_lo = L.bX(L.TONGUE_BY[1]) - L.bX(L.WIN_BY[1])
-    slit_hi = L.bX(L.WIN_BY[0]) - L.bX(L.TONGUE_BY[0])
+    slit_lo = L.bX(L.TONGUE_BY[1]) - L.bX(L.OPEN_BY[1])
+    slit_hi = L.bX(L.OPEN_BY[0]) - L.bX(L.TONGUE_BY[0])
     strain = 3.0 * L.TONGUE_T * L.TONGUE_DEFL / (2.0 * L.TONGUE_L ** 2) * 100.0
     t_rows = [("lip reach over the PCB back edge", reach, 0.40, "=="),
               ("free gap beside the tongue, -X", slit_lo, 0.80, ">="),
@@ -477,23 +512,37 @@ def main():
     rows = [("eave brow angle above the lens axis (deg)", brow, 40.0, ">="),
             ("card roof to the top wall inner face", L.CARD_ROOF, 3.50, ">="),
             ("boss bore diameter", L.BOSS_BORE, 2.20, "=="),
+            ("boss diameter", L.BOSS_D, 5.50, "=="),
             ("pilot diameter", L.PILOT_D, 1.70, "=="),
             ("pilot depth", L.PILOT_DEPTH, 3.40, "=="),
-            ("boss length (screw head -> back plate)", boss_len, 10.50, "=="),
+            ("boss length (screw head -> back plate)", boss_len, 9.00, "=="),
+            ("M2 x 12 thread engagement in the back plate", engage, 3.00, ">="),
             ("M2 x 12 tip short of the pilot bottom", pilot_bottom - tip_z,
              0.30, ">="),
-            ("M2 x 12 thread engagement in the back plate", engage, 1.50, "==")]
+            ("screw head -> front lip nose (driver reach)",
+             (L.BOSS_Z0 - L.SCREW_HEAD_T) - L.FRONT_LIP_Z1, 0.0, ">=")]
     for name, got, want, op in rows:
         print(f"  {name:44s} {got:8.3f}   (contract {op} {want:.2f})")
         if op == "==" and abs(got - want) > 0.021:
             fail(f"{name}: {got:.3f} != {want:.2f}")
         if op == ">=" and got < want - 1e-9:
             fail(f"{name}: {got:.3f} < {want:.2f}")
-    if engage < 2.0:
-        warn(f"M2 x 12 engages only {engage:.2f} mm of the back plate "
-             f"(bosses are {boss_len:.1f} long).  DESIGN_v2 §5's alternative — "
-             f"counterbore Ø4.4 x 4.5 in a Ø6.5 boss and keep M2 x 8 — or "
-             f"M2 x 14 would give 3.5 mm.")
+
+    # driver access: nothing crosses a boss axis between the front mouth and
+    # the boss top
+    print("   driver access down each boss axis (Ø5.5 column, "
+          f"Z {L.PLATE_T:.2f}..{L.BOSS_Z0:.2f}):")
+    access = 0
+    for i, (bx, by) in enumerate(L.BOSS_XY):
+        col = L.cyl_at(bx, by, L.PLATE_T, L.BOSS_D, L.BOSS_Z0 - L.PLATE_T)
+        v = intersect_vol(ring, col)
+        access += 1
+        print(f"     boss {i + 1} at ({bx:.2f}, {by:.2f}): {v:.4f} mm^3 "
+              f"(expect 0)")
+        if v > TOL:
+            fail(f"boss {i + 1} driver access blocked by {v:.4f} mm^3")
+    if access != 4:
+        fail("driver access not checked on all 4 bosses")
     note("brow / roof / screws")
 
     # ------------------------------------------------------------------
@@ -523,33 +572,19 @@ def main():
     # ------------------------------------------------------------------
     print("\n-- 10. insertion feasibility")
     card_sweep = max(
-        intersect_vol(ring, L.xiao_vendor(pre=L.tilt_loc(a), parts="card",
-                                          label=f"card_{a}"))
+        intersect_vol(rigid, L.xiao_vendor(pre=L.tilt_loc(a), parts="card",
+                                           label=f"card_{a}"))
         for a in (-13, -8, -4, -1))
-    print(f"  microSD card swept through the tilt range x ring: "
-          f"{card_sweep:.2f} mm^3 (the bridge band)")
-    travel_needed = B.SD_CARD[2] - B.SD_SOCKET[0]
-    travel_have = L.CARD_ROOF
-    print(f"  in-situ card insertion: needs {travel_needed:.2f} mm of straight "
-          f"travel, the roof gives {travel_have:.2f} mm")
-    head_sweep = intersect_vol(
-        ring, L.xiao_vendor(pre=L.tilt_loc(-4), parts="head", label="head_rigid"))
-    print(f"  head swung rigidly with the PCB at -4 deg x ring: "
-          f"{head_sweep:.2f} mm^3 (it is flex-mounted, so it is fed in "
-          f"separately)")
+    print(f"  microSD card fitted, swept through the tilt range x ring: "
+          f"{card_sweep:.4f} mm^3  (v2.1: the bridge band is gone)")
     if card_sweep > TOL:
-        warn("DESIGN_v2 §2's order 'SD card in; tilt the board ~13 deg' is not "
-             f"buildable: the card sweeps {card_sweep:.1f} mm^3 through the "
-             "bridge band at any tilt > ~1 deg, and it cannot be fitted after "
-             f"the board either ({travel_needed:.2f} mm of travel needed, "
-             f"{travel_have:.2f} available).  Needs a contract decision: drop "
-             "the bridge (the collar step already stops the USB end), or drop "
-             "the board another 1.5 for the roof.")
-    if head_sweep > TOL:
-        warn(f"the camera head cannot swing in with the PCB ({head_sweep:.1f} "
-             "mm^3 into the collar/bridge at -4 deg); it must be fed into the "
-             "collar window by hand — consistent with DESIGN_v2 §1 'held only "
-             "by its flex'.")
+        fail(f"the fitted card still fouls the ring: {card_sweep:.4f} mm^3")
+    head_sweep = intersect_vol(
+        rigid, L.xiao_vendor(pre=L.tilt_loc(-4), parts="head",
+                             label="head_rigid"))
+    print(f"  head swung rigidly with the PCB at -4 deg x ring: "
+          f"{head_sweep:.2f} mm^3 (it is flex-mounted, so it is fed into the "
+          f"collar separately — see group 5)")
     note("insertion feasibility")
 
     # ------------------------------------------------------------------

@@ -236,25 +236,21 @@ LEDGE_RAMP_DEG = 45.0
 USB_BX = (-1.60, -0.40)                 # USB-end wall
 USB_BZ = (-9.00, 9.00)
 
-WIN_BY = (3.90, 13.85)                  # USB-C shell window
-WIN_BZ = (-0.10, 4.56)
-BRIDGE_BZ = (4.56, 6.50)                # the wall band over the window
-# DEVIATION (v2): the camera head (8.0 square in the vendor STEP, board
-# x -0.47..7.53) reaches 0.07 past the USB-end wall's inner face, so feeding
-# it straight back into the collar window clips the bridge band by 0.07
-# (0.18 mm^3).  The bridge's inner face is recessed 0.30 over the shell
-# window's width; it bears on the shell's TOP face, so 0.90 of depth there is
-# still 8 mm^2 of bearing.
-BRIDGE_RELIEF = 0.30
-NOTCH_BY = (2.20, 13.90)                # SD card notch
-NOTCH_BZ = (6.50, 9.00)
+# v2.1 amendment 1: the bridge band is deleted.  The USB-end wall is now two
+# side pillars plus the strip that roots the snap tongue; the shell window and
+# the card notch merge into ONE opening from the tongue root up to the collar's
+# back face, so the microSD card can be fitted to the board BEFORE the board is
+# tilted in (with the bridge in place it swept 8 mm^3 through that band at any
+# tilt beyond ~1 deg, and it could not be fitted afterwards either).
+# The USB end's forward stop becomes the collar step, acting through the stack
+# camera head -> microSD socket -> expansion PCB -> B2B connector -> base PCB.
+USB_PILLAR_BY = ((-0.50, 2.20), (13.90, 18.28))
+OPEN_BY = (2.20, 13.90)                 # merged shell window + card notch
+OPEN_BZ = (-8.80, 9.00)                 # tongue root .. collar back face
 
 TONGUE_BY = (6.00, 12.00)               # snap tongue
 TONGUE_BX = (-1.10, -0.20)              # 0.9 thick
 TONGUE_BZ = (-8.80, -0.10)              # root at the bed, free end at the PCB
-SLIT_W = 0.80
-SLIT_BY = (TONGUE_BY[0] - SLIT_W, TONGUE_BY[0])        # 5.20 .. 6.00
-SLIT_BY2 = (TONGUE_BY[1], TONGUE_BY[1] + SLIT_W)       # 12.00 .. 12.80
 LIP_BX = (-0.20, 0.40)                  # lip: 0.40 over the PCB back edge
 LIP_BZ = (-0.60, -0.10)
 LIP_RAMP = 0.60                         # 45 deg ramp on the lip's back side
@@ -283,7 +279,14 @@ FPC_RELIEF_BZ = 9.50
 LENS_HOLE_D = 7.50
 LENS_CHAMFER = 0.60
 
-BOSS_D, BOSS_Z0, BOSS_BORE = 5.50, 15.86, 2.20
+# v2.1 amendment 2: the bosses shorten so an M2 x 12 actually holds.  With a
+# 10.5 boss it engaged the back plate by only 1.5.  DEVIATION: the amendment
+# asks for 8.3 (engagement 3.7), but the pilot is 3.4 deep, so a 3.7 engagement
+# bottoms the screw out 0.30 PAST the pilot.  Boss length must satisfy both
+# "engagement >= 3.0" (L <= 9.0) and "tip >= 0.3 short of the 3.4 pilot"
+# (L >= 8.9); 9.0 is the value that meets both with the most engagement.
+BOSS_LEN = 9.00
+BOSS_D, BOSS_Z0, BOSS_BORE = 5.50, Z_PLATE - BOSS_LEN, 2.20    # 17.36
 BOSS_INSET = 6.50
 BOSS_XY = [(BOSS_INSET, BOSS_INSET), (OUT_W - BOSS_INSET, BOSS_INSET),
            (BOSS_INSET, OUT_H - BOSS_INSET), (OUT_W - BOSS_INSET, OUT_H - BOSS_INSET)]
@@ -500,32 +503,24 @@ def _collar():
 
 
 def _usb_end_wall():
-    """The USB-end wall (shell window, bridge band, card notch) and the snap
-    tongue cut out of it.  Returns (solid, cuts, tongue)."""
-    x0, x1 = BAY_IN_X
+    """The USB-end wall — v2.1: two side pillars hanging from the collar, the
+    strip that roots the snap tongue, and the tongue itself.  Everything
+    between the pillars is open from the tongue root to the collar, so the
+    board can be tilted in with the microSD card already fitted.
+
+    Returns (wall, tongue)."""
     wy0, wy1 = bY(USB_BX[1]), bY(USB_BX[0])                 # 71.69 .. 72.89
-    wall = box_at(x0, wy0, bZ(USB_BZ[1]), x1 - x0, wy1 - wy0,
-                  bZ(USB_BZ[0]) - bZ(USB_BZ[1]))
+    z0, z1 = bZ(USB_BZ[1]), bZ(USB_BZ[0])                   # 8.36 .. 26.36
+    wall = None
+    for by0, by1 in USB_PILLAR_BY:
+        s = box_at(bX(by1), wy0, z0, by1 - by0, wy1 - wy0, z1 - z0)
+        wall = s if wall is None else wall + s
+    # the ligament the tongue is rooted in (board z -9.0 .. -8.8)
+    wall += box_at(bX(OPEN_BY[1]), wy0, bZ(OPEN_BZ[0]),
+                   OPEN_BY[1] - OPEN_BY[0], wy1 - wy0,
+                   z1 - bZ(OPEN_BZ[0]))
 
-    cy0, cy1 = wy0 - 0.50, wy1 + 0.50                       # through the wall
-    # DEVIATION (v2): the shell window runs from board z 4.56 all the way to
-    # the tongue root (z -8.8) instead of stopping at the PCB plane (z -0.1).
-    # At the 13 deg insertion tilt the USB-C shell sweeps ~3.6 behind the PCB
-    # plane and cut 1.55 mm^3 into the wall on either side of the slits; the
-    # wall behind the PCB does nothing there (the PCB's +Y stop is the wall
-    # OUTSIDE the window's X range) so it is simply opened.
-    cuts = bay_box(USB_BX[0] - 1.0, USB_BX[1] + 1.0, WIN_BY[0], WIN_BY[1],
-                   bZ(WIN_BZ[1]), bZ(TONGUE_BZ[0]))
-    cuts += bay_box(USB_BX[0] - 1.0, USB_BX[1] + 1.0, NOTCH_BY[0], NOTCH_BY[1],
-                    bZ(NOTCH_BZ[1]), bZ(NOTCH_BZ[0]))
-    cuts += bay_box(USB_BX[1], USB_BX[1] - BRIDGE_RELIEF, WIN_BY[0], WIN_BY[1],
-                    bZ(BRIDGE_BZ[1]), bZ(BRIDGE_BZ[0]))
-    # tongue pocket + the two slits
-    for by0, by1 in (TONGUE_BY, SLIT_BY, SLIT_BY2):
-        cuts += box_at(bX(by1), cy0, bZ(TONGUE_BZ[1]), by1 - by0, cy1 - cy0,
-                       bZ(TONGUE_BZ[0]) - bZ(TONGUE_BZ[1]))
-
-    # the tongue itself: 0.9 thick, rooted in the wall at the bed end
+    # the tongue: 0.9 thick, rooted in that ligament at the bed end
     tx0, tdx = bX(TONGUE_BY[1]), TONGUE_BY[1] - TONGUE_BY[0]
     ty0, ty1 = bY(TONGUE_BX[1]), bY(TONGUE_BX[0])           # 71.49 .. 72.39
     tongue = box_at(tx0, ty0, bZ(TONGUE_BZ[1]), tdx, ty1 - ty0,
@@ -535,7 +530,7 @@ def _usb_end_wall():
     lz0, lz1 = bZ(LIP_BZ[1]), bZ(LIP_BZ[0])                 # 17.46 .. 17.96
     tongue += prism_x([(ly1, lz0), (ly0, lz0), (ly0, lz1),
                        (ly1, lz1 + LIP_RAMP)], tx0, tx0 + tdx)
-    return wall, cuts, tongue
+    return wall, tongue
 
 
 def ring(ribs=True, tongue=True):
@@ -564,7 +559,7 @@ def ring(ribs=True, tongue=True):
     # --- board bay
     part += _side_walls()
     part += _far_end()
-    wall, wall_cuts, tongue_solid = _usb_end_wall()
+    wall, tongue_solid = _usb_end_wall()
     part += wall
     part += _collar()
     part += _rails(ribs=ribs)
@@ -583,7 +578,6 @@ def ring(ribs=True, tongue=True):
                    TIE_WEB_W, TIE_POST_YC - IN_Y0, Z_PLATE - TIE_POST_Z0)
 
     # --- cuts
-    part -= wall_cuts
     part -= box_at(BAY_IN_X[1] - 0.5, WIRE_NOTCH_Y[0], WIRE_NOTCH_Z0,
                    (BAY_IN_X[1] + BAY_T + 0.5) - (BAY_IN_X[1] - 0.5),
                    WIRE_NOTCH_Y[1] - WIRE_NOTCH_Y[0],
@@ -609,7 +603,7 @@ def rail_ribs():
 
 def tongue_only():
     """The snap tongue alone (the one compliant retention feature)."""
-    _, _, tongue = _usb_end_wall()
+    _, tongue = _usb_end_wall()
     tongue.label = "snap_tongue"
     return tongue
 
