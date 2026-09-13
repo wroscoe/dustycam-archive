@@ -1,12 +1,14 @@
-  microsd_socket_bottom x microsd_card_mock: 125.400 mm^3  (mated, reference-internal)
-  charger_jst_plug_1_mock x load_cable_mock: 6.270 mm^3  (mated, reference-internal)
-  charger_jst_plug_2_mock x batt_cable_mock: 4.400 mm^3  (mated, reference-internal)
+front_cup    solids=1 valid=True volume=35663.71 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -11.6000001 <= y <= 49.28000010000001, -27.370000100000006 <= z <= 25.9000001
+cam_plate    solids=1 valid=True volume=10761.93 mm^3 bbox=bbox: -1.7020001000001652 <= x <= 40.31200010000017, -9.0000001 <= y <= 46.6800001, -8.5000001 <= z <= 0.0
+back_cup     solids=1 valid=True volume=12020.50 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -11.6000001 <= y <= 49.28000010000001, -29.7700001 <= z <= -8.499999899999999
+29 occurrences, 74 bound-overlapping pairs
+  front_cup x back_cup: 18.013 mm^3  (designed crush)
 static pairs checked: 74/74
 jack end -> charger edge (Y): 8.00
 jack end -> battery (Y):      3.23
-jack nut top -> plate back (Z): 1.00
-jack nut bottom -> bay floor (Z): 0.87
-charger comps -> battery (Z): -1.50 (negative = clear)
+jack nut top -> plate back (Z): 3.43
+jack nut bottom -> bay floor (Z): 3.43
+charger comps -> battery (Z): -6.50 (negative = clear)
 slide-in sweep: 24 moving occurrences, 31 steps of 1.0 mm, vs front_cup + jack
 sweep steps completed: 31/31, worst intersection 0.00000 mm^3
 CHECK PASSED

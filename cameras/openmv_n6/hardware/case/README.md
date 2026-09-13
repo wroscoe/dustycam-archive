@@ -1,6 +1,6 @@
 # OpenMV Cam N6 + bq25185 solar charger + 1S LiPo — 3-part printed case
 
-Overall **47.21 × 60.88 × 50.67 mm** (rev E; rev D was 42.30 deep), lens
+Overall **47.21 × 60.88 × 55.67 mm** (rev E2; rev D was 42.30 deep), lens
 barrel stands **5.35 mm proud** of the front face. All mm. Frame is the N6
 board frame from `ref/DIMENSIONS.md` (origin = PCB bottom-left corner on the
 PCB bottom face, +Y toward the lens, +Z along the optical axis). The bottom
@@ -11,15 +11,15 @@ it.
 
 | Part | File | Print orientation | Volume |
 |---|---|---|---|
-| Front cup | `front-cup.step` / `.stl` | **Face down** (lens face on the bed) | 33.3 cm³ |
+| Front cup | `front-cup.step` / `.stl` | **Face down** (lens face on the bed) | 35.7 cm³ |
 | Cam plate | `cam-plate.step` / `.stl` | **Flat, bosses up** (back face on the bed) | 10.8 cm³ |
-| Back cup | `back-cup.step` / `.stl` | **Back face down** | 10.6 cm³ |
+| Back cup | `back-cup.step` / `.stl` | **Back face down** | 12.0 cm³ |
 
 `n6-case.step` is the assembled view. `fitcheck.step` is a review-only
 cutaway with the real N6 model, the vendor bq25185 model, the jack envelope,
 the battery, the plugs and the cable mocks inside it.
 
-No supports on any part. The deep socket in the front cup and the 13.9 mm
+No supports on any part. The deep socket in the front cup and the 18.9 mm
 lip on the back cup are plain vertical walls; the Ø7.52 jack hole is a
 horizontal hole in a vertical wall (expect the usual slight sag at its
 crown — the panel nut clamps through it regardless).
@@ -40,10 +40,10 @@ crown — the panel nut clamps through it regardless).
 
 ```
 front cup  ── straight bore over the board, 1.20 internal shoulder at z = -3.50,
-              deep socket below it; DC jack through its -Y wall at z = -15.5
+              deep socket below it; DC jack through its -Y wall at z = -17.9
 cam plate  ── 5.00 thick, seats on that shoulder; N6 bolts to its front with
               2 × M2.5 × 6, bq25185 bolts to its back with 4 × M2.5 × 5
-back cup   ── 13.9 lip presses into the socket and pushes the plate up
+back cup   ── 18.9 lip presses into the socket and pushes the plate up
               against the shoulder; encloses charger + battery
 ```
 
@@ -64,12 +64,20 @@ back cup   ── 13.9 lip presses into the socket and pushes the plate up
 5. Slide board + plate + charger into the front cup. The 13 × 11.9 notch in
    the plate's −Y edge passes the installed jack; validated over the full
    insertion travel.
-6. Seat the pouch on the back cup floor at the +Y end (y ≥ 4.6 keeps it clear
-   of the jack) and press the back cup on. The gap in its −Y lip wall passes
+6. Lay the pouch on the back cup floor at the +Y end (y ≥ 4.6 keeps it clear
+   of the jack; nothing locates it, tape it down) and press the back cup on. The gap in its −Y lip wall passes
    the jack nut. Friction fit on crush ribs — firm thumb pressure, no tools.
 
 Disassembly: pull the back cup, lift the pouch, then board + plate + charger
 come straight out past the jack. The jack never has to come out.
+
+## Rev E2 (2026-09-13) — 5 mm deeper for the jack
+
+`BAY_DEPTH` is now a direct parameter (12.50, was 7.50 derived from the
+pouch + swell). The jack sits at the centre of the 18.87 window between the
+plate back and the bay floor, so a Ø12 nut has 3.43 clear each way and a
+larger nut can be accommodated by `NOTCH_W` alone. The pouch is no longer a
+design constraint: it lies on the floor with 6.5 mm of air above it.
 
 ## Rev E (2026-09-12) — solar charger + DC jack
 
@@ -87,17 +95,16 @@ keep the battery in the back part, make the case deeper to suit.
   ~8 mm in front of the edge, which sets `CHG_Y0 = 9.40` (jack end + 8).
   The USB-C is enclosed against the +Y end of the bay. The DC/solar input on
   this board is a pair of solder pads, not a connector.
-- **Jack** at (x = 19.31, z = −15.50) through the 2.40 socket-zone wall,
-  Ø7.52, reaching y = 1.40. Its centre is the middle of the window between
-  the plate back (nut 1.00 clear) and the bay floor (0.87 clear).
+- **Jack** at x = 19.31 through the 2.40 socket-zone wall, Ø7.52, reaching
+  y = 1.40, centred in the window between the plate back and the bay floor.
 - **Notches** 13.0 wide (nut Ø12 + 0.5/side) in the plate's −Y edge (to
   y = 2.90) and through the full height of the back cup's −Y lip wall. The
   −Y crush rib became a pair at x = CX ± 12; 7 ribs total.
 - **Wire slot** moved to x 3–11 so the LOAD lead passes clear of the nut.
 - **Battery** on the bay floor at the +Y end, behind the charger's component
   plane with the same 1.50 swell room as before; 3.2 mm from the jack end.
-- Z stack: plate back −8.50 → charger PCB −10.07 → components −14.87 →
-  bay floor / seam −22.37 → back face −24.77.
+- Z stack (E2): plate back −8.50 → charger PCB −10.07 → components −14.87 →
+  bay floor / seam −27.37 → back face −29.77.
 
 ## Rev D (2026-09-02)
 
@@ -136,13 +143,13 @@ actual vs the Ø14.0 barrel in OpenMV's GLB. Fit constants and
 |---|---|
 | Back cup lip → front cup socket | 0.15/side clearance |
 | Crush ribs on the lip | 7 × 6.4 tall × 6.0 long at the seam, 0.25 proud → 0.10/side net crush (18.01 mm³ total) |
-| Lip engagement | 13.87 (ribs engage over the last 6.4) |
+| Lip engagement | 18.87 (ribs engage over the last 6.4) |
 | Cam plate → socket | 0.20/side |
 | Plate bearing on the shoulder | 1.00/side |
 | Board → front cup bore | 0.60/side (0.70 at the PCB corners) |
 | Lens barrel Ø14.00 → aperture Ø16.00 | 1.00/side (0.25/side on the ~Ø15.5 focus knurl) |
 | Jack bushing → Ø7.52 hole | user's number; nut and flange clamp the 2.40 wall |
-| Jack nut → plate / lip / plate notch | 1.00 above, 0.5/side in both notches |
+| Jack nut → plate back / bay floor / notches | 3.43 above, 3.43 below, 0.5/side in both notches |
 | Lead-in chamfers | 0.60 × 45° on the socket mouth and the lip nose |
 | Elephant-foot chamfer | 0.40 × 45° on every bed-contact perimeter |
 
@@ -150,18 +157,16 @@ Walls 2.40 (6 perimeters); lip wall 1.60 (4 perimeters); plate 5.00.
 
 ## Battery bay
 
-**38.91 × 52.58** in plan, **7.50** deep behind the charger's component plane
-(6.00 pouch + 1.50 swell/wire room). The pouch sits on the back cup floor at
-the +Y end. Nothing rigid bears on it at nominal thickness; if it swells past
-1.5 mm it meets the flat tops of the charger's JST housings, not an edge.
-Change `BAT_T` in `caselib.py` if the real pack is thicker — the case depth
-follows it 1:1.
+**38.91 × 52.58** in plan, **12.50** deep behind the charger's component
+plane (`BAY_DEPTH`, set for jack room, not by the pouch). The 6 mm pouch
+lies on the back cup floor at the +Y end with 6.5 mm of air above it and
+nothing locating it.
 
 ## Vents and openings
 
 Two 2.40 × 12.00 stadium slots through the bottom (−Y) wall of the front cup
 at z = 8.00, the 15.0 × 9.5 USB-C port, and the Ø7.52 jack hole at
-z = −15.5. The microSD, the charger's USB-C, the USER/PWR buttons and JTAG
+z = −17.9. The microSD, the charger's USB-C, the USER/PWR buttons and JTAG
 are enclosed. Focus can be adjusted with the case shut (barrel proud, lock
 ring captive behind the Ø16.00 aperture).
 
@@ -177,6 +182,7 @@ Run with the cad skill's venv:
   USB plug.
 - Front cup ∩ back cup = 18.01 mm³, entirely the designed crush-rib
   interference (7 ribs). Front cup ∩ plate and back cup ∩ plate both 0.
+- Jack nut 3.43 clear of the plate back and of the bay floor.
 - 31-step, 1.0 mm slide-in sweep of plate + N6 + charger + plugs + cables +
   card against the front cup and the installed jack: 0.00000 mm³ worst case.
 - All three parts are single valid solids.
@@ -191,13 +197,13 @@ slicer pass yet.
 
 - **Jack envelope is assumed.** Hole and reach are measured; nut Ø12,
   body Ø10 and flange Ø11 are guesses that size both notches and the jack's Z.
-  Measure the real nut across corners before printing; a bigger nut widens
-  `NOTCH_W` and pushes `JACK_ZC` (the window is only 12.9 tall for a Ø12 nut).
+  Measure the real nut across corners before printing; a bigger nut only
+  widens `NOTCH_W` (the Z window has 3.4 to spare each side).
 - **JST-PH plug envelope** (5.9 × 4.5, 6.0 proud) is estimated.
 - M2.5 × 5 into a 3.80 blind pilot gives 3.43 of thread — adequate for a
   10 g board, but ×6 will bottom out / break through the 1.20 floor.
-- Battery is assumed 30 × 40 × 6 and is not located in plan; tape it to the
-  back cup floor.
+- Battery is assumed 30 × 40 × 6 and is not located or supported; tape it to
+  the back cup floor.
 - The front cup ceiling is still set by the M12 lens holder; ~13 mm of dead
   air above the board at the USB end remains.
 - Board is held by 2 screws at the lens end only; the two anti-bow pads have

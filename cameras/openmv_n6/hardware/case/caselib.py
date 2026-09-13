@@ -65,12 +65,13 @@ WIRE_CH = 8.00              # battery-lead channel at the USB (-Y) end: JST-PH
                             # plug + lead loop need real room (rev C, was 4.00)
 
 # ---------------------------------------------------------------------------
-# Battery bay — 30 x 40 x 6 pouch assumed; bay is board-sized, per
-# tolerances "bay height = max thickness + ~1.5 swell/wire room".
+# Battery bay — rev E2: the bay depth is set directly, for jack room, and no
+# longer derived from the pouch (30 x 40 x 6 assumed; it just lies on the
+# floor with plenty of room, nothing locates or preloads it).
 # ---------------------------------------------------------------------------
 BAT_T = 6.00
-BAT_SWELL = 1.50
-BAY_DEPTH = BAT_T + BAT_SWELL       # 7.50
+BAY_DEPTH = 12.50                   # behind the charger component plane
+                                    # (rev E was 7.50 = pouch + swell)
 
 # ---------------------------------------------------------------------------
 # Z stack (all relative to the PCB bottom face)
@@ -83,8 +84,8 @@ Z_PLATE_BOT = Z_SHOULDER - PLATE_T          # -8.50, back cup lip top face;
 Z_CHG_TOP = Z_PLATE_BOT - 1.57              # -10.07 charger PCB component face
 Z_CHG_COMPS = Z_PLATE_BOT - 6.37            # -14.87 charger component plane;
                                             # battery bay starts here
-Z_SEAM = Z_CHG_COMPS - BAY_DEPTH            # -22.37, front cup rim
-Z_BACK_OUT = Z_SEAM - WALL                  # -24.77, case back face
+Z_SEAM = Z_CHG_COMPS - BAY_DEPTH            # -27.37, front cup rim
+Z_BACK_OUT = Z_SEAM - WALL                  # -29.77, case back face
 Z_CEIL = Z_LOCKRING_TOP + 0.65              # 23.50, front cup inner ceiling
 Z_FRONT_OUT = Z_CEIL + WALL                 # 25.90, case front face
 LIP_RIB_H = 6.40                            # rev D rib height, kept: ribs sit
@@ -194,8 +195,8 @@ JACK_BODY_D = 10.00                          # assumed
 JACK_FLANGE_D, JACK_FLANGE_T = 11.00, 2.00   # assumed, outside the wall
 JACK_XC = CX
 # Centred in the window between the plate back (-8.50) and the bay floor
-# (-22.37) with the nut 1.0 / 0.87 clear of each.
-JACK_ZC = -15.50
+# (-27.37): 18.87 tall, so a Ø12 nut has 3.4 each side.
+JACK_ZC = (Z_PLATE_BOT + Z_SEAM) / 2        # -17.935
 JACK_Y_END = OUT_Y0 + JACK_REACH     # 1.40, past the N6 board edge
 NOTCH_W = JACK_NUT_D + 1.00          # 13.0 — plate and lip notches, 0.5/side
 PLATE_NOTCH_Y1 = JACK_Y_END + 1.50   # 2.90, plate slides past the installed jack
@@ -378,8 +379,8 @@ def back_cup():
 
 
 def battery_mock():
-    """30 x 40 x 6 pouch on the bay floor at the +Y end, behind the charger's
-    component plane — reference only.  The -Y end stays clear of the jack."""
+    """30 x 40 x 6 pouch lying on the bay floor at the +Y end — reference
+    only; nothing in the case locates it.  The -Y end stays clear of the jack."""
     part = box_at(CX - 15.0, BAY_Y1 - 0.5 - 40.0, Z_SEAM, 30.0, 40.0, BAT_T)
     part.label = "battery_30x40x6_mock"
     return part
