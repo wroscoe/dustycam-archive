@@ -1,0 +1,51 @@
+tube         solids=1 valid=True volume=8946.85 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, 2.3999999 <= z <= 18.4000001
+front_plate  solids=1 valid=True volume=11637.85 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, -1e-07 <= z <= 9.900000100000002
+back_cup     solids=1 valid=True volume=19633.93 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, 10.8999999 <= z <= 34.3000001
+10 occurrences, 22 bound-overlapping pairs
+  tube x front_plate: 18.013 mm^3  (designed crush)
+  tube x back_cup: 15.440 mm^3  (designed crush)
+  tube x load_cable_mock: 0.0085 mm^3
+FAIL interference tube x load_cable_mock = 0.0085 mm^3
+static pairs checked: 22/22
+jack end -> charger edge (Y): 8.00
+jack nut -> seam (Z):         0.75
+jack nut -> floor (Z):        0.75
+plug bottom -> jack end (Y):  2.00
+battery -> back lip nose (Z): -2.50  (negative = battery extends past the nose in Z; radially clear, in BAY not LIP)
+battery -> charger comps (Z): 8.73  (positive = clear)
+slide-in sweep: 7 moving occurrences, 21 steps of 1.0 mm, vs tube + front_plate + battery
+FAIL sweep offset 0.0: tube x load_cable_mock = 0.0085 mm^3
+FAIL sweep offset 1.0: tube x load_cable_mock = 9.2400 mm^3
+FAIL sweep offset 2.0: tube x load_cable_mock = 23.6400 mm^3
+FAIL sweep offset 3.0: tube x load_cable_mock = 38.0400 mm^3
+FAIL sweep offset 4.0: tube x load_cable_mock = 52.4400 mm^3
+FAIL sweep offset 5.0: tube x load_cable_mock = 66.8314 mm^3
+FAIL sweep offset 6.0: tube x load_cable_mock = 72.0000 mm^3
+FAIL sweep offset 7.0: tube x load_cable_mock = 72.0000 mm^3
+FAIL sweep offset 8.0: tube x load_cable_mock = 72.0000 mm^3
+FAIL sweep offset 9.0: tube x load_cable_mock = 71.8800 mm^3
+FAIL sweep offset 10.0: tube x load_cable_mock = 62.2800 mm^3
+FAIL sweep offset 11.0: tube x load_cable_mock = 47.8800 mm^3
+FAIL sweep offset 12.0: tube x load_cable_mock = 33.4800 mm^3
+FAIL sweep offset 13.0: tube x load_cable_mock = 19.0800 mm^3
+FAIL sweep offset 14.0: tube x load_cable_mock = 4.8000 mm^3
+sweep steps completed: 21/21
+  worst tube x moving-group intersection (rib crush, expected to fall to 0 by d=6.4): 15.44000 mm^3
+  worst front_plate/battery x moving-group intersection: 72.00000 mm^3
+CHECK FAILED (16 problems)
+ - interference tube x load_cable_mock = 0.0085 mm^3
+ - sweep offset 0.0: tube x load_cable_mock = 0.0085 mm^3
+ - sweep offset 1.0: tube x load_cable_mock = 9.2400 mm^3
+ - sweep offset 2.0: tube x load_cable_mock = 23.6400 mm^3
+ - sweep offset 3.0: tube x load_cable_mock = 38.0400 mm^3
+ - sweep offset 4.0: tube x load_cable_mock = 52.4400 mm^3
+ - sweep offset 5.0: tube x load_cable_mock = 66.8314 mm^3
+ - sweep offset 6.0: tube x load_cable_mock = 72.0000 mm^3
+ - sweep offset 7.0: tube x load_cable_mock = 72.0000 mm^3
+ - sweep offset 8.0: tube x load_cable_mock = 72.0000 mm^3
+ - sweep offset 9.0: tube x load_cable_mock = 71.8800 mm^3
+ - sweep offset 10.0: tube x load_cable_mock = 62.2800 mm^3
+ - sweep offset 11.0: tube x load_cable_mock = 47.8800 mm^3
+ - sweep offset 12.0: tube x load_cable_mock = 33.4800 mm^3
+ - sweep offset 13.0: tube x load_cable_mock = 19.0800 mm^3
+ - sweep offset 14.0: tube x load_cable_mock = 4.8000 mm^3
