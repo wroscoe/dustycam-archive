@@ -1,0 +1,41 @@
+front_cup    solids=1 valid=True volume=36384.76 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -13.600000099999997 <= y <= 67.2000001, -14.0000001 <= z <= 25.9000001
+cam_plate    solids=1 valid=True volume=9630.96 mm^3 bbox=bbox: -1.7020001000001652 <= x <= 40.31200010000017, -11.0000001 <= y <= 64.6000001, -6.500000100000001 <= z <= 0.0
+back_plate   solids=1 valid=True volume=11765.00 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -13.600000099999997 <= y <= 67.2000001, -16.4000001 <= z <= -6.4999999
+usb_cap      solids=1 valid=True volume=791.76 mm^3 bbox=bbox: 14.669999900000002 <= x <= 32.6700001, -15.1000001 <= y <= -9.999999899999999, -3.7200001460864986 <= z <= 8.780000146086499
+
+usb_cap bounding box: bbox: 14.669999900000002 <= x <= 32.6700001, -15.1000001 <= y <= -9.999999899999999, -3.7200001460864986 <= z <= 8.780000146086499
+
+25 occurrences, 55 bound-overlapping pairs
+  front_cup x back_plate: 15.440 mm^3  (designed crush)
+  front_cup x usb_cap: 2.816 mm^3  (designed crush)
+  usb_cap x usb_plug_mock: 428.400 mm^3  (alternate states, not co-present)
+  pcb_main x usb_c_receptacle: 49.222 mm^3  (mated, reference-internal)
+  pcb_main x camera_standoffs: 20.262 mm^3  (mated, reference-internal)
+  pcb_main x usb_plug_mock: 20.612 mm^3  (mated, reference-internal)
+  usb_c_receptacle x usb_plug_mock: 178.137 mm^3  (mated, reference-internal)
+  microsd_socket_bottom x microsd_card_mock: 125.400 mm^3  (mated, reference-internal)
+  load_jst_plug_mock x load_cable_mock: 9.000 mm^3  (mated, reference-internal)
+static pairs checked: 55/55
+
+plate x front_cup: 0.0000 mm^3
+plate x back_plate: 0.0000 mm^3
+lens barrel -> aperture radial clearance: 1.00 mm
+USB shell -> port margin: x=2.71 z=2.67
+opening non-overlap (vents / LOAD slot / USB port):
+  usb_port <-> load_slot: gap 2.67 mm
+  usb_port <-> vent_0: gap 12.07 mm
+  usb_port <-> vent_1: gap 3.13 mm
+  load_slot <-> vent_0: gap 2.40 mm
+  load_slot <-> vent_1: gap 20.80 mm
+  vent_0 <-> vent_1: gap 30.20 mm
+TOP_CH (headroom above the board): 18.52 mm
+
+slide-in sweep: 19 moving occurrences (52 solids), 31 steps of 1.0 mm, vs front_cup
+sweep steps completed: 31/31, worst intersection 0.00000 mm^3
+
+camera-puck.step reimport: solids=4
+source bbox:     bbox: -4.302000100000096 <= x <= 42.91200010000011, -15.1000001 <= y <= 67.2000001, -16.4000001 <= z <= 25.9000001
+reimported bbox: bbox: -4.3020001 <= x <= 42.9120001, -15.1000001 <= y <= 67.2000001, -16.4000001 <= z <= 25.9000001
+worst bbox delta: 0.00000 mm
+
+CHECK PASSED
