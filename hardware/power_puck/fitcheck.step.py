@@ -17,6 +17,7 @@ def reference_parts():
     parts.append(C.load_cable_mock())
     parts.append(C.batt_cable_mock())
     parts.append(C.battery_mock())
+    parts.append(C.usb_plug_mock())
     return parts
 
 
@@ -25,14 +26,15 @@ def gen_step():
     cut = Pos(C.CX, -20, -20) * Box(60, 120, 80, align=(Align.MIN,) * 3)
 
     parts = []
-    for fn in (C.tube, C.front_plate, C.back_cup):
+    for fn in (C.tube, C.front_plate, C.back_cup, C.usb_cap):
         p = fn()
         label = p.label
         p = p - cut
         p.label = label + "_sectioned"
         parts.append(p)
 
-    parts.extend(reference_parts())
+    # the USB plug mock is the port's *open* state; the view shows it capped
+    parts.extend(o for o in reference_parts() if o.label != "usb_plug_mock")
 
     asm = Compound(children=parts)
     asm.label = "power_puck_fitcheck"

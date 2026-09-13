@@ -72,13 +72,23 @@ Z_FRONT_OUT = 0.0
 Z_TUBE0 = WALL                         # 2.40  tube front mouth / plate inner face
 TUBE_D = 16.00
 Z_SEAM = Z_TUBE0 + TUBE_D              # 18.40 tube back mouth
-CUP_D = 13.50                          # skirt interior depth (back_cup)
-Z_FLOOR = Z_SEAM + CUP_D               # 31.90 floor top, inside
-Z_BACK_OUT = Z_FLOOR + WALL            # 34.30
+CUP_D = 18.00                          # v2: skirt interior depth (was 13.50)
+Z_FLOOR = Z_SEAM + CUP_D               # 36.40 floor top, inside
+Z_BACK_OUT = Z_FLOOR + WALL            # 38.80
 
 FRONT_LIP_Z0, FRONT_LIP_Z1 = Z_TUBE0, Z_TUBE0 + LIP_ENG    # 2.40, 9.90
 BACK_LIP_Z0, BACK_LIP_Z1 = Z_SEAM - LIP_ENG, Z_SEAM         # 10.90, 18.40
 # 1.00 gap between the two lip noses: BACK_LIP_Z0 - FRONT_LIP_Z1 == 1.00
+
+# v2: solid seam ring under the lip.  The lip (LIP rect) only ever touched
+# the skirt (IN rect) along a knife edge because LIP is inset 0.15 from IN;
+# the ring keeps the BAY-radius bore for LEDGE_T beyond the seam, then
+# chamfers out (45 deg, since BAY is IN inset by exactly LIP_WALL+LIP_GAP)
+# to the full IN-radius interior for the rest of the cup depth.
+LEDGE_T = 1.60
+LEDGE_CHAMFER = LIP_WALL + LIP_GAP     # 1.75
+LEDGE_Z0 = Z_SEAM + LEDGE_T            # 20.00  ledge bore ends / chamfer starts
+CHAMFER_TOP = LEDGE_Z0 + LEDGE_CHAMFER  # 21.75  chamfer ends / IN-radius bore starts
 
 # ---------------------------------------------------------------------------
 # Charger (Adafruit 6091 bq25185).  Vendor STEP frame: PCB plan bottom-left,
@@ -98,7 +108,10 @@ BOSS_PILOT_D = 2.10
 CHG_PILOT_DEPTH = 4.60                 # from the boss top; leaves a 1.20 floor
 
 # ---------------------------------------------------------------------------
-# Jack (panel-mount DC barrel, through the back cup's -Y skirt wall)
+# Jack (panel-mount DC barrel, through the back cup's -Y skirt wall).  v2:
+# JACK_ZC moves to the middle of the window between the chamfer top and the
+# floor (the charger moved up to the top of the cup, so the jack no longer
+# has to share the old, shallower window with it).
 # ---------------------------------------------------------------------------
 JACK_HOLE_D = 7.52
 JACK_REACH = 13.00
@@ -106,29 +119,51 @@ JACK_NUT_D, JACK_NUT_T = 12.00, 2.50           # assumed
 JACK_BODY_D = 10.00                            # assumed
 JACK_FLANGE_D, JACK_FLANGE_T = 11.00, 2.00     # assumed
 JACK_XC = CX
-JACK_ZC = Z_SEAM + CUP_D / 2           # 25.15
+JACK_ZC = (CHAMFER_TOP + Z_FLOOR) / 2   # 29.075
 JACK_Y_END = 0.0 + JACK_REACH          # 13.00, jack reaches y = 13.0
 
-CHG_Y0 = JACK_Y_END + 8.00             # 21.00
-CHG_Y1 = CHG_Y0 + CHG_L                # 46.40 (documentation; real bbox taller)
+# v2: charger moves up to the top of the cup, USB-C edge toward +Y (JST edge
+# stays toward -Y).
+CHG_Y1 = IN_Y1 - 2.0                   # 76.40
+CHG_Y0 = CHG_Y1 - CHG_L                # 51.00 (documentation; real bbox taller)
 CHG_X0 = CX - CHG_W / 2                # 7.73
 CHG_X1 = CHG_X0 + CHG_W                # 39.48
 
-Z_CHG_BARE = Z_FLOOR - CHG_BOSS_H      # 28.50, PCB bare face on the boss tops
-Z_CHG_COMPS = Z_CHG_BARE - CHG_H       # 22.13, components extend to here
+Z_CHG_BARE = Z_FLOOR - CHG_BOSS_H      # 33.00, PCB bare face on the boss tops
+Z_CHG_COMPS = Z_CHG_BARE - CHG_H       # 26.63, components extend to here
 
 PLUG_W, PLUG_H, PLUG_OUT = 5.90, 4.50, 6.00
 # plug 1 (LOAD) and plug 2 (BATT) x-centres, mirrored (Rot 180 about Y) from
 # the local JST housing offsets: CHG_X1 - 20.32 and CHG_X1 - 11.43
 PLUG_XC = [CHG_X1 - 20.32, CHG_X1 - 11.43]     # [19.16, 28.05]
 
-# ---------------------------------------------------------------------------
-# LOAD slot (tube's -Y wall) and front-plate lip notch
-# ---------------------------------------------------------------------------
-LOAD_SLOT_W, LOAD_SLOT_H = 7.0, 6.0
-LOAD_SLOT_ZC = 6.40
+# USB-C port, through the back cup's +Y skirt wall, under the charger's
+# USB-C shell (vendor model local x 11.4..20.34, local z 0.57..4.77 from the
+# PCB bottom).
+USB_W, USB_H = 15.0, 9.5
+USB_Z0 = Z_CHG_BARE - 4.77             # 28.23
+USB_Z1 = Z_CHG_BARE - 0.57             # 32.43
+USB_ZC = (USB_Z0 + USB_Z1) / 2         # 30.33
+USB_SHELL_Y = CHG_Y1 + 1.0             # 77.40, 1.0 inside IN_Y1 (78.40)
 
-NOTCH_X_HALF = 4.5
+# v2: printed cap for the USB-C port.  Plug 0.15/side inside the opening
+# with two crush ribs (0.10/side net, same recipe as the lips), 2.40 deep so
+# it stops flush with the inner wall face — 1.0 short of the USB-C shell.
+# Head sits on the outer face; prints head-down.
+CAP_GAP = LIP_GAP                       # 0.15
+CAP_W, CAP_H = USB_W - 2 * CAP_GAP, USB_H - 2 * CAP_GAP    # 14.70 x 9.20
+CAP_R = 2.5 - CAP_GAP                   # 2.35
+CAP_DEPTH = WALL                        # 2.40, flush with the inner face
+CAP_LEADIN = 0.40
+CAP_RIB_H = CAP_DEPTH - CAP_LEADIN      # 2.00
+CAP_HEAD_W, CAP_HEAD_H, CAP_HEAD_T, CAP_HEAD_R = USB_W + 3.0, USB_H + 3.0, 1.50, 3.5
+
+# ---------------------------------------------------------------------------
+# LOAD slot: v2 moves it from the tube to the back cup's -Y skirt wall,
+# beside the jack (was in the tube's -Y wall in v1).
+# ---------------------------------------------------------------------------
+LOAD_SLOT_XC = CX - 12.0
+LOAD_SLOT_W, LOAD_SLOT_H = 7.0, 6.0
 
 # ---------------------------------------------------------------------------
 # helpers (copied from cameras/openmv_n6/hardware/case/caselib.py style)
@@ -173,6 +208,16 @@ def flare_up(x0, y0, x1, y1, r, z1, c):
     )
 
 
+def chamfer_widen(x0, y0, x1, y1, r, z0, c):
+    """45 deg widening chamfer (v2 ledge->bore transition): c undersize
+    (inset) at z0, nominal (x0,y0,x1,y1,r) at z0 + c."""
+    w, l = x1 - x0, y1 - y0
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    return Pos(cx, cy) * loft(
+        [_sk(w - 2 * c, l - 2 * c, max(r - c, 0.05), z0), _sk(w, l, r, z0 + c)]
+    )
+
+
 def slot_y(xc, zc, w, h, y0, y1, r=None):
     """Rounded slot through a -Y/+Y wall, w along X, h along Z (stadium default)."""
     sk = RectangleRounded(w, h, min(w, h) / 2 - 0.001 if r is None else r)
@@ -198,20 +243,20 @@ def cyl_at(cx, cy, z0, d, h):
 # parts
 # ---------------------------------------------------------------------------
 def tube():
-    """Prints front-mouth down (Z_TUBE0 on the bed)."""
+    """Prints front-mouth down (Z_TUBE0 on the bed).  v2: no LOAD slot (moved
+    to the back cup's -Y skirt wall)."""
     part = prism(OUT_X0, OUT_Y0, OUT_X1, OUT_Y1, R_OUT, Z_TUBE0, Z_SEAM, cb=EFOOT)
     part -= prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_TUBE0 - 1.0, Z_SEAM + 1.0)
     part -= flare_down(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_TUBE0, LEADIN)
     part -= flare_up(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_SEAM, LEADIN)
-    # r=1.5 (not a full stadium): a JST-PH plug is nearly square-cornered
-    part -= slot_y(CX, LOAD_SLOT_ZC, LOAD_SLOT_W, LOAD_SLOT_H,
-                   OUT_Y0 - 1.0, IN_Y0 + 1.0, r=1.5)
     part.label = "tube"
     return part
 
 
 def front_plate():
-    """Prints outer-face down (z = 0 on the bed).  Outer face is plain."""
+    """Prints outer-face down (z = 0 on the bed).  Outer face is plain.
+    v2: no lip notch (the JST plug exit moved to the back cup), 6 ribs
+    (single -Y rib at CX), matching back_cup's rib layout."""
     part = prism(OUT_X0, OUT_Y0, OUT_X1, OUT_Y1, R_OUT, Z_FRONT_OUT, Z_TUBE0,
                  cb=EFOOT)
     part += prism(LIP_X0, LIP_Y0, LIP_X1, LIP_Y1, R_LIP,
@@ -224,27 +269,36 @@ def front_plate():
         part += Pos(LIP_X0, yc, FRONT_LIP_Z0) * Rot(0, 0, 90) * rib
         part += Pos(LIP_X1, yc, FRONT_LIP_Z0) * Rot(0, 0, -90) * rib
     part += Pos(CX, LIP_Y1, FRONT_LIP_Z0) * rib
-    for xc in (CX - 12.0, CX + 12.0):
-        part += Pos(xc, LIP_Y0, FRONT_LIP_Z0) * Rot(0, 0, 180) * rib
-
-    # JST-PH plug notch through the lip's -Y wall (not the outer plate)
-    part -= box_at(CX - NOTCH_X_HALF, LIP_Y0 - 1.0, Z_TUBE0 - 1.0,
-                   2 * NOTCH_X_HALF, (BAY_Y0 + 0.5) - (LIP_Y0 - 1.0),
-                   (FRONT_LIP_Z1 + 1.0) - (Z_TUBE0 - 1.0))
+    part += Pos(CX, LIP_Y0, FRONT_LIP_Z0) * Rot(0, 0, 180) * rib
 
     part.label = "front_plate"
     return part
 
 
 def back_cup():
-    """Prints back-face down (Z_BACK_OUT on the bed)."""
+    """Prints back-face down (Z_BACK_OUT on the bed).
+
+    v2: the lip (LIP rect) only ever line-touched the skirt (IN rect), since
+    LIP is inset 0.15 from IN.  Now the interior stays at BAY radius for
+    LEDGE_T past the seam (a solid ring, OUT-to-BAY, under the full lip
+    wall), then a 45 deg chamfer (BAY is exactly IN inset by LIP_WALL +
+    LIP_GAP, so the chamfer is a true 45) widens it out to the full
+    IN-radius bore for the rest of the depth to the floor.  Order: shell -
+    void, THEN + lip - bay-bore, so the lip's wall roots fully into the
+    solid ring instead of butting a knife edge.
+    """
     part = prism(OUT_X0, OUT_Y0, OUT_X1, OUT_Y1, R_OUT, Z_SEAM, Z_BACK_OUT,
                  ct=EFOOT)
-    part -= prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_SEAM - 1.0, Z_FLOOR)
+
+    void = prism(BAY_X0, BAY_Y0, BAY_X1, BAY_Y1, R_BAY, Z_SEAM - 1.0, LEDGE_Z0)
+    void += chamfer_widen(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, LEDGE_Z0, LEDGE_CHAMFER)
+    void += prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, CHAMFER_TOP, Z_FLOOR)
+    part -= void
+
     part += prism(LIP_X0, LIP_Y0, LIP_X1, LIP_Y1, R_LIP,
                   BACK_LIP_Z0, BACK_LIP_Z1, cb=LEADIN)
     part -= prism(BAY_X0, BAY_Y0, BAY_X1, BAY_Y1, R_BAY,
-                  BACK_LIP_Z0 - 1.0, BACK_LIP_Z1)
+                  BACK_LIP_Z0 - 1.0, BACK_LIP_Z1 + 0.01)
 
     rib = fits.edge_crush_rib(LIP_RIB_H, length=6.0, proud=LIP_RIB_PROUD)
     rib_z = Z_SEAM - LIP_RIB_H             # 12.0
@@ -261,6 +315,13 @@ def back_cup():
                        BOSS_PILOT_D, 1.0 + CHG_PILOT_DEPTH)
 
     part -= cyl_y(JACK_XC, JACK_ZC, JACK_HOLE_D, OUT_Y0 - 1.0, IN_Y0 + 1.0)
+
+    # v2: LOAD slot, beside the jack in the same -Y skirt wall
+    part -= slot_y(LOAD_SLOT_XC, JACK_ZC, LOAD_SLOT_W, LOAD_SLOT_H,
+                   OUT_Y0 - 1.0, IN_Y0 + 1.0, r=1.5)
+
+    # v2: USB-C port through the +Y skirt wall, under the charger's shell
+    part -= slot_y(CX, USB_ZC, USB_W, USB_H, IN_Y1 - 1.0, OUT_Y1 + 1.0, r=2.5)
 
     part.label = "back_cup"
     return part
@@ -286,23 +347,53 @@ def charger_plug_mocks():
 
 
 def load_cable_mock():
-    # A1: out of the plug, forward past the seam (stays above the jack in Y)
-    part = box_at(16.0, 14.0, 13.9, 22.0 - 16.0, 21.0 - 14.0, 22.3 - 13.9)
-    # A2: down toward the bottom wall, in the tube zone (z < seam), clear of the jack
-    part += box_at(16.0, 5.0, 13.9, 22.0 - 16.0, 14.0 - 5.0, 18.0 - 13.9)
-    part += box_at(19.5, 4.65, 4.0, 24.0 - 19.5, 7.5 - 4.65, 18.0 - 4.0)         # B
-    # D + C: the JST-PH plug itself (5.9 x 4.5) dropping to the wall and out
-    # through the slot, centred on the slot
-    part += box_at(CX - PLUG_W / 2, 2.9, LOAD_SLOT_ZC - PLUG_H / 2, PLUG_W, 7.5 - 2.9, PLUG_H)   # D
-    part += box_at(CX - PLUG_W / 2, -5.0, LOAD_SLOT_ZC - PLUG_H / 2, PLUG_W, 3.0 - (-5.0), PLUG_H)  # C
+    """v2: moves WITH the cup (it now exits through the back cup's own -Y
+    wall, beside the jack, instead of the tube).  Down the inside of the
+    bottom-left of the cup, from plug 1 to the LOAD slot (routing box, x
+    9..15 literal), then the plug shape (PLUG_W x PLUG_H) through the slot,
+    centred on the slot (LOAD_SLOT_XC, not the routing box's rough x9..15 —
+    a literal x9..15 there is centred at x=12.0, 0.395 off the slot's true
+    centre at LOAD_SLOT_XC=11.605, and clips two corners of the slot's r=1.5
+    rounding by ~0.043 mm^3 total; centring on the slot instead, as the spec
+    explicitly says for this box, makes it fit with margin)."""
+    part = box_at(9.0, 3.0, 26.1, 15.0 - 9.0, 47.0 - 3.0, 32.1 - 26.1)
+    part += box_at(LOAD_SLOT_XC - PLUG_W / 2, -5.0, JACK_ZC - PLUG_H / 2,
+                   PLUG_W, 3.0 - (-5.0), PLUG_H)
     part.label = "load_cable_mock"
     return part
 
 
 def batt_cable_mock():
-    part = box_at(26.0, 14.0, 13.9, 30.0 - 26.0, 21.0 - 14.0, 22.3 - 13.9)
-    part += box_at(26.0, 8.5, 13.9, 30.0 - 26.0, 14.0 - 8.5, 18.0 - 13.9)
+    """v2: static, attached to the battery — from the battery zone back
+    toward plug 2 (the charger moved up to the top of the cup)."""
+    part = box_at(26.0, 40.0, 13.9, 30.0 - 26.0, 47.0 - 40.0, 27.0 - 13.9)
     part.label = "batt_cable_mock"
+    return part
+
+
+def usb_cap():
+    """v2: press-in cap for the USB-C port.  Built along local +Z (plug) with
+    the head at local -Z, then rotated so local +Z -> puck -Y: head outside
+    the +Y wall, plug in the opening, nose flush with the inner face.
+    Prints head-down (outer face on the bed).  No supports."""
+    plug = prism(-CAP_W / 2, -CAP_H / 2, CAP_W / 2, CAP_H / 2, CAP_R,
+                 0.0, CAP_DEPTH, ct=CAP_LEADIN)
+    head = prism(-CAP_HEAD_W / 2, -CAP_HEAD_H / 2, CAP_HEAD_W / 2, CAP_HEAD_H / 2,
+                 CAP_HEAD_R, -CAP_HEAD_T, 0.0, cb=EFOOT)
+    part = plug + head
+    rib = fits.edge_crush_rib(CAP_RIB_H, length=6.0, proud=LIP_RIB_PROUD)
+    part += Pos(0, CAP_H / 2, 0) * rib                      # local +Y face
+    part += Pos(0, -CAP_H / 2, 0) * Rot(0, 0, 180) * rib    # local -Y face
+    part = Pos(CX, OUT_Y1, USB_ZC) * Rot(90, 0, 0) * part
+    part.label = "usb_cap"
+    return part
+
+
+def usb_plug_mock():
+    """v2: USB-C plug overmold at the charger's +Y edge, through the back
+    cup's +Y skirt wall.  Static reference; excluded from the sweep."""
+    part = box_at(CX - 6.0, USB_SHELL_Y, USB_ZC - 3.5, 12.0, 95.0 - USB_SHELL_Y, 7.0)
+    part.label = "usb_plug_mock"
     return part
 
 

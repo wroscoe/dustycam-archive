@@ -1,16 +1,16 @@
-"""Assembled power puck — the 3 printed parts as a labelled compound.
+"""Assembled power puck — the 4 printed parts as a labelled compound.
 
 NOT a printable artifact by itself; print tube.step.py, front-plate.step.py,
-and back-cup.step.py separately.
+back-cup.step.py and usb-cap.step.py separately.
 """
 
 from build123d import Compound
 
-from caselib import back_cup, front_plate, tube
+from caselib import back_cup, front_plate, tube, usb_cap
 
 
 def gen_step():
-    parts = [tube(), front_plate(), back_cup()]
+    parts = [tube(), front_plate(), back_cup(), usb_cap()]
     asm = Compound(children=parts)
     asm.label = "power_puck"
     return asm

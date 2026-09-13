@@ -1,4 +1,4 @@
-"""Fail-closed interference check for the power puck (v1).
+"""Fail-closed interference check for the power puck (v2).
 
   python check.py            # static pairs + slide-in sweep
   python check.py --quick    # static pairs only
@@ -25,8 +25,9 @@ _spec.loader.exec_module(_fc)
 
 TOL = 1e-4           # mm^3 - numerical noise floor
 RIB_EXPECT = {
-    frozenset({"front_plate", "tube"}): (14.0, 25.0),   # 7 ribs
+    frozenset({"front_plate", "tube"}): (12.0, 21.0),   # v2: 6 ribs (was 7)
     frozenset({"back_cup", "tube"}): (12.0, 21.0),       # 6 ribs
+    frozenset({"usb_cap", "back_cup"}): (1.0, 3.0),      # 2 ribs x ~0.9 mm^3
 }
 
 # Pairs that overlap by construction inside the reference mocks: each JST
@@ -37,7 +38,11 @@ MATED = {
         ("charger_jst_plug_2_mock", "batt_cable_mock"),
     ]
 }
-PRINTED = {"tube", "front_plate", "back_cup"}
+PRINTED = {"tube", "front_plate", "back_cup", "usb_cap"}
+
+# Pairs that are alternate states of the same opening and are never present
+# together: the cap fills the USB port, the plug mock is the port in use.
+ALTERNATE = {frozenset({"usb_cap", "usb_plug_mock"})}
 
 failures = []
 
@@ -75,7 +80,7 @@ def intersect_vol(a, b):
 
 def main():
     quick = "--quick" in sys.argv
-    printed = [C.tube(), C.front_plate(), C.back_cup()]
+    printed = [C.tube(), C.front_plate(), C.back_cup(), C.usb_cap()]
     refs = _fc.reference_parts()
 
     # --- printable solids: exactly one valid solid each
@@ -103,6 +108,9 @@ def main():
         v = intersect_vol(a, b)
         checked += 1
         names = frozenset({a.label, b.label})
+        if names in ALTERNATE:
+            print(f"  {a.label} x {b.label}: {v:.3f} mm^3  (alternate states, not co-present)")
+            continue
         if names in RIB_EXPECT:
             lo, hi = RIB_EXPECT[names]
             status = "designed crush" if lo <= v <= hi else "UNEXPECTED"
@@ -129,29 +137,44 @@ def main():
 
     nut_top = C.JACK_ZC + C.JACK_NUT_D / 2
     nut_bot = C.JACK_ZC - C.JACK_NUT_D / 2
-    print(f"\njack end -> charger edge (Y): {gap_y(jack, chg):.2f}")
-    print(f"jack nut -> seam (Z):         {nut_bot - C.Z_SEAM:.2f}")
-    print(f"jack nut -> floor (Z):        {C.Z_FLOOR - nut_top:.2f}")
-    print(f"plug bottom -> jack end (Y):  {gap_y(jack, plug1):.2f}")
-    print(f"battery -> back lip nose (Z): {C.BACK_LIP_Z0 - bat.bounding_box().max.Z:.2f}"
-          "  (negative = battery extends past the nose in Z; radially clear, in BAY not LIP)")
-    print(f"battery -> charger comps (Z): {chg.bounding_box().min.Z - bat.bounding_box().max.Z:.2f}"
-          "  (positive = clear)")
-    for want, got in [("jack->charger", gap_y(jack, chg)),
-                       ("plug->jack", gap_y(jack, plug1))]:
-        if got < 1.0:
-            fail(f"{want} clearance {got:.2f} < 1.0")
+    jack_chamfer_clear = nut_bot - C.CHAMFER_TOP
+    jack_floor_clear = C.Z_FLOOR - nut_top
+    charger_edge_clear = gap_y(jack, chg)
+    load_nut_clear = (C.JACK_XC - C.JACK_NUT_D / 2) - (C.LOAD_SLOT_XC + C.LOAD_SLOT_W / 2)
+    usb_wall_clear = C.IN_Y1 - C.USB_SHELL_Y
+    plug_jack_clear = gap_y(jack, plug1)
 
-    # --- slide-in sweep: back_cup + charger + jack + plugs + cables move
+    print(f"\njack nut -> chamfer top (Z):    {jack_chamfer_clear:.3f}")
+    print(f"jack nut -> floor (Z):          {jack_floor_clear:.3f}")
+    print(f"jack end -> charger edge (Y):   {charger_edge_clear:.2f}")
+    print(f"LOAD slot edge -> nut (X):      {load_nut_clear:.2f}")
+    print(f"USB shell face -> inner wall (Y): {usb_wall_clear:.2f}")
+    print(f"plug bottom -> jack end (Y):    {plug_jack_clear:.2f}")
+
+    for want, got in [
+        ("jack nut->chamfer top", jack_chamfer_clear),
+        ("jack nut->floor", jack_floor_clear),
+        ("jack->charger", charger_edge_clear),
+        ("LOAD slot->nut", load_nut_clear),
+        ("USB shell->inner wall", usb_wall_clear),
+        ("plug->jack", plug_jack_clear),
+    ]:
+        if got < 0.0:
+            fail(f"{want} clearance {got:.2f} < 0 (interference)")
+
+    # --- slide-in sweep: back_cup + charger + jack + plugs + load_cable move
     #     along +Z, pulling the cup out of the tube's back mouth, past the
     #     stationary front_plate and battery.
     if not quick:
-        # The cable mocks stay put: the LOAD lead is threaded through the
-        # tube's slot and the BATT lead belongs to the battery, so both are
-        # unplugged from the charger before the cup comes off.
+        # v2: load_cable_mock now exits through the back cup's own -Y wall
+        # (beside the jack), so it moves WITH the cup.  batt_cable_mock stays
+        # attached to the battery, and usb_plug_mock is a static reference
+        # only meaningful with the cup off — both stay out of the moving
+        # group (they're still checked in the static pair list above).
         moving_labels = {
             "back_cup", "charger_bq25185", "dc_jack_mock",
             "charger_jst_plug_1_mock", "charger_jst_plug_2_mock",
+            "load_cable_mock",
         }
         moving = [o for o in occ if o.label in moving_labels]
         static = {
@@ -159,7 +182,7 @@ def main():
             "front_plate": next(o for o in occ if o.label == "front_plate"),
             "battery": bat,
         }
-        steps = [k * 1.0 for k in range(0, 21)]
+        steps = [k * 1.0 for k in range(0, 23)]   # 0..22, cup lip clears the tube well before 22
         print(f"\nslide-in sweep: {len(moving)} moving occurrences, "
               f"{len(steps)} steps of 1.0 mm, vs tube + front_plate + battery")
         worst = 0.0

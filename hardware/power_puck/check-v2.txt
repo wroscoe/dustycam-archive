@@ -1,0 +1,22 @@
+tube         solids=1 valid=True volume=9043.01 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, 2.3999999 <= z <= 18.4000001
+front_plate  solids=1 valid=True volume=11764.13 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, -1e-07 <= z <= 9.900000100000002
+back_cup     solids=1 valid=True volume=22758.93 mm^3 bbox=bbox: -1.0000008881784197e-07 <= x <= 47.210000100000094, -1e-07 <= y <= 80.8000001, 10.8999999 <= z <= 38.8000001
+usb_cap      solids=1 valid=True volume=632.16 mm^3 bbox=bbox: 14.604999900000001 <= x <= 32.605000100000005, 78.3999999 <= y <= 82.30000009999999, 24.0799998539135 <= z <= 36.5800001460865
+12 occurrences, 18 bound-overlapping pairs
+  tube x front_plate: 15.440 mm^3  (designed crush)
+  tube x back_cup: 15.440 mm^3  (designed crush)
+  back_cup x usb_cap: 1.760 mm^3  (designed crush)
+  usb_cap x usb_plug_mock: 327.600 mm^3  (alternate states, not co-present)
+  charger_jst_plug_2_mock x batt_cable_mock: 1.360 mm^3  (mated, reference-internal)
+static pairs checked: 18/18
+jack nut -> chamfer top (Z):    1.325
+jack nut -> floor (Z):          1.325
+jack end -> charger edge (Y):   38.00
+LOAD slot edge -> nut (X):      2.50
+USB shell face -> inner wall (Y): 1.00
+plug bottom -> jack end (Y):    32.00
+slide-in sweep: 6 moving occurrences, 23 steps of 1.0 mm, vs tube + front_plate + battery
+sweep steps completed: 23/23
+  worst tube x moving-group intersection (rib crush, expected to fall to 0 by d=6.4): 15.44000 mm^3
+  worst front_plate/battery x moving-group intersection: 0.00000 mm^3
+CHECK PASSED
