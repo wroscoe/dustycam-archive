@@ -233,30 +233,34 @@ LEDGE_BZ = (-9.00, -0.10)               # 0.10 under the PCB back face
 LEDGE_FLAT = 0.30                       # flat bearing reach under the PCB
 LEDGE_RAMP_DEG = 45.0
 
-USB_BX = (-1.60, -0.40)                 # USB-end wall
-USB_BZ = (-9.00, 9.00)
+# v2.2 amendment: the USB-end wall is gone entirely above the lip.  What is
+# left is the root strip at board z -9.0..-8.8 (it runs wall to wall and ties
+# the side walls together at the bed) and TWO snap tongues grown from it, one
+# at each end of the PCB's end edge.  A single central tongue could not
+# survive insertion: the USB-C shell stands 1.53 proud of the PCB's end edge
+# and 4.2 tall, so once the USB end is lifted ~2 mm its rear corner sweeps
+# through anything behind the PCB plane inside board y 4.41..13.35.  The two
+# tongues sit outside that span (>= 0.5 clear) and reach 1.7 into the opening
+# so their lips land on the STRAIGHT part of the PCB's end edge — the R1.906
+# corners leave straight edge only for board y 1.906..15.874.
+# Consequence: there is no rigid +Y stop any more.  The tongues' faces at
+# board x -0.2 are a soft stop, so the board's Y play is 0.20 to the far-end
+# stop ribs and 0.20 to the tongue faces.
+USB_STRIP_BX = (-1.60, -0.20)           # root strip, board x
+USB_STRIP_BZ = (-9.00, -8.80)
+USB_OPEN_BZ = (-0.10, 9.00)             # fully open from the lip to the collar
 
-# v2.1 amendment 1: the bridge band is deleted.  The USB-end wall is now two
-# side pillars plus the strip that roots the snap tongue; the shell window and
-# the card notch merge into ONE opening from the tongue root up to the collar's
-# back face, so the microSD card can be fitted to the board BEFORE the board is
-# tilted in (with the bridge in place it swept 8 mm^3 through that band at any
-# tilt beyond ~1 deg, and it could not be fitted afterwards either).
-# The USB end's forward stop becomes the collar step, acting through the stack
-# camera head -> microSD socket -> expansion PCB -> B2B connector -> base PCB.
-USB_PILLAR_BY = ((-0.50, 2.20), (13.90, 18.28))
-OPEN_BY = (2.20, 13.90)                 # merged shell window + card notch
-OPEN_BZ = (-8.80, 9.00)                 # tongue root .. collar back face
-
-TONGUE_BY = (6.00, 12.00)               # snap tongue
+TONGUE_BYS = ((-0.50, 3.90), (13.88, 18.28))   # the two tongues, board y
 TONGUE_BX = (-1.10, -0.20)              # 0.9 thick
-TONGUE_BZ = (-8.80, -0.10)              # root at the bed, free end at the PCB
+TONGUE_BZ = (-8.80, -0.10)              # root at the strip, free end at the PCB
 LIP_BX = (-0.20, 0.40)                  # lip: 0.40 over the PCB back edge
 LIP_BZ = (-0.60, -0.10)
 LIP_RAMP = 0.60                         # 45 deg ramp on the lip's back side
 TONGUE_T = TONGUE_BX[1] - TONGUE_BX[0]                 # 0.90
 TONGUE_L = TONGUE_BZ[1] - TONGUE_BZ[0]                 # 8.70
 TONGUE_DEFL = 0.60                      # deflection at the lip on insertion
+E_PETG = 2000.0                         # MPa, for the snap force estimate
+PCB_STRAIGHT_BY = (PCB_R, PCB_W - PCB_R)               # 1.906 .. 15.874
 
 RAIL_BX = (8.00, 17.00)                 # side rails on the expansion edges
 RAIL_BY = 0.35                          # rail face (mirror 17.43)
@@ -503,34 +507,26 @@ def _collar():
 
 
 def _usb_end_wall():
-    """The USB-end wall — v2.1: two side pillars hanging from the collar, the
-    strip that roots the snap tongue, and the tongue itself.  Everything
-    between the pillars is open from the tongue root to the collar, so the
-    board can be tilted in with the microSD card already fitted.
+    """v2.2: the USB end is open from the lip level (board z -0.1) up to the
+    collar's back face.  All that is left is the root strip at the bed and the
+    two snap tongues grown from it.  Returns (strip, tongues)."""
+    x0, x1 = BAY_IN_X
+    sy0, sy1 = bY(USB_STRIP_BX[1]), bY(USB_STRIP_BX[0])     # 71.49 .. 72.89
+    strip = box_at(x0, sy0, bZ(USB_STRIP_BZ[1]), x1 - x0, sy1 - sy0,
+                   bZ(USB_STRIP_BZ[0]) - bZ(USB_STRIP_BZ[1]))
 
-    Returns (wall, tongue)."""
-    wy0, wy1 = bY(USB_BX[1]), bY(USB_BX[0])                 # 71.69 .. 72.89
-    z0, z1 = bZ(USB_BZ[1]), bZ(USB_BZ[0])                   # 8.36 .. 26.36
-    wall = None
-    for by0, by1 in USB_PILLAR_BY:
-        s = box_at(bX(by1), wy0, z0, by1 - by0, wy1 - wy0, z1 - z0)
-        wall = s if wall is None else wall + s
-    # the ligament the tongue is rooted in (board z -9.0 .. -8.8)
-    wall += box_at(bX(OPEN_BY[1]), wy0, bZ(OPEN_BZ[0]),
-                   OPEN_BY[1] - OPEN_BY[0], wy1 - wy0,
-                   z1 - bZ(OPEN_BZ[0]))
-
-    # the tongue: 0.9 thick, rooted in that ligament at the bed end
-    tx0, tdx = bX(TONGUE_BY[1]), TONGUE_BY[1] - TONGUE_BY[0]
     ty0, ty1 = bY(TONGUE_BX[1]), bY(TONGUE_BX[0])           # 71.49 .. 72.39
-    tongue = box_at(tx0, ty0, bZ(TONGUE_BZ[1]), tdx, ty1 - ty0,
-                    Z_PLATE - bZ(TONGUE_BZ[1]))
-    # lip: 0.4 over the PCB back edge, 45 deg ramp underneath (print + cam)
     ly0, ly1 = bY(LIP_BX[1]), bY(LIP_BX[0])                 # 70.89 .. 71.49
     lz0, lz1 = bZ(LIP_BZ[1]), bZ(LIP_BZ[0])                 # 17.46 .. 17.96
-    tongue += prism_x([(ly1, lz0), (ly0, lz0), (ly0, lz1),
-                       (ly1, lz1 + LIP_RAMP)], tx0, tx0 + tdx)
-    return wall, tongue
+    tongues = None
+    for by0, by1 in TONGUE_BYS:
+        tx0, tdx = bX(by1), by1 - by0
+        t = box_at(tx0, ty0, bZ(TONGUE_BZ[1]), tdx, ty1 - ty0,
+                   Z_PLATE - bZ(TONGUE_BZ[1]))
+        t += prism_x([(ly1, lz0), (ly0, lz0), (ly0, lz1),
+                      (ly1, lz1 + LIP_RAMP)], tx0, tx0 + tdx)
+        tongues = t if tongues is None else tongues + t
+    return strip, tongues
 
 
 def ring(ribs=True, tongue=True):
@@ -559,8 +555,8 @@ def ring(ribs=True, tongue=True):
     # --- board bay
     part += _side_walls()
     part += _far_end()
-    wall, tongue_solid = _usb_end_wall()
-    part += wall
+    strip, tongue_solid = _usb_end_wall()
+    part += strip
     part += _collar()
     part += _rails(ribs=ribs)
 
@@ -602,10 +598,26 @@ def rail_ribs():
 
 
 def tongue_only():
-    """The snap tongue alone (the one compliant retention feature)."""
-    _, tongue = _usb_end_wall()
-    tongue.label = "snap_tongue"
-    return tongue
+    """The two snap tongues alone (the compliant retention features)."""
+    _, tongues = _usb_end_wall()
+    tongues.label = "snap_tongues"
+    return tongues
+
+
+def tongue_cam_zone():
+    """The volume a tongue's lip + 45 deg ramp occupies — the region the board
+    is DESIGNED to cam through on insertion.  Everything outside it must be
+    clear of the swept board."""
+    ly0 = bY(LIP_BX[1]) - 0.05
+    ly1 = bY(TONGUE_BX[1]) + 0.05
+    lz0 = bZ(LIP_BZ[1]) - 0.05
+    lz1 = bZ(LIP_BZ[0]) + LIP_RAMP + 0.05
+    out = None
+    for by0, by1 in TONGUE_BYS:
+        z = box_at(bX(by1) - 0.05, ly0, lz0, (by1 - by0) + 0.10,
+                   ly1 - ly0, lz1 - lz0)
+        out = z if out is None else out + z
+    return out
 
 
 def back_plate():

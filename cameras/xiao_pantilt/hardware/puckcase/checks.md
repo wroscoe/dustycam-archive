@@ -1,29 +1,27 @@
-# puckcase v2.1 — check output
+# puckcase v2.2 — check output
 
-Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`, exit 0.
-`check.py` implements DESIGN_v2.md §6 as amended by §9 (v2.1); see README.md
-"Deviations" for the places where §6's literal wording and §3's parameter
-tables disagree and which one the check follows.
+Run 2026-09-13 from `cameras/xiao_pantilt/hardware/puckcase/`, exit 0,
+**no warnings**.
 
-v2.1 cleared both of the v2.0 warnings: the microSD card is now fitted before
-insertion and sweeps clear (0.0000 mm³ at every tilt), and M2 × 12 engages the
-back plate by 3.000 with the tip 0.400 short of the pilot bottom.
+`check.py` implements DESIGN_v2.md §6 as amended by §9 (v2.1 and v2.2); see
+README.md "Deviations" for the places where §6's literal wording and §3's
+parameter tables disagree and which one the check follows.
 
-**One new, previously unmeasured conflict is reported as a WARNING**: the
-USB-C shell sweeps through the snap tongue's body during the insertion swing.
-That is a contract-level decision (DESIGN_v2 §9 D), not a geometry error, so
-it is warned rather than failed.
+v2.1 cleared the microSD card and the M2 × 12 engagement. v2.2 cleared the
+last one: the single central snap tongue, which the USB-C shell swept through,
+is replaced by two pillar tongues outside the shell's span — their bodies are
+0.0000 mm³ against the full swept board at every insertion angle and only
+their cam ramps are touched.
 
 ```
-$ ~/.claude/skills/cad/.venv/bin/python check.py
 ==============================================================================
-puckcase v2 — fail-closed fit check (DESIGN_v2.md §6)
+puckcase v2.2 — fail-closed fit check (DESIGN_v2.md §6 + §9)
 ==============================================================================
 
 -- 1. printable solids
 front_plate  solids=1 valid=True volume= 10801.14 mm^3
              bbox=(-0.000, -0.000, -0.000) .. (47.210, 78.500, 8.400)
-ring         solids=1 valid=True volume= 19362.50 mm^3
+ring         solids=1 valid=True volume= 19235.61 mm^3
              bbox=(-0.000, -0.000, -8.000) .. (47.210, 80.800, 26.360)
 back_plate   solids=1 valid=True volume= 17787.13 mm^3
              bbox=(-0.000, -0.000, 26.360) .. (47.210, 80.800, 37.860)
@@ -71,13 +69,10 @@ ring x back_plate: 0.00000 mm^3 (expect 0 — screws are the only contact)
   Y nominal            X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
   Y nominal            X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
   Y nominal            X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.20              X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.20              X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
-  Y +0.20              X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.40 (USB wall)   X -0.15          ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-  Y +0.40 (USB wall)   X 0.00           ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
-  Y +0.40 (USB wall)   X +0.15 (rails)  ring_rigid 0.0153/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
-board positions checked: 12/12   (cells are board/header interference, expect 0)
+  Y +0.20 (tongue faces, soft) X -0.15          ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+  Y +0.20 (tongue faces, soft) X 0.00           ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.1808
+  Y +0.20 (tongue faces, soft) X +0.15 (rails)  ring_rigid 0.0000/0.0000  front_plate 0.0000/0.0000  back_plate 0.0000/0.0000  tongue 0.0000  ribs 1.8450
+board positions checked: 9/9   (cells are board/header interference, expect 0)
   camera head (collar-located, nominal) x ring_rigid   0.0000 mm^3
   camera head (collar-located, nominal) x front_plate  0.0000 mm^3
   camera head (collar-located, nominal) x back_plate   0.0000 mm^3
@@ -85,18 +80,18 @@ board positions checked: 12/12   (cells are board/header interference, expect 0)
 -- 5. tilt insertion (board rotated about its far-edge PCB-back corner line)
    v2.1: the microSD card is FITTED and rides with the PCB
     0 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 1.1808 (deliberate crush)
+   -2 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.9091 (deliberate crush)
    -4 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.6431 (deliberate crush)
    -8 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.2146 (deliberate crush)
   -13 deg   ring_rigid 0.0000   back_plate 0.0000   card alone 0.0000   rail ribs 0.0334 (deliberate crush)
   far-edge groove at 13 deg: slot 1.500 vs 1.25*cos13 + 0.80*sin13 = 1.398
 
-   snap tongue during the swing (lip cam = designed, tongue BODY = must be 0):
-       0 deg   lip cam  0.0000   tongue body  0.0000
-      -2 deg   lip cam  0.4909   tongue body  0.9775
-      -4 deg   lip cam  0.6193   tongue body  2.1147
-      -8 deg   lip cam  0.0000   tongue body  4.7930
-     -13 deg   lip cam  0.1672   tongue body  6.6561
-WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.66 mm^3 at -13 deg, first contact at about -4 deg).  The shell stands 1.53 proud of the PCB's end edge and 4.2 tall, so once the USB end is lifted ~2 mm its rear corner is behind the PCB's back plane, at case Y 72.6..73.3 — past the tongue's back face (72.39).  Deflecting the tongue clear would need ~1.8 mm, three times its 0.6 design travel.  Any tongue inside the shell's X span (18.505..27.445) has this problem; the fix is to move retention to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and 13.575..17.955, both already proven clear of the whole swept board), which needs a contract decision.
+   snap tongues during the swing (cam ramp = designed contact, tongue BODY = must be 0):
+       0 deg   cam ramps  0.0000   tongue bodies  0.0000
+      -2 deg   cam ramps  1.3626   tongue bodies  0.0000
+      -4 deg   cam ramps  1.4618   tongue bodies  0.0000
+      -8 deg   cam ramps  0.0000   tongue bodies  0.0000
+     -13 deg   cam ramps  0.0000   tongue bodies  0.0000
 
 -- 6. named clearances (DESIGN_v2 §6.3)
   collar window -> head, per side                   0.300   (contract >= 0.15)
@@ -114,7 +109,7 @@ WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.6
   rib crest -> FPC socket (board y)                 0.220   (contract == 0.22)
   far-end wall -> expansion PCB overhang            0.350   (contract == 0.35)
   stop rib -> PCB far edge                          0.200   (contract == 0.20)
-  USB-end wall -> PCB end edge                      0.400   (contract == 0.40)
+  tongue face -> PCB end edge (soft +Y stop)        0.200   (contract == 0.20)
   card tip -> top wall inner face (roof)            4.000   (contract == 4.00)
   lens tip -> plate inner face (Z)                  1.000   (contract == 1.00)
   eave proud of the front plate face (Z)            8.000   (contract == 8.00)
@@ -129,13 +124,25 @@ WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.6
      button_rst               x all printed: 0.0000 mm^3
      button_boot              x all printed: 0.0000 mm^3
 
--- 7. snap tongue (DESIGN_v2 §6.5)
+-- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues in v2.2)
+  tongue 1 (board y -0.50..+3.90, case X 27.955..32.355, 4.40 wide)
+     lip bearing on the PCB back       1.1163 mm^2 (2.791 effective length)
+     on the STRAIGHT end edge           1.994 mm   (require >= 1.90; PCB corners are R1.906)
+     snap force at 0.6 deflection       1.46 N     (E = 2000 MPa, PETG)
+  tongue 2 (board y +13.88..+18.28, case X 13.575..17.975, 4.40 wide)
+     lip bearing on the PCB back       1.1163 mm^2 (2.791 effective length)
+     on the STRAIGHT end edge           1.994 mm   (require >= 1.90; PCB corners are R1.906)
+     snap force at 0.6 deflection       1.46 N     (E = 2000 MPa, PETG)
   lip reach over the PCB back edge                0.400   (contract == 0.40)
-  free gap beside the tongue, -X                  1.900   (contract >= 0.80)
-  free gap beside the tongue, +X                  3.800   (contract >= 0.80)
+  free gap, tongue 2 -> -X side wall              2.600   (contract >= 0.80)
+  free gap, tongue 1 -> +X side wall              1.000   (contract >= 0.80)
   tongue thickness                                0.900   (contract == 0.90)
   tongue free length                              8.700   (contract == 8.70)
+  clear of the USB-C shell, tongue 1 (board y)    0.510   (contract >= 0.50)
+  clear of the USB-C shell, tongue 2 (board y)    0.530   (contract >= 0.50)
   outer-fibre strain at 0.60 deflection (%)       1.070   (contract <= 1.50)
+  total snap force, both tongues (N)              2.923   (contract >= 0.00)
+  removal: press BOTH tongues outward through the back mouth
 
 -- 8. eave brow, card roof, screws
   eave brow angle above the lens axis (deg)      43.025   (contract >= 40.00)
@@ -157,8 +164,8 @@ WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.6
 -- 9. overhang audit: planar faces steeper than 45 deg from vertical, in each part's print orientation
   front_plate: 1 faces, 1.3 mm^2 (bed at Z 0.00, -Z is down; first-layer faces excluded)
          1.25 mm^2  n.down=1.00  X 20.61..26.61  Y 78.25..78.50  Z 2.40..2.40
-  ring: 14 faces, 244.9 mm^2 (bed at Z 26.36, +Z is down; first-layer faces excluded)
-       120.57 mm^2  n.down=1.00  X 12.57..33.36  Y 61.49..72.89  Z 8.36..8.36
+  ring: 14 faces, 253.4 mm^2 (bed at Z 26.36, +Z is down; first-layer faces excluded)
+       129.07 mm^2  n.down=1.00  X 12.57..33.36  Y 61.49..72.89  Z 8.36..8.36
         28.48 mm^2  n.down=1.00  X 1.80..45.41  Y 74.80..79.00  Z 2.40..2.40
         28.17 mm^2  n.down=1.00  X 6.00..41.21  Y 78.40..79.20  Z -6.50..-6.50
         20.50 mm^2  n.down=1.00  X 19.30..27.91  Y 63.46..72.06  Z 6.86..6.86
@@ -182,10 +189,7 @@ WARN the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.6
   microSD card fitted, swept through the tilt range x ring: 0.0000 mm^3  (v2.1: the bridge band is gone)
   head swung rigidly with the PCB at -4 deg x ring: 1.89 mm^3 (it is flex-mounted, so it is fed into the collar separately — see group 5)
 
--- checks run: printable solids + bounds; crush references; static pair sweep; ring x back_plate; pcb/header/head vs printed, nominal + play extremes; tilt insertion 0/-4/-8/-13 deg + groove + tongue swing + head entry; named clearances; 0.30 clearance proofs; snap tongue; brow / roof / screws; overhang audit; insertion feasibility
-
-1 WARNING(S) — contract-level, not geometry:
- * the USB-C shell sweeps THROUGH the snap tongue's body during the swing (6.66 mm^3 at -13 deg, first contact at about -4 deg).  The shell stands 1.53 proud of the PCB's end edge and 4.2 tall, so once the USB end is lifted ~2 mm its rear corner is behind the PCB's back plane, at case Y 72.6..73.3 — past the tongue's back face (72.39).  Deflecting the tongue clear would need ~1.8 mm, three times its 0.6 design travel.  Any tongue inside the shell's X span (18.505..27.445) has this problem; the fix is to move retention to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and 13.575..17.955, both already proven clear of the whole swept board), which needs a contract decision.
+-- checks run: printable solids + bounds; crush references; static pair sweep; ring x back_plate; pcb/header/head vs printed, nominal + play extremes; tilt insertion 0/-2/-4/-8/-13 deg + groove + tongue swing + head entry; named clearances; 0.30 clearance proofs; snap tongue; brow / roof / screws; overhang audit; insertion feasibility
 
 CHECK PASSED
 exit 0

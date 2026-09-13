@@ -242,15 +242,42 @@ axes is clear from the front mouth (Ø5.5 column, Z 2.40..17.36, 0 mm³).
    −4°). The **card is not** separate any more: since amendment A it is fitted
    before insertion and rides with the PCB through every sweep.
 
-### D. Open against this contract
-**The snap tongue cannot survive the swing.** The USB-C shell stands 1.53
-proud of the PCB's end edge and is 4.2 tall, so once the USB end is lifted
-~2 mm its rear corner is behind the PCB's back plane at case Y 72.6..73.3 —
-past the tongue's back face (72.39). Measured tongue-body interference is
-0.98 mm³ at −2°, 2.11 at −4°, 4.79 at −8°, 6.66 at −13°; clearing it would
-need ~1.8 mm of deflection against a 0.6 design travel. Any tongue inside the
-shell's X span (18.505..27.445) has this problem. The fix is to move retention
-to a pair of tongues cut from the USB-end pillars (X 29.655..32.355 and
-13.575..17.955, both already proven clear of the whole swept board), at the
-cost of the rigid +Y stop over their width — **it needs a decision**, so v2.1
-ships the central tongue as specified and `check.py` reports the conflict.
+### D. v2.2 — the snap tongue moves to the pillars (2026-09-13)
+v2.1's single central tongue could not survive insertion: the USB-C shell
+stands 1.53 proud of the PCB's end edge and is 4.2 tall, so once the USB end
+is lifted ~2 mm its rear corner is behind the PCB's back plane at case
+Y 72.6..73.3 — past the tongue's back face. Measured tongue-body interference
+was 0.98 mm³ at −2° rising to 6.66 at −13°, needing ~1.8 mm of deflection
+against 0.6 of design travel. Any tongue inside the shell's board-y span
+(4.41..13.35) has this problem. So:
+
+- **the central tongue and its slits are deleted**;
+- **each USB-end pillar becomes a tongue over its whole width** and extends
+  1.7 into the opening so its lip lands on the *straight* part of the PCB's end
+  edge (the R1.906 corners leave straight edge only for board y 1.906..15.874):
+  **tongue A board y −0.50..3.90** (case X 27.955..32.355), **tongue B
+  y 13.88..18.28** (case X 13.575..17.975), both 4.40 wide, both ≥ 0.50 clear
+  of the shell span (0.510 and 0.530);
+- thickness 0.9 at board x −1.1..−0.2, root in the z −9.0..−8.8 strip (which
+  now runs wall to wall and ties the side walls together at the bed), top =
+  the lip at z −0.6..−0.1 reaching x +0.4 with the 45° ramp behind it;
+- **above board z −0.1 there is no wall at the USB end at all**: the opening is
+  the full bay width from the lip level to the collar's back face (z 9.0), and
+  the collar sheet bridges wall to wall, 20.8 mm, as in v2.0 before the
+  pillars;
+- **there is no rigid +Y stop any more.** The tongues' faces at board x −0.2
+  are a soft +Y stop, so the board's Y play is **0.20 to the far-end stop ribs
+  and 0.20 to the tongue faces**;
+- removal: press **both** tongues outward through the back mouth.
+
+Measured: tongue bodies 0.0000 mm³ against the full swept board at
+0/−2/−4/−8/−13°; only the cam ramps engage (1.36 mm³ at −2°, 1.46 at −4°,
+0 elsewhere). Lip bearing on the PCB back 1.1163 mm² per tongue (2.791
+effective length), of which 1.994 mm is on the straight end edge. Strain
+1.070 % at 0.6 of deflection; snap force 1.46 N per tongue, 2.92 N total
+(E = 2000 MPa, PETG).
+
+### E. Open against this contract
+Nothing. `check.py` passes with no warnings. The remaining risks are process,
+not geometry — see README "Open items" (the 0.2 mm root ligament, the 20.8 mm
+collar bridge, the assumed header geometry).

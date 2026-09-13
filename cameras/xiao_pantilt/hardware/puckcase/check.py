@@ -142,7 +142,7 @@ def overhang_faces(part, up_is_minus_z, bed_z):
 
 def main():
     print("=" * 78)
-    print("puckcase v2 — fail-closed fit check (DESIGN_v2.md §6)")
+    print("puckcase v2.2 — fail-closed fit check (DESIGN_v2.md §6 + §9)")
     print("=" * 78)
 
     # ------------------------------------------------------------------
@@ -269,8 +269,10 @@ def main():
     # position the board cannot reach (it is 0.10 inside the stop ribs).  The
     # sweep uses the true stop faces instead, which is a superset of the
     # reachable set.
+    # v2.2: there is no rigid +Y stop.  Y travel is 0.20 to the far-end stop
+    # ribs and 0.20 to the two tongue faces (a soft stop).
     ALONG = [("-0.20 (stop ribs)", -0.20), ("nominal", 0.0),
-             ("+0.20", 0.20), ("+0.40 (USB wall)", 0.40)]
+             ("+0.20 (tongue faces, soft)", 0.20)]
     ACROSS = [("-0.15", -0.15), ("0.00", 0.0), ("+0.15 (rails)", 0.15)]
     runs = 0
     for ytag, dy in ALONG:
@@ -324,7 +326,7 @@ def main():
           "corner line)")
     print("   v2.1: the microSD card is FITTED and rides with the PCB")
     tilt_runs = 0
-    for ang in (0, -4, -8, -13):
+    for ang in (0, -2, -4, -8, -13):
         pre = None if ang == 0 else L.tilt_loc(ang)
         b = L.xiao_vendor(pre=pre, parts="pcb", label=f"pcb_tilt_{ang}")
         c = L.xiao_vendor(pre=pre, parts="card", label=f"card_tilt_{ang}")
@@ -344,7 +346,7 @@ def main():
             fail(f"tilt {ang} deg rail crush = {crush:.4f} mm^3")
         tilt_runs += 1
         print(f"  {ang:3d} deg   " + "   ".join(row))
-    if tilt_runs != 4:
+    if tilt_runs != 5:
         fail("not every tilt angle was checked")
 
     # the far edge in the groove at 13 deg: hook underside -> ledge face
@@ -355,39 +357,29 @@ def main():
     if slot < need:
         fail(f"groove {slot:.3f} < required {need:.3f}")
 
-    # the snap tongue during the swing: the lip cam is designed, the BODY is not
-    print("\n   snap tongue during the swing (lip cam = designed, "
+    # the two snap tongues during the swing: their cam ramps are designed to
+    # be pushed, every other part of them must be clear of the swept board
+    print("\n   snap tongues during the swing (cam ramp = designed contact, "
           "tongue BODY = must be 0):")
-    lip_zone = L.box_at(L.bX(L.TONGUE_BY[1]), L.bY(L.LIP_BX[1]) - 0.10,
-                        L.bZ(L.LIP_BZ[0]) - 0.10,
-                        L.TONGUE_BY[1] - L.TONGUE_BY[0],
-                        (L.bY(L.TONGUE_BX[1]) - L.bY(L.LIP_BX[1])) + 0.10,
-                        (L.bZ(L.LIP_BZ[1]) + L.LIP_RAMP + 0.10)
-                        - (L.bZ(L.LIP_BZ[0]) - 0.10))
-    body = tongue - lip_zone
-    worst_body = 0.0
+    body = tongue - L.tongue_cam_zone()
+    body.label = "tongue_bodies"
+    cam_runs = 0
     for ang in (0, -2, -4, -8, -13):
         pre = None if ang == 0 else L.tilt_loc(ang)
         b = L.xiao_vendor(pre=pre, parts="pcb", label=f"pcb_{ang}")
         bv = intersect_vol(body, b)
-        lv = intersect_vol(tongue, b) - bv
-        worst_body = max(worst_body, bv)
-        print(f"     {ang:3d} deg   lip cam {lv:7.4f}   tongue body {bv:7.4f}")
-    if worst_body > CONTACT_TOL:
-        warn("the USB-C shell sweeps THROUGH the snap tongue's body during the "
-             f"swing ({worst_body:.2f} mm^3 at -13 deg, first contact at about "
-             "-4 deg).  The shell stands 1.53 proud of the PCB's end edge and "
-             "4.2 tall, so once the USB end is lifted ~2 mm its rear corner is "
-             "behind the PCB's back plane, at case Y 72.6..73.3 — past the "
-             "tongue's back face (72.39).  Deflecting the tongue clear would "
-             "need ~1.8 mm, three times its 0.6 design travel.  Any tongue "
-             "inside the shell's X span (18.505..27.445) has this problem; the "
-             "fix is to move retention to a pair of tongues cut from the "
-             "USB-end pillars (X 29.655..32.355 and 13.575..17.955, both "
-             "already proven clear of the whole swept board), which needs a "
-             "contract decision.")
+        cv = intersect_vol(tongue, b) - bv
+        cam_runs += 1
+        print(f"     {ang:3d} deg   cam ramps {cv:7.4f}   tongue bodies "
+              f"{bv:7.4f}")
+        if bv > TOL:
+            fail(f"tongue body x swept board at {ang} deg = {bv:.4f} mm^3")
+        if cv > 4.0:
+            fail(f"tongue cam at {ang} deg = {cv:.4f} mm^3 (expect < 4)")
+    if cam_runs != 5:
+        fail("tongue swing not checked at every angle")
 
-    note("tilt insertion 0/-4/-8/-13 deg + groove + tongue swing + head entry")
+    note("tilt insertion 0/-2/-4/-8/-13 deg + groove + tongue swing + head entry")
 
     # ------------------------------------------------------------------
     # 6. named clearances
@@ -422,7 +414,9 @@ def main():
         ("far-end wall -> expansion PCB overhang", L.FAR_BX[0] - B.EXP[2],
          0.35, "=="),
         ("stop rib -> PCB far edge", L.STOP_BX[0] - L.PCB_L, 0.20, "=="),
-        ("USB-end wall -> PCB end edge", -L.USB_BX[1], 0.40, "=="),
+        # v2.2: the wall is gone; the tongue faces are a soft +Y stop
+        ("tongue face -> PCB end edge (soft +Y stop)", -L.TONGUE_BX[1],
+         0.20, "=="),
         ("card tip -> top wall inner face (roof)", L.CARD_ROOF, 4.00, "=="),
         ("lens tip -> plate inner face (Z)", L.LENS_TIP_Z - L.PLATE_T, 1.00, "=="),
         ("eave proud of the front plate face (Z)", -L.Z_EAVE, 8.00, "=="),
@@ -479,17 +473,55 @@ def main():
     # ------------------------------------------------------------------
     # 7. the snap tongue
     # ------------------------------------------------------------------
-    print("\n-- 7. snap tongue (DESIGN_v2 §6.5)")
+    print("\n-- 7. snap tongues (DESIGN_v2 §6.5, two pillar tongues in v2.2)")
+    pcb_solid = next(sld for sld in L.xiao_envelope().children
+                     if sld.label == "env_base_pcb")
     reach = L.LIP_BX[1]
-    slit_lo = L.bX(L.TONGUE_BY[1]) - L.bX(L.OPEN_BY[1])
-    slit_hi = L.bX(L.OPEN_BY[0]) - L.bX(L.TONGUE_BY[0])
     strain = 3.0 * L.TONGUE_T * L.TONGUE_DEFL / (2.0 * L.TONGUE_L ** 2) * 100.0
+    inertia_per_mm = L.TONGUE_T ** 3 / 12.0
+    total_force = 0.0
+    n_tongue = 0
+    edges = [_bb(t) for t in tongue.solids()]
+    for i, (by0, by1) in enumerate(L.TONGUE_BYS):
+        col = L.box_at(L.bX(by1), L.bY(reach), L.Z_B0 - 5.0,
+                       by1 - by0, reach, 10.0)
+        area = intersect_vol(col, pcb_solid) / L.PCB_T
+        eff = area / reach
+        lo = max(by0, L.PCB_STRAIGHT_BY[0])
+        hi = min(by1, L.PCB_STRAIGHT_BY[1])
+        straight = max(0.0, hi - lo)
+        width = by1 - by0
+        force = (3.0 * L.E_PETG * width * inertia_per_mm * L.TONGUE_DEFL
+                 / L.TONGUE_L ** 3)
+        total_force += force
+        n_tongue += 1
+        print(f"  tongue {i + 1} (board y {by0:+.2f}..{by1:+.2f}, "
+              f"case X {L.bX(by1):.3f}..{L.bX(by0):.3f}, {width:.2f} wide)")
+        print(f"     lip bearing on the PCB back      {area:7.4f} mm^2 "
+              f"({eff:.3f} effective length)")
+        print(f"     on the STRAIGHT end edge         {straight:7.3f} mm   "
+              f"(require >= 1.90; PCB corners are R{L.PCB_R})")
+        print(f"     snap force at {L.TONGUE_DEFL} deflection    "
+              f"{force:7.2f} N     (E = {L.E_PETG:.0f} MPa, PETG)")
+        if straight < 1.90 - 1e-9:
+            fail(f"tongue {i + 1} straight-edge overlap {straight:.3f} < 1.90")
+        if area < 1.0:
+            fail(f"tongue {i + 1} lip bearing {area:.4f} mm^2 < 1.0")
+    if n_tongue != 2:
+        fail(f"only {n_tongue}/2 tongues checked")
+    gap_lo = min(e[0] for e in edges) - L.BAY_IN_X[0]
+    gap_hi = L.BAY_IN_X[1] - max(e[3] for e in edges)
     t_rows = [("lip reach over the PCB back edge", reach, 0.40, "=="),
-              ("free gap beside the tongue, -X", slit_lo, 0.80, ">="),
-              ("free gap beside the tongue, +X", slit_hi, 0.80, ">="),
+              ("free gap, tongue 2 -> -X side wall", gap_lo, 0.80, ">="),
+              ("free gap, tongue 1 -> +X side wall", gap_hi, 0.80, ">="),
               ("tongue thickness", L.TONGUE_T, 0.90, "=="),
               ("tongue free length", L.TONGUE_L, 8.70, "=="),
-              ("outer-fibre strain at 0.60 deflection (%)", strain, 1.50, "<=")]
+              ("clear of the USB-C shell, tongue 1 (board y)",
+               B.USB[1] - L.TONGUE_BYS[0][1], 0.50, ">="),
+              ("clear of the USB-C shell, tongue 2 (board y)",
+               L.TONGUE_BYS[1][0] - B.USB[3], 0.50, ">="),
+              ("outer-fibre strain at 0.60 deflection (%)", strain, 1.50, "<="),
+              ("total snap force, both tongues (N)", total_force, 0.0, ">=")]
     for name, got, want, op in t_rows:
         print(f"  {name:44s} {got:8.3f}   (contract {op} {want:.2f})")
         if op == "==" and abs(got - want) > 0.021:
@@ -498,6 +530,7 @@ def main():
             fail(f"{name}: {got:.3f} < {want:.2f}")
         if op == "<=" and got > want + 1e-9:
             fail(f"{name}: {got:.3f} > {want:.2f}")
+    print("  removal: press BOTH tongues outward through the back mouth")
     note("snap tongue")
 
     # ------------------------------------------------------------------
