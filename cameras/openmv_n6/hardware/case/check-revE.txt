@@ -1,14 +1,14 @@
-front_cup    solids=1 valid=True volume=35663.71 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -11.6000001 <= y <= 49.28000010000001, -27.370000100000006 <= z <= 25.9000001
-cam_plate    solids=1 valid=True volume=10761.93 mm^3 bbox=bbox: -1.7020001000001652 <= x <= 40.31200010000017, -9.0000001 <= y <= 46.6800001, -8.5000001 <= z <= 0.0
-back_cup     solids=1 valid=True volume=12020.50 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -11.6000001 <= y <= 49.28000010000001, -29.7700001 <= z <= -8.499999899999999
-29 occurrences, 74 bound-overlapping pairs
+front_cup    solids=1 valid=True volume=36507.25 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -13.6000001 <= y <= 49.2800001, -27.370000100000006 <= z <= 25.900000100000003
+cam_plate    solids=1 valid=True volume=11181.75 mm^3 bbox=bbox: -1.7020001000001652 <= x <= 40.31200010000017, -11.0000001 <= y <= 46.68000010000001, -8.5000001 <= z <= 0.0
+back_cup     solids=1 valid=True volume=12366.85 mm^3 bbox=bbox: -4.302000100000096 <= x <= 42.91200010000011, -13.6000001 <= y <= 49.2800001, -29.770000100000004 <= z <= -8.4999999
+29 occurrences, 75 bound-overlapping pairs
   front_cup x back_cup: 18.013 mm^3  (designed crush)
-static pairs checked: 74/74
+static pairs checked: 75/75
 jack end -> charger edge (Y): 8.00
-jack end -> battery (Y):      3.23
+jack end -> battery (Y):      5.23
 jack nut top -> plate back (Z): 3.43
 jack nut bottom -> bay floor (Z): 3.43
 charger comps -> battery (Z): -6.50 (negative = clear)
-slide-in sweep: 24 moving occurrences, 31 steps of 1.0 mm, vs front_cup + jack
+slide-in sweep: 24 moving occurrences (112 solids), 31 steps of 1.0 mm, vs front_cup + jack
 sweep steps completed: 31/31, worst intersection 0.00000 mm^3
 CHECK PASSED

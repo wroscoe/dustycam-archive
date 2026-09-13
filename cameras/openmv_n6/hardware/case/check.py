@@ -143,14 +143,18 @@ def main():
     if not quick:
         moving_labels = {o.label for o in refs} - {"dc_jack_mock", "battery_30x40x6_mock", "usb_plug_mock"}
         moving = [plate] + [o for o in refs if o.label in moving_labels]
-        group = Compound(children=moving)
+        # Flatten to solids: intersect() ignores a Location applied to a
+        # Compound, so every solid is moved individually per step.
+        moving_solids = []
+        for o in moving:
+            moving_solids.extend(o.solids())
         static = [printed[0], jack]
         steps = [k * 1.0 for k in range(0, 31)]
-        print(f"\nslide-in sweep: {len(moving)} moving occurrences, {len(steps)} steps of 1.0 mm, vs front_cup + jack")
+        print(f"\nslide-in sweep: {len(moving)} moving occurrences ({len(moving_solids)} solids), {len(steps)} steps of 1.0 mm, vs front_cup + jack")
         worst = 0.0
         done = 0
         for d in steps:
-            g = Pos(0, 0, -d) * group
+            g = Compound(children=[Pos(0, 0, -d) * s for s in moving_solids])
             for s in static:
                 v = intersect_vol(s, g)
                 worst = max(worst, v)

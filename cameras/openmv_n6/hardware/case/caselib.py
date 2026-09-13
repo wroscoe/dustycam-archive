@@ -61,8 +61,11 @@ BOARD_CLR = 0.60            # board -> front cup bore, per side
 CARD_CH = 3.60              # +X bore side runs this wide instead (microSD card
                             # channel — see the note above SD_YC below)
 SHOULDER = 1.20             # ledge width the cam plate bears on
-WIRE_CH = 8.00              # battery-lead channel at the USB (-Y) end: JST-PH
-                            # plug + lead loop need real room (rev C, was 4.00)
+WIRE_CH = 10.00             # lead channel at the USB (-Y) end.  Rev C: 8.00 for
+                            # the JST-PH plug + loop.  Rev E3: 10.00 so the DC
+                            # jack's 13.0 reach ends 0.6 short of the board edge
+                            # — the corrected slide-in sweep found the jack body
+                            # in the N6 PCB's insertion path at 8.00.
 
 # ---------------------------------------------------------------------------
 # Battery bay — rev E2: the bay depth is set directly, for jack room, and no
@@ -197,12 +200,12 @@ JACK_XC = CX
 # Centred in the window between the plate back (-8.50) and the bay floor
 # (-27.37): 18.87 tall, so a Ø12 nut has 3.4 each side.
 JACK_ZC = (Z_PLATE_BOT + Z_SEAM) / 2        # -17.935
-JACK_Y_END = OUT_Y0 + JACK_REACH     # 1.40, past the N6 board edge
+JACK_Y_END = OUT_Y0 + JACK_REACH     # -0.60, short of the N6 board edge
 NOTCH_W = JACK_NUT_D + 1.00          # 13.0 — plate and lip notches, 0.5/side
-PLATE_NOTCH_Y1 = JACK_Y_END + 1.50   # 2.90, plate slides past the installed jack
+PLATE_NOTCH_Y1 = JACK_Y_END + 1.50   # 0.90, plate slides past the installed jack
 
 CHG_X0 = CX - CHG_W / 2              # centred over the jack
-CHG_Y0 = JACK_Y_END + 8.00           # 9.40: JST plugs need ~8 in front of the edge
+CHG_Y0 = JACK_Y_END + 8.00           # 7.40: JST plugs need ~8 in front of the edge
 CHG_X1, CHG_Y1 = CHG_X0 + CHG_W, CHG_Y0 + CHG_L
 CHG_JST_XC = [CHG_X0 + x for x in CHG_JST_XC_LOCAL]
 PLUG_W, PLUG_H, PLUG_OUT = 5.90, 4.50, 6.00  # JST-PH plug envelope (estimated)
@@ -436,7 +439,12 @@ def charger_mock():
     """Adafruit 6091 bq25185, vendor STEP, placed bare-side against the plate
     back with components toward -Z (the battery) and the JST edge toward -Y.
     Rot 180 about Y keeps it a proper rotation (x mirrored, z flipped)."""
-    part = Pos(CHG_X1, CHG_Y0, Z_PLATE_BOT) * Rot(0, 180, 0) * _charger_step()
+    # The vendor STEP is a 56-solid Compound.  In this build123d a Location
+    # applied to a Compound (Pos/Rot/.moved) is honoured by bounding_box() but
+    # silently ignored by intersect(), so bake the transform into each solid
+    # before compounding (verified 2026-09-13 with a two-box repro).
+    loc = Pos(CHG_X1, CHG_Y0, Z_PLATE_BOT) * Rot(0, 180, 0)
+    part = Compound(children=[loc * s for s in _charger_step().solids()])
     part.label = "charger_bq25185"
     return part
 

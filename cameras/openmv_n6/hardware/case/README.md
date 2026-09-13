@@ -1,6 +1,6 @@
 # OpenMV Cam N6 + bq25185 solar charger + 1S LiPo — 3-part printed case
 
-Overall **47.21 × 60.88 × 55.67 mm** (rev E2; rev D was 42.30 deep), lens
+Overall **47.21 × 62.88 × 55.67 mm** (rev E3; rev D was 60.88 × 42.30), lens
 barrel stands **5.35 mm proud** of the front face. All mm. Frame is the N6
 board frame from `ref/DIMENSIONS.md` (origin = PCB bottom-left corner on the
 PCB bottom face, +Y toward the lens, +Z along the optical axis). The bottom
@@ -13,7 +13,7 @@ it.
 |---|---|---|---|
 | Front cup | `front-cup.step` / `.stl` | **Face down** (lens face on the bed) | 35.7 cm³ |
 | Cam plate | `cam-plate.step` / `.stl` | **Flat, bosses up** (back face on the bed) | 10.8 cm³ |
-| Back cup | `back-cup.step` / `.stl` | **Back face down** | 12.0 cm³ |
+| Back cup | `back-cup.step` / `.stl` | **Back face down** | 12.4 cm³ |
 
 `n6-case.step` is the assembled view. `fitcheck.step` is a review-only
 cutaway with the real N6 model, the vendor bq25185 model, the jack envelope,
@@ -71,6 +71,21 @@ back cup   ── 18.9 lip presses into the socket and pushes the plate up
 Disassembly: pull the back cup, lift the pouch, then board + plate + charger
 come straight out past the jack. The jack never has to come out.
 
+## Rev E3 (2026-09-13) — check bug found, jack pulled back 2 mm
+
+The rev E/E2 "validated" claims were partly false. In this build123d a
+`Pos`/`Rot` applied to a multi-solid `Compound` is honoured by
+`bounding_box()` but silently ignored by `intersect()`, so the vendor
+charger model was intersected at the origin and the slide-in sweep (which
+moved a compound group) never actually moved anything. `caselib.charger_mock`
+now bakes the transform into each solid and `check.py` moves solids
+individually. The real sweep then showed the jack body, which reached 1.4 mm
+past the N6 board edge, sitting in the PCB's insertion path. Fix: `WIRE_CH`
+8.00 → 10.00 (case +2 in Y, 62.88), so the jack's 13.0 reach now ends
+0.6 short of the board edge (y = −0.60); the charger, plate notch and plug
+room follow parametrically. Static pairs and the corrected 31-step sweep
+pass.
+
 ## Rev E2 (2026-09-13) — 5 mm deeper for the jack
 
 `BAY_DEPTH` is now a direct parameter (12.50, was 7.50 derived from the
@@ -96,7 +111,8 @@ keep the battery in the back part, make the case deeper to suit.
   The USB-C is enclosed against the +Y end of the bay. The DC/solar input on
   this board is a pair of solder pads, not a connector.
 - **Jack** at x = 19.31 through the 2.40 socket-zone wall, Ø7.52, reaching
-  y = 1.40, centred in the window between the plate back and the bay floor.
+  y = −0.60 (E3; was 1.40), centred in the window between the plate back and
+  the bay floor.
 - **Notches** 13.0 wide (nut Ø12 + 0.5/side) in the plate's −Y edge (to
   y = 2.90) and through the full height of the back cup's −Y lip wall. The
   −Y crush rib became a pair at x = CX ± 12; 7 ribs total.
@@ -157,7 +173,7 @@ Walls 2.40 (6 perimeters); lip wall 1.60 (4 perimeters); plate 5.00.
 
 ## Battery bay
 
-**38.91 × 52.58** in plan, **12.50** deep behind the charger's component
+**38.91 × 54.58** in plan, **12.50** deep behind the charger's component
 plane (`BAY_DEPTH`, set for jack room, not by the pouch). The 6 mm pouch
 lies on the back cup floor at the +Y end with 6.5 mm of air above it and
 nothing locating it.
@@ -175,7 +191,8 @@ ring captive behind the Ø16.00 aperture).
 Run with the cad skill's venv:
 `~/.claude/skills/cad/.venv/bin/python check.py` (`--quick` skips the sweep).
 
-- 29 labelled occurrences, 74 bound-overlapping pairs, all intersected.
+- 29 labelled occurrences, 75 bound-overlapping pairs, all intersected
+  (charger model placed per-solid, see rev E3).
 - 0 interference between any case part and any of the 17 N6 solids, the
   56-solid vendor charger model, the jack envelope, the battery, the two JST
   plug mocks, the LOAD and BATT cable mocks, the seated SD card, the seated
@@ -184,7 +201,8 @@ Run with the cad skill's venv:
   interference (7 ribs). Front cup ∩ plate and back cup ∩ plate both 0.
 - Jack nut 3.43 clear of the plate back and of the bay floor.
 - 31-step, 1.0 mm slide-in sweep of plate + N6 + charger + plugs + cables +
-  card against the front cup and the installed jack: 0.00000 mm³ worst case.
+  card (112 solids, moved individually) against the front cup and the
+  installed jack: 0.00000 mm³ worst case.
 - All three parts are single valid solids.
 - The seven non-zero pairs *inside* the reference set (N6 PCB vs its own
   mid-mount USB-C / press-in spacers, plug-in-socket, card-in-socket,
