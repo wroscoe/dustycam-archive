@@ -10,8 +10,16 @@ v2 (DESIGN_v2.md) redesigns the board bay after the v1 coupon print:
     BACK_GAP grows from 3.0 to 9.0.
   * the board is held by its two header-free ends (hooks + centre ledge at the
     far end, bridge + snap tongue at the USB end), by the expansion PCB's long
-    edges (side rails with crush ribs) and by the camera head (collar).
+    edges (side rails with crush ribs) and by the camera head.
   * the board drops 3.5 (BOARD_DROP) so the SD card gets a 4.0 roof.
+
+v2.4 (DESIGN_v2.md §10) moves the lens collar off the RING and onto the FRONT
+PLATE as the head window boss: on the ring every one of its horizontal faces
+pointed at the bed (180 of the ring's 253.4 mm^2 of overhang, including a
+20.8 mm bridge carrying the lens location); on the plate the identical faces
+are floors.  With it gone the side walls collapse to one Z band, and the
+front-mouth lead-in, the drip groove and the wire notch lose their last three
+downward faces: the ring audits at 9.3 mm^2 and the plate is unchanged at 1.3.
 
 Frame (case-local, per DESIGN.md):
   X  0 at the -X outer face .. 47.21
@@ -182,20 +190,23 @@ SIDE_CLR = 1.50            # wall inner face from the PCB long edge
 BAY_T = 1.60               # bay wall thickness
 BAY_BX0, BAY_BX1 = -7.11, 23.20         # board-x run of the side walls
 SIDE_BY = (-SIDE_CLR - BAY_T, -SIDE_CLR)               # -3.10 .. -1.50
-SIDE_BZ = (-9.00, 11.80)                # to the collar's front face
+# v2.4: ONE Z band.  The lens collar has moved off the ring onto the front
+# plate (see front_plate()'s head window boss), so nothing needs the walls
+# forward of the front lip band any more: they run from the bed (board
+# z -9.00 = case Z_PLATE) to SIDE_BACK_Z0 (case Z 8.70 = board z 8.66),
+# 0.30 clear of the front lip nose, over the WHOLE Y run.
+SIDE_BZ = (-9.00, 8.66)
 # the two side walls' INNER faces (the bay's clear width)
 BAY_IN_X = (X_B0 - (BOARD_MIRROR_Y - SIDE_BY[1]), X_B0 - SIDE_BY[1])   # 12.575, 33.355
 
-# the front plate's top lip band (case Y LIP_Y1-LIP_WALL .. LIP_Y1, Z .. 8.40)
-# runs right through the side walls' forward extension -> clip it.
 # DEVIATION (v2): DESIGN_v2 gives the side walls one Z range (5.56..26.36) over
 # the whole run Y 48.09..78.40.  At Y > 76.65 that is inside the front plate's
-# lip band (Z 2.40..8.40), a hard interference DESIGN_v2 does not mention.  The
-# walls keep the full forward reach only where the collar needs it (Y <= 76.35,
-# 0.30 clear of the lip band) and start at Z 8.70 (0.30 clear of the lip nose)
-# for the last 2.05 up to the top wall.
+# lip band (Z 2.40..8.40), a hard interference DESIGN_v2 does not mention.
+# v2.0..v2.3 kept the full forward reach where the collar needed it (Y <= 76.35)
+# and started at Z 8.70 only for the last 2.05 up to the top wall.  v2.4 deletes
+# the collar (it is now the front plate's head window boss), so the whole wall
+# starts at Z 8.70, 0.30 clear of the front lip nose, over the whole Y run.
 SIDE_LIP_CLR = 0.30
-SIDE_FWD_Y1 = (LIP_Y1 - LIP_WALL) - SIDE_LIP_CLR       # 76.35
 SIDE_BACK_Z0 = FRONT_LIP_Z1 + SIDE_LIP_CLR             # 8.70
 
 # DEVIATION (v2): DESIGN_v2 §3 calls the far-end wall "low ... so the antenna
@@ -252,7 +263,9 @@ LEDGE_RAMP_DEG = 45.0
 # instead of the tongue's blade.
 USB_STRIP_BX = (-1.60, -0.20)           # root strip, board x (1.40 thick)
 USB_STRIP_BZ = (-9.00, -7.50)           # 1.50 tall
-USB_OPEN_BZ = (-0.10, 9.00)             # fully open from the lip to the collar
+# v2.4: the collar is gone, so the USB end is open from the lip level all the
+# way to the front lip band — board z -0.10 up to SIDE_BZ[1] (case Z 8.70).
+USB_OPEN_BZ = (-0.10, SIDE_BZ[1])
 
 TONGUE_BYS = ((-0.50, 3.90), (13.88, 18.28))   # the two tongues, board y
 TONGUE_BX = (-1.00, -0.20)              # v2.3: 0.8 thick
@@ -277,15 +290,29 @@ RIB_PROUD = 0.25                        # -> 0.10 nominal crush per side
 RIB_H = 1.40
 RIB_BX = ((8.50, 12.50), (13.00, 17.00))
 
-COLLAR_BX = (-1.60, 9.80)               # collar plate
-COLLAR_FRONT_BX1 = -2.30                # front part reaches further
-COLLAR_BZ = (9.00, 11.80)
+# --- head window (v2.4: on the FRONT PLATE, not the ring) ------------------
+# Up to v2.3 these described `_collar()`, a sheet spanning the ring's bay wall
+# to wall at case Z 5.56..8.36.  Every horizontal face of it pointed +Z, i.e.
+# straight down in the ring's print orientation: 180 mm^2 of the ring's
+# 253.4 mm^2 overhang budget, including a 20.8 mm unsupported bridge carrying
+# the lens location.  v2.4 moves the same window onto the front plate as a
+# boss growing OUT of the plate's inner face, where the identical faces point
+# away from the bed and are floors.  The names and the numbers are unchanged;
+# only the part they belong to is.  COLLAR_BZ[0] is now the boss MOUTH (the
+# back face the head enters through) and COLLAR_BZ[1] the plate's inner face
+# side of the old sheet (the boss actually starts at PLATE_T, further forward).
+COLLAR_BX = (-1.60, 9.80)               # old collar sheet extent (ring)
+COLLAR_FRONT_BX1 = -2.30                # old front part (deleted with the ring
+#                                         sheet; the boss is a plain square)
+COLLAR_BZ = (9.00, 11.80)               # board z of the mouth (9.00 -> Z 8.36)
 COLLAR_STEP_BZ = 10.50                  # window/bore step = head top + 0.2
 COLLAR_WIN = 8.60                       # square window around the head
-COLLAR_WIN_CHAMFER = 0.60
+COLLAR_WIN_CHAMFER = 0.60               # 45 deg lead-in at the mouth
 COLLAR_BORE_D = 8.25                    # barrel 7.84 + 0.4
-FPC_RELIEF_BX = (7.83, 9.80)
-FPC_RELIEF_BZ = 9.50
+HEADWIN_WALL = 1.60                     # v2.4: wall round the window ->
+#                                         11.80 square boss on the plate
+FPC_RELIEF_BX = (7.83, 9.80)            # the boss's -Y wall is cut back here
+FPC_RELIEF_BZ = 9.50                    # to board z 9.50 (case Z 7.86)
 
 LENS_HOLE_D = 7.50
 LENS_CHAMFER = 0.60
@@ -383,11 +410,53 @@ def _front_ribs(z0, height):
     return out
 
 
+def _head_window_boss():
+    """v2.4: the lens collar, moved off the ring onto the front plate.
+
+    A HEADWIN_WALL-walled square boss growing from the plate's INNER face
+    (Z = PLATE_T) to the old collar's mouth (Z = bZ(COLLAR_BZ[0]) = 8.36),
+    centred on the lens axis.  It captures the 8 x 8 camera head in a
+    COLLAR_WIN window with a 45 deg lead-in at the mouth, steps at the head
+    top (COLLAR_STEP_BZ) and bores COLLAR_BORE_D for the barrel down to the
+    plate's own lens hole.
+
+    Print orientation: the plate prints outer-face down, so every horizontal
+    face here (the Ø7.5/Ø8.25 annulus at PLATE_T, the step at 6.86, the FPC
+    relief at 7.86, the mouth at 8.36) points AWAY from the bed — a floor,
+    not an overhang.  On the ring the same faces cost 180 mm^2 of overhang.
+    """
+    w, c = COLLAR_WIN, COLLAR_WIN_CHAMFER
+    ow = w + 2 * HEADWIN_WALL                               # 11.80 square
+    z_mouth = bZ(COLLAR_BZ[0])                              # 8.36
+    z_step = bZ(COLLAR_STEP_BZ)                             # 6.86
+    boss = box_at(LENS_XC - ow / 2, LENS_YC - ow / 2, PLATE_T,
+                  ow, ow, z_mouth - PLATE_T)
+
+    # Ø8.25 barrel bore, plate inner face up to the step (the plate's own
+    # Ø7.5 hole stays below it; the annulus at PLATE_T is a floor)
+    boss -= cyl_at(LENS_XC, LENS_YC, PLATE_T - 1.0, COLLAR_BORE_D,
+                   (z_step - PLATE_T) + 1.0)
+
+    # square window round the head, with the 45 deg lead-in at the mouth
+    boss -= box_at(LENS_XC - w / 2, LENS_YC - w / 2, z_step, w, w,
+                   (z_mouth - z_step) + 0.01)
+    boss -= loft([_sq_at(LENS_XC, LENS_YC, w, z_mouth - c),
+                  _sq_at(LENS_XC, LENS_YC, w + 2 * c, z_mouth)])
+
+    # FPC roll relief: the -Y wall (board x > the head, i.e. the far-end side)
+    # stops 0.50 short of the mouth so the rolled flex keeps 0.50
+    ry0, ry1 = bY(FPC_RELIEF_BX[1]), bY(FPC_RELIEF_BX[0])   # 61.49 .. 63.46
+    boss -= box_at(LENS_XC - w / 2, ry0, bZ(FPC_RELIEF_BZ),
+                   w, ry1 - ry0, (z_mouth - bZ(FPC_RELIEF_BZ)) + 0.01)
+    return boss
+
+
 def front_plate():
     """Weather face.  Prints outer-face down (Z = 0 on the bed), lip up.
 
     v2: the posts are gone (the bay holds the board), so the plate is outline
     + lip + ribs + the chamfered lens hole at the new LENS_YC.
+    v2.4: + the head window boss (was the ring's collar).
     """
     keep = box_at(-5.0, -5.0, -5.0, OUT_W + 10.0, Y_SHOULDER + 5.0, 20.0)
     keep += prism(LIP_X0, LIP_Y0, LIP_X1, LIP_Y1, R_LIP, -5.0, FRONT_LIP_Z1 + 1.0)
@@ -408,6 +477,10 @@ def front_plate():
         Plane.XY.offset(0.0) * Circle(LENS_HOLE_D / 2 + LENS_CHAMFER),
         Plane.XY.offset(LENS_CHAMFER) * Circle(LENS_HOLE_D / 2),
     ])
+
+    # head window boss (v2.4) — the ring's collar, moved to the plate
+    part += _head_window_boss()
+
     part.label = "front_plate"
     return part
 
@@ -415,16 +488,18 @@ def front_plate():
 # --- ring sub-assemblies ---------------------------------------------------
 def _side_walls():
     """The two long walls, SIDE_CLR clear of the PCB's long edges, hanging
-    from the ring's top wall.  Two Z bands so the forward reach clears the
-    front plate's lip band (see SIDE_FWD_Y1)."""
+    from the ring's top wall.
+
+    v2.4: ONE box each, case Z SIDE_BACK_Z0..Z_PLATE over the full Y run
+    bY(BAY_BX1)..IN_Y1.  Up to v2.3 a second band reached forward to the
+    collar's front face (case Z 5.56) over Y <= 76.35; the collar now
+    lives on the front plate, and the rails (Z 11.76..15.01) are the deepest
+    thing the walls have to carry, so the forward band is gone."""
     out = None
     for by0, by1 in (SIDE_BY, bmirror(*SIDE_BY)):
         x0, _, _, dx, _, _ = bspan(0, 0, by0, by1, 0, 0)
-        back = box_at(x0, bY(BAY_BX1), SIDE_BACK_Z0, dx,
-                      IN_Y1 - bY(BAY_BX1), Z_PLATE - SIDE_BACK_Z0)
-        fwd = box_at(x0, bY(BAY_BX1), bZ(SIDE_BZ[1]), dx,
-                     SIDE_FWD_Y1 - bY(BAY_BX1), SIDE_BACK_Z0 - bZ(SIDE_BZ[1]))
-        s = back + fwd
+        s = box_at(x0, bY(BAY_BX1), SIDE_BACK_Z0, dx,
+                   IN_Y1 - bY(BAY_BX1), Z_PLATE - SIDE_BACK_Z0)
         out = s if out is None else out + s
     return out
 
@@ -486,33 +561,6 @@ def _rails(ribs=True):
     return out
 
 
-def _collar():
-    """Lens collar: the sheet that captures the camera head (8.6 window +
-    0.6 back chamfer), steps at the head top and bores Ø8.25 for the barrel."""
-    x0, x1 = BAY_IN_X                                       # 12.575 .. 33.355
-    y0, y1 = bY(COLLAR_BX[1]), bY(COLLAR_BX[0])             # 61.49 .. 72.89
-    z0, z1 = bZ(COLLAR_BZ[1]), bZ(COLLAR_BZ[0])             # 5.56 .. 8.36
-    z_step = bZ(COLLAR_STEP_BZ)                             # 6.86
-    part = box_at(x0, y0, z0, x1 - x0, y1 - y0, z1 - z0)
-    part += box_at(x0, y1, z0, x1 - x0, bY(COLLAR_FRONT_BX1) - y1, z_step - z0)
-
-    # FPC roll relief: back face raised to board z 9.5 over board x 7.83..9.8
-    ry0, ry1 = bY(FPC_RELIEF_BX[1]), bY(FPC_RELIEF_BX[0])   # 61.49 .. 63.46
-    part -= box_at(LENS_XC - COLLAR_WIN / 2, ry0, bZ(FPC_RELIEF_BZ),
-                   COLLAR_WIN, ry1 - ry0, z1 - bZ(FPC_RELIEF_BZ) + 0.01)
-
-    # square window around the head, with the 45 deg entry chamfer at the back
-    w, c = COLLAR_WIN, COLLAR_WIN_CHAMFER
-    part -= box_at(LENS_XC - w / 2, LENS_YC - w / 2, z_step, w, w, z1 - z_step)
-    part -= loft([_sq_at(LENS_XC, LENS_YC, w, z1 - c),
-                  _sq_at(LENS_XC, LENS_YC, w + 2 * c, z1)])
-
-    # barrel bore through the front part
-    part -= cyl_at(LENS_XC, LENS_YC, z0 - 1.0, COLLAR_BORE_D,
-                   (z_step - z0) + 1.0)
-    return part
-
-
 def _usb_end_wall():
     """v2.2: the USB end is open from the lip level (board z -0.1) up to the
     collar's back face.  All that is left is the root strip at the bed and the
@@ -546,7 +594,15 @@ def ring(ribs=True, tongue=True):
     """
     part = prism(OUT_X0, OUT_Y0, OUT_X1, OUT_Y1, R_OUT, PLATE_T, Z_PLATE, ct=EFOOT)
     part -= prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, PLATE_T - 1.0, Z_PLATE + 1.0)
-    part -= flare_down(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, PLATE_T, LEADIN)
+    # front-mouth lead-in, CLIPPED at the eave root (v2.4).  Forward of
+    # Z = PLATE_T the eave continues the inner wall at Y = IN_Y1, so an
+    # oversize lead-in there is not a lead-in at all: it leaves a 0.6 step
+    # under the eave whose roof (28.5 mm^2 at Z 2.40) points straight down in
+    # the ring's print orientation.  The sides and the bottom keep theirs.
+    lead_in = flare_down(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, PLATE_T, LEADIN)
+    lead_in &= box_at(OUT_X0 - 5.0, OUT_Y0 - 5.0, PLATE_T - 1.0,
+                      OUT_W + 10.0, Y_SHOULDER + 5.0, LEADIN + 2.0)
+    part -= lead_in
     part -= flare_up(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_PLATE, LEADIN)
 
     # --- eave: the top wall run 8.0 forward of the front mouth
@@ -555,16 +611,20 @@ def ring(ribs=True, tongue=True):
                    OUT_W + 10.0, OUT_H + 10.0, EAVE + PLATE_T + 2.0)
     eave -= prism(IN_X0, IN_Y0, IN_X1, IN_Y1, R_IN, Z_EAVE - 1.0, PLATE_T + 1.0)
     part += eave
-    # drip groove along X on the eave's underside (the Y = IN_Y1 face)
-    part -= box_at(IN_X0 + R_IN, IN_Y1, DRIP_Z0,
-                   (IN_X1 - R_IN) - (IN_X0 + R_IN), DRIP_D, DRIP_W)
+    # drip groove along X on the eave's underside (the Y = IN_Y1 face).
+    # v2.4: a V-groove, not a rectangle.  The tip-side face is a 45 deg ramp
+    # (it was a 28.2 mm^2 roof at Z DRIP_Z0, unsupported in the print); the
+    # back face at DRIP_Z1 stays vertical and sharp, because THAT edge — the
+    # one nearest the case — is the drip edge.
+    part -= prism_x([(IN_Y1, DRIP_Z0), (IN_Y1, DRIP_Z1),
+                     (IN_Y1 + DRIP_D, DRIP_Z1)],
+                    IN_X0 + R_IN, IN_X1 - R_IN)
 
     # --- board bay
     part += _side_walls()
     part += _far_end()
     strip, tongue_solid = _usb_end_wall()
     part += strip
-    part += _collar()
     part += _rails(ribs=ribs)
 
     # --- screw bosses, each fused to its corner by a square fill
@@ -581,10 +641,17 @@ def ring(ribs=True, tongue=True):
                    TIE_WEB_W, TIE_POST_YC - IN_Y0, Z_PLATE - TIE_POST_Z0)
 
     # --- cuts
-    part -= box_at(BAY_IN_X[1] - 0.5, WIRE_NOTCH_Y[0], WIRE_NOTCH_Z0,
-                   (BAY_IN_X[1] + BAY_T + 0.5) - (BAY_IN_X[1] - 0.5),
-                   WIRE_NOTCH_Y[1] - WIRE_NOTCH_Y[0],
-                   (Z_PLATE + 0.5) - WIRE_NOTCH_Z0)
+    # wire notch through the +X side wall, open onto the back mouth.
+    # v2.4: a 45 deg GABLE on its closed end instead of a flat 4.5 mm roof
+    # (7.2 mm^2 of bridge); ridge at WIRE_NOTCH_Z0 - half the span.
+    wn_y0, wn_y1 = WIRE_NOTCH_Y
+    wn_yc, wn_half = (wn_y0 + wn_y1) / 2, (wn_y1 - wn_y0) / 2
+    part -= prism_x([(wn_y0, WIRE_NOTCH_Z0),
+                     (wn_yc, WIRE_NOTCH_Z0 - wn_half),
+                     (wn_y1, WIRE_NOTCH_Z0),
+                     (wn_y1, Z_PLATE + 0.5),
+                     (wn_y0, Z_PLATE + 0.5)],
+                    BAY_IN_X[1] - 0.5, BAY_IN_X[1] + BAY_T + 0.5)
     for bx, by in BOSS_XY:
         part -= cyl_at(bx, by, BOSS_Z0 - 1.0, BOSS_BORE, (Z_PLATE - BOSS_Z0) + 2.0)
     part -= slot_y(CORD_SLOT_XC, CORD_SLOT_ZC, CORD_SLOT_W, CORD_SLOT_H,

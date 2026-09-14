@@ -74,7 +74,7 @@ from the USB-C end, +z toward the lens; `board_to_case` as in `puckcase_lib.py`.
 | Name | Board | Case | Note |
 |---|---|---|---|
 | SIDE_CLR | 1.50 | | wall inner face from the PCB long edge (header body 1.0 + 0.5) |
-| side walls | y −1.5..−3.1 and 19.28..20.88; x −7.11..23.2 | X 10.975..12.575 & 33.355..34.955; Y 48.09..78.40; Z 5.56..26.36 | hang from the ring's top wall as in v1; full height to the collar face |
+| side walls | y −1.5..−3.1 and 19.28..20.88; x −7.11..23.2 | X 10.975..12.575 & 33.355..34.955; Y 48.09..78.40; Z 5.56..26.36 | hang from the ring's top wall as in v1; full height to the collar face. **v2.4 (§10): Z 8.70..26.36 in one band** — the collar has gone, so nothing needs them forward of the front lip |
 | far-end wall | x 21.6..23.2; z ≤ 6.0 | Y 48.09..49.69; Z 11.36..26.36 | inner face 0.35 clear of the expansion PCB overhang (x 21.25). Low so the antenna cable can cross it |
 | USB-end wall | x −1.6..−0.4; z −9.0..9.0 | Y 71.69..72.89; Z 8.36..26.36 | spans wall to wall, merges into the collar above |
 
@@ -104,15 +104,20 @@ from the USB-C end, +z toward the lens; `board_to_case` as in `puckcase_lib.py`.
 | RIBS | 2 per rail, x 8.5..12.5 and 13.0..17.0, 0.25 proud (`fits.edge_crush_rib` shape, 1.4 tall) | 0.10 nominal crush; ends 0.22 clear of the FPC socket (y 0.82) |
 | −y rail end at x 17 | | leaves x 17..20 at the −y edge free for the U.FL cable to leave the board |
 
-### Collar
-| Name | Board | Case |
-|---|---|---|
-| plate | x −1.6..9.8 (front part z 10.5..11.8 extends to x −2.3), wall to wall in y, z 9.0..11.8 | Y 61.49..72.89 (73.59 front); X 12.575..33.355; Z 5.56..8.36 |
-| FPC relief | back face raised to z 9.5 over x 7.83..9.8 | Z 7.86 |
-| window | 8.6 square centred on CAM_C (3.53, 8.25): x −0.77..7.83, y 3.95..12.55, z 9.0..10.5; 0.6 × 45° chamfer at the back edge | X 19.305..27.905; Y 63.46..72.06; Z 6.86..8.36 |
-| step | z 10.5 = head top 10.3 + 0.2 | Z 6.86 |
-| bore | Ø8.25 (barrel 7.84 + 0.4), z 10.5..11.8 | Z 5.56..6.86 |
-| clearances | card top 8.5 → 0.5; SD socket 8.03 → 0.97; FPC roll 8.75 → 0.75 (relief) | |
+### Collar — **moved to the front plate in v2.4 (§10)**
+Every row below is built, with its numbers unchanged, as the **head window
+boss** on the front plate instead of as a sheet on the ring. The "plate" row's
+sheet and its extended front part are gone; the boss is an 11.80 square tower
+growing from the plate's inner face (Z 2.40) to the mouth (Z 8.36).
+
+| Name | Board | Case | v2.4 |
+|---|---|---|---|
+| plate | x −1.6..9.8 (front part z 10.5..11.8 extends to x −2.3), wall to wall in y, z 9.0..11.8 | Y 61.49..72.89 (73.59 front); X 12.575..33.355; Z 5.56..8.36 | **deleted** → boss X 17.705..29.505, Y 61.86..73.66, Z 2.40..8.36 |
+| FPC relief | back face raised to z 9.5 over x 7.83..9.8 | Z 7.86 | same, in the boss's −Y wall |
+| window | 8.6 square centred on CAM_C (3.53, 8.25): x −0.77..7.83, y 3.95..12.55, z 9.0..10.5; 0.6 × 45° chamfer at the back edge | X 19.305..27.905; Y 63.46..72.06; Z 6.86..8.36 | same; the chamfer is now the lead-in the head is pressed onto |
+| step | z 10.5 = head top 10.3 + 0.2 | Z 6.86 | same |
+| bore | Ø8.25 (barrel 7.84 + 0.4), z 10.5..11.8 | Z 5.56..6.86 | Z **2.40**..6.86, down onto the plate's own Ø7.5 hole |
+| clearances | card top 8.5 → 0.5; SD socket 8.03 → 0.97; FPC roll 8.75 → 0.75 (relief) | | unchanged |
 
 ### Front plate
 Unchanged outline, lip, ribs, chamfered Ø7.5 hole at (23.605, 67.76). **No posts.**
@@ -310,5 +315,63 @@ doubles its torsional rate and brings the torsional term to ~0.25 mm.
 
 ### F. Open against this contract
 Nothing fails. `check.py` passes with no warnings. Remaining process risks:
-the strip's torsional softness above (preload only), the collar's 20.8 mm
-bridge, and the assumed header geometry — see README "Open items".
+the strip's torsional softness above (preload only), ~~the collar's 20.8 mm
+bridge~~ (withdrawn in §10 — there is no collar), and the assumed header
+geometry — see README "Open items".
+
+## 10. v2.4 amendments (2026-09-13) — print cleanup
+
+Everything above stands except where a line below overrides it — in particular
+§2's "the head enters the collar window over the last ~4°" (it now rides in
+with the board and the *plate* is pressed over it), §3's Collar table (moved,
+see above) and §4's "collar sheet 20.8 mm between the side walls" (there is no
+such bridge any more).
+
+v2.3 audited **253.4 mm² of overhang on the ring across 14 faces**, 180 of it
+the lens collar and 129 of that a single 20.8 mm unsupported bridge carrying
+the lens location. The ring prints standing on its back mouth (bed at
+Z_PLATE 26.36, **+Z is down**) and the front plate prints outer-face down (bed
+at Z 0, **+Z is up**), so a horizontal face whose normal is +Z is an overhang
+on one part and a floor on the other. v2.4 moves the offending faces to the
+part that supports them and trims what is left.
+
+| Change | Was | Is | Effect |
+|---|---|---|---|
+| **head window boss** on the front plate | `_collar()`: a sheet across the ring's bay, case Z 5.56..8.36, wall to wall (X 12.575..33.355) with an extended front part to Y 73.59 | `_head_window_boss()`: an 11.80 square (COLLAR_WIN + 2·**HEADWIN_WALL 1.60**) tower on the plate's inner face, X 17.705..29.505, Y 61.86..73.66, Z **PLATE_T 2.40**..8.36. Ø8.25 bore 2.40..6.86 onto the plate's Ø7.5 hole, 8.60 window 6.86..8.36 with the 0.60 × 45° lead-in at the mouth, FPC relief cutting the −Y wall to Z 7.86 over Y 61.49..63.46 | **−180 mm²** of ring overhang (the sheet's underside 129.07, the window step 20.50, the FPC relief roof 16.08, the front part's underside 14.55). The boss adds **0 mm²** to the plate: in its print orientation the bore annulus at 2.40, the step at 6.86, the relief at 7.86 and the mouth at 8.36 all face away from the bed |
+| **side walls: one Z band** | two boxes — Z 8.70..26.36 over Y 48.09..78.40 plus a forward band Z 5.56..8.70 over Y 48.09..76.35 "to the collar's front face" (`SIDE_BZ[1]` = 11.80 board z) | one box per wall, Z **SIDE_BACK_Z0 8.70**..26.36 over the full run Y 48.09..78.40; `SIDE_BZ = (−9.00, 8.66)`, `SIDE_FWD_Y1` deleted | nothing needs the walls forward of the front lip band once the collar has gone. The rails (Z 11.76..13.16, 45° underside back to 15.01) are the deepest thing they carry and are still fully rooted. −480 mm³ of ring |
+| **front-mouth lead-in clipped at the eave root** | `flare_down(IN_*, PLATE_T, LEADIN)` all the way round | the same tool, intersected with Y ≤ `Y_SHOULDER` 74.80 | forward of Z 2.40 the eave continues the inner wall at Y = IN_Y1, so the oversize there was not a lead-in but a 0.6 step whose roof (**28.48 mm²** at Z 2.40, X 1.80..45.41, Y 74.80..79.00) faced the bed. Side and bottom lead-ins unchanged. Side effect: the +Y crush rib now bears over its whole 4.9, so `front_plate × ring` goes 11.4800 → **11.7227 mm³** (expected 11.8213 ± 10 %) |
+| **drip groove: a V, not a rectangle** | `box_at(..., DRIP_Z0, ..., DRIP_D 0.80, DRIP_W 1.00)` — a 0.8-deep slot in the eave's underside, roof at Z −6.50 | `prism_x([(IN_Y1, DRIP_Z0), (IN_Y1, DRIP_Z1), (IN_Y1 + DRIP_D, DRIP_Z1)], …)` — the tip-side face is a ramp (0.8 in Y over 1.0 in Z, 51.3° from horizontal), the back face at DRIP_Z1 −5.50 stays flat and its mouth corner stays sharp | **−28.17 mm²**. The drip edge is the back edge, nearest the case, and it is unchanged |
+| **wire notch: a 45° gable** | a plain box, flat roof at Z 21.86 over Y 52.30..56.80 — a 4.5 mm bridge | `prism_x` with a ridge at Z 21.86 − 2.25 = **19.61** centred at Y 54.55 | **−7.20 mm²**. The ridge is 4.6 deeper than the rails' 45° underside root (Z 15.01) and the aperture the LOAD lead and the coax pass through (Z 23.51..25.21) is untouched |
+
+**Result:** ring **9.3 mm² over 7 faces** (hook undersides 1.37 + 1.36, four
+rail rib crests 0.75 each, the cord slot's 1.5 mm flat 3.60 — all accepted, all
+sub-4 mm² tabs or short double-anchored bridges), front plate **1.3 mm²**
+(unchanged, the +Y crush rib's underside), back plate **9.1 mm²** (unchanged,
+the four Ø1.7 pilot bottoms). No part needs supports.
+
+### Consequences for assembly and for the checks
+
+- **Assembly order changes.** §2's "feed the head into the collar by hand" is
+  gone: the head rides in rigidly with the PCB (0.0000 mm³ against the ring at
+  0/−2/−4/−8/−13°, where v2.3 put 1.89 mm³ into the collar at −4°), and the
+  **front plate's head window drops over the head** as the plate is pressed on.
+  The 0.60 × 45° lead-in at the mouth is what guides it.
+- **The USB end's forward stop only exists once the plate is fitted.** It is
+  still the window step, 0.20 over the head top, acting through head → SD
+  socket → expansion PCB → B2B → PCB; the ring's far-end hooks (0.150) still
+  catch first, so forward travel of the whole board is still **0.155**.
+- **`check.py` group 5 is new — the plate fitting sweep.** The plate, boss and
+  all, is stepped from 8.0 mm short of its seat to seated (8/6/4/2/1/0.5/0)
+  against the pcb, head, card, FPC roll and header mocks at nominal and at all
+  nine board play positions: 63 configurations, 0.0000 mm³ at nominal
+  everywhere. The head's footprint stays inside the chamfer mouth aperture
+  (COLLAR_WIN + 2·COLLAR_WIN_CHAMFER = 9.80) at every play position, margin
+  ≥ 0.700. The only non-zero cells are the Ø7.84 barrel against the Ø8.25
+  bore's 0.205 radial when the head is *carried rigidly* to a Y ± 0.20,
+  X ± 0.15 extreme (0.250 diagonal): ≤ 0.32 mm³, and per §9 C.9 the head is
+  not carried rigidly — it hangs on its flex and the bore recentres it.
+
+### Open against this contract
+Nothing fails; `check.py` passes with no warnings. The collar's 20.8 mm bridge
+is no longer a process risk (there is no bridge), so the remaining ones are the
+root strip's torsional softness (preload only) and the assumed header geometry.
