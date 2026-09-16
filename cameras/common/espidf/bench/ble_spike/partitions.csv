@@ -1,0 +1,8 @@
+# Name,   Type, SubType, Offset,   Size,      Flags
+# Partition table at 0xc000 (CONFIG_PARTITION_TABLE_OFFSET) — first partition must start at >= 0xd000.
+# 8 MB flash: two 3 MB OTA app slots (the gate model is ~643 KB plus esp-tflite-micro/esp-nn/esp32-camera).
+nvs,      data, nvs,     0xd000,   0x6000,
+otadata,  data, ota,     ,         0x2000,
+phy_init, data, phy,     ,         0x1000,
+ota_0,    app,  ota_0,   0x20000,  0x300000,
+ota_1,    app,  ota_1,   ,         0x300000,

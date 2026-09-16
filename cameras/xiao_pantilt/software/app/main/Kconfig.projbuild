@@ -1,0 +1,29 @@
+menu "xiaocam1"
+    config DUSTY_DEVICE
+        string "device id (blob path + firmware identity)"
+        default "xiaocam1"
+    config DUSTY_WIFI_SSID
+        string "hotspot SSID"
+        default ""
+    config DUSTY_WIFI_PASS
+        string "hotspot password"
+        default ""
+    config DUSTY_SERVER_HOST
+        string "sensorhub host"
+        default ""
+    config DUSTY_SERVER_PORT
+        int "sensorhub port"
+        default 10000
+    config DUSTY_SERVER_TLS
+        bool "sensorhub over TLS (Funnel)"
+        default y
+    config DUSTY_BLOB_TOKEN
+        string "X-Token for blob/telemetry/config/firmware"
+        default ""
+    config DUSTY_BLE_KEY
+        string "dusty_ble owner key, 64 hex chars (32 raw bytes); empty = no BLE auth possible"
+        default ""
+    config DUSTY_CRASH_DEBUG
+        bool "crash instrumentation (docs/crash_experiment_2026-09-16.md)"
+        default n
+endmenu

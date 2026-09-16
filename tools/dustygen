@@ -2,39 +2,119 @@
 """dustygen: one generator for every camera's configuration.
 docs/camera_standard.md §5 (three tiers). Replaces the removed `dusty generate`.
 
-    tools/dustygen <camera-dir> [--public] [--stage] [--no-bundle]
+    tools/dustygen <camera-dir> [--public] [--lan] [--stage] [--no-bundle] [--reset-config]
 
 Reads ~/.dusty/config.toml + ~/.dusty/secrets.toml and the camera's
-camera.toml, then:
+camera.toml, then, for `runtime = "micropython"`:
 
   1. secrets   -> <camera>/software/app/secrets.py   (identity + credentials;
                   flashed over USB, never OTA; format per runtime)
   2. tuning    -> stamps `TUNING = {...}` in software/app/board.py (defaults
                   compiled into the firmware) from camera.toml [tuning]
                   overridden by config.toml [camera.<name>] keys
-  3. server    -> /hd2/sensorhub/config/<id>.json, the same tuning with a
-                  `cfg` version that increments when the content changes,
-                  so a running board pulls it at its next contact
+  3. server    -> /hd2/sensorhub/config/<id>.json, SEEDED (not overwritten)
+                  from this tuning: the device page's settings form is now
+                  the source of truth for a running board. If the file does
+                  not exist yet, it is written from the workstation tuning
+                  (`cfg: 1`). If it exists, only keys missing from it are
+                  added from the workstation tuning; a key already present
+                  (including one edited from the device page) is never
+                  changed; a key that belongs to neither the workstation
+                  tuning nor the reserved set (`cfg`, `mode`) is dropped. Any
+                  key present in both where the values differ is reported as
+                  `drift` (a phone edit the operator should see). `cfg`
+                  increments only when the resulting file differs from what
+                  was there. `--reset-config` restores the old overwrite
+                  behaviour: the server file is replaced by the workstation
+                  tuning outright (still only bumping `cfg` when it changed).
+  3b. schema   -> /hd2/sensorhub/config/<id>.schema.json, overwritten every
+                  run: `{name, type, default, help}` per tuning key, in
+                  camera.toml order, for the sensorhub to render a settings
+                  form from. See `tuning_schema()`.
   4. bundle    -> software/build/app.py via cameras/common/micropython/bundle.py
   --stage      -> copies build/app.py to /hd2/sensorhub/firmware/<id>.py and
                   writes <id>.version = APP_VERSION, so boards pull it
 
+or, for `runtime = "espidf"`:
+
+  1. secrets   -> <camera>/software/app/sdkconfig.secrets (CONFIG_DUSTY_*);
+                  WiFi comes from secrets.toml [hotspot] when the manifest's
+                  `capabilities` include "hotspot" (the phone-hotspot
+                  cameras), else from [wifi]. Also stamps
+                  CONFIG_DUSTY_BLE_KEY from secrets.toml [ble] key (a 64-hex
+                  owner key; generated with `secrets.token_hex(32)` and
+                  written back into secrets.toml the first time it is
+                  needed). `--blank` builds a fleet image instead: identity
+                  (CONFIG_DUSTY_DEVICE/WIFI_SSID/WIFI_PASS/SERVER_HOST/
+                  BLOB_TOKEN/BLE_KEY) is written empty so the same .bin can
+                  be flashed to any board and given identity later over BLE
+                  by the phone app (NVS `ident`, docs/camera_standard.md §5);
+                  SERVER_PORT/SERVER_TLS are unaffected. Every time
+                  sdkconfig.secrets is (re)written (blank OR normal), any
+                  stale `sdkconfig`/`sdkconfig.old` next to it is deleted:
+                  ESP-IDF's kconfgen loads SDKCONFIG_DEFAULTS first and then
+                  an existing `sdkconfig` with replace=False, so a stale one
+                  wins over freshly generated secrets -- a `--blank` build
+                  could otherwise ship the owner's real ble_key/creds.
+                  `--verify-blank <camera>` re-checks this after a build:
+                  fails (naming the item, never the value) if
+                  build/<id>.bin contains the ble_key, wifi/hotspot
+                  password, blob token or SSID bytes.
+  2. tuning    -> <camera>/software/app/main/tuning_defaults.h, one
+                  `#define DUSTY_DEF_<KEY>` per tuning key (GENERATED header)
+  2b. schema   -> <camera>/software/app/main/tuning_schema.h, the same
+                  schema object as <id>.schema.json (see 3b below) minified
+                  and C-escaped into `static const char TUNING_SCHEMA_JSON[]`
+                  (<= 4 KB), so the phone app's settings form is data-driven
+                  off-grid with nothing pre-seeded on sensorhub.
+  3. server    -> same seeding + schema as micropython, from software/app/version.txt
+  --stage      -> copies software/app/build/<id>.bin to
+                  /hd2/sensorhub/firmware/<id>.bin + <id>.version
+                  (no bundling step: the .bin is the ESP-IDF build output)
+
 --public selects [server].public_host/public_port + TLS (Tailscale Funnel)
-instead of [server].host + gate_port. Only the micropython runtime is
-implemented; espidf (sdkconfig.secrets) and cpython (.env) are TODO.
+instead of [server].host + gate_port. For a camera whose `capabilities`
+include "hotspot", --public is the default; pass --lan to force the LAN
+gate instead. This also decides where WIFI_SSID/WIFI_PASS come from for a
+micropython camera (secrets.toml [hotspot] vs [wifi]), same as espidf.
+cpython (.env) is TODO.
+
+    tools/dustygen --phone-json
+
+writes ~/.dusty/dusty_phone.json (mode 0600): `{"v":1,"server":{host,port,
+tls,token},"hotspot":{ssid,pass},"ble_key":"<hex>","cameras":[{"id":...},
+...]}` — the file the Android app (`apps/dustyphone`) imports once via the
+system file picker. `server`/`hotspot`/`ble_key` come from ~/.dusty
+(public/Funnel host always, since a field camera has no LAN); `cameras` is
+every `runtime = "espidf"` camera.toml under `cameras/` (BLE is an ESP-IDF
+component; no camera positional is given or needed). Prints only the path.
+
+DUSTY_DIR and SENSORHUB_DIR override ~/.dusty and /hd2/sensorhub (tests).
 """
 import argparse
+import datetime
 import json
+import os
 import re
+import secrets
 import subprocess
 import sys
 import tomllib
 from pathlib import Path
 
-DUSTY = Path.home() / '.dusty'
-SENSORHUB = Path('/hd2/sensorhub')
+DUSTY = Path(os.environ.get('DUSTY_DIR', str(Path.home() / '.dusty')))
+SENSORHUB = Path(os.environ.get('SENSORHUB_DIR', '/hd2/sensorhub'))
 REPO = Path(__file__).resolve().parents[1]
 BUNDLE = REPO / 'cameras' / 'common' / 'micropython' / 'bundle.py'
+
+
+def rel(p: Path):
+    """Path for a print(): relative to REPO when possible, else absolute
+    (camera_dir is not under REPO in tests, which use a temp copy)."""
+    try:
+        return p.relative_to(REPO)
+    except ValueError:
+        return p
 
 
 def load(camera_dir: Path):
@@ -49,6 +129,14 @@ def gen_secrets_micropython(camera_dir, conf, sec, manifest, public):
     cam = conf['camera'].get(name, {})
     csec = sec.get('camera', {}).get(name, {})
     srv = conf['server']
+    ssid, password = wifi_creds(sec, manifest)
+    # The home LAN network + gate, carried alongside WIFI_*/SERVER_* so the
+    # board can pick either at a contact (contact.py scans first): secrets.
+    # toml [wifi] is the LAN SSID/password (the same section a non-hotspot
+    # camera already uses for WIFI_SSID/WIFI_PASS, so its LAN_* keys come out
+    # equal to its WIFI_*/SERVER_* -- harmless); config.toml [server] host +
+    # gate_port is always the LAN gate (never the public/Funnel host, TLS off).
+    lan = sec.get('wifi', {})
     vals = {
         'DEVICE': manifest['id'],
         'MQTT_USER': sec['mqtt']['user'], 'MQTT_PASS': sec['mqtt']['password'], 'MQTT_TOPIC': manifest['id'],
@@ -56,7 +144,9 @@ def gen_secrets_micropython(camera_dir, conf, sec, manifest, public):
         'SERVER_HOST': srv['public_host'] if public else srv['host'],
         'SERVER_PORT': srv['public_port'] if public else srv.get('gate_port', 8089),
         'SERVER_TLS': bool(public), 'BLOB_TOKEN': sec['sensorhub']['blob_token'],
-        'WIFI_SSID': sec['wifi']['ssid'], 'WIFI_PASS': sec['wifi']['password'],
+        'WIFI_SSID': ssid, 'WIFI_PASS': password,
+        'LAN_SSID': lan.get('ssid', ''), 'LAN_PASS': lan.get('password', ''),
+        'LAN_HOST': srv['host'], 'LAN_PORT': srv.get('gate_port', 8089), 'LAN_TLS': False,
     }
     out = ['# GENERATED by tools/dustygen from ~/.dusty/ — do not edit; not OTA-managed (USB copy to /flash).',
            '# camera: %s  path: %s' % (name, 'public (Funnel, TLS)' if public else 'LAN (gate)'),
@@ -64,7 +154,7 @@ def gen_secrets_micropython(camera_dir, conf, sec, manifest, public):
     out += ['%s = %r' % (k, v) for k, v in vals.items()]
     p = camera_dir / 'software' / 'app' / 'secrets.py'
     p.write_text('\n'.join(out) + '\n')
-    print('secrets ->', p.relative_to(REPO), vals['SERVER_HOST'], vals['SERVER_PORT'], 'tls' if public else 'plain')
+    print('secrets ->', rel(p), vals['SERVER_HOST'], vals['SERVER_PORT'], 'tls' if public else 'plain')
 
 
 def tuning_for(camera_dir, conf, manifest):
@@ -88,12 +178,27 @@ def stamp_tuning(camera_dir, tuning):
     if new == src and 'TUNING = %r' % tuning not in src:
         sys.exit('%s: TUNING line not found' % p)
     p.write_text(new)
-    print('tuning  ->', p.relative_to(REPO), tuning)
+    print('tuning  ->', rel(p), tuning)
     m = re.search(r"^APP_VERSION = '([^']+)'", new, re.M)
     return m.group(1) if m else None
 
 
-def write_server_config(manifest, tuning):
+RESERVED_CONFIG_KEYS = {'cfg', 'mode'}
+
+
+def write_server_config(manifest, tuning, reset=False):
+    """SEED, not overwrite (unless `reset`): docs/camera_operation.md §1 —
+    the device page's settings form is the live source of truth once a
+    board has pulled its first config. If <id>.json does not exist yet (or
+    `reset`), it is written straight from the workstation `tuning` (`cfg`
+    bumps only if that changed anything). Otherwise: start from what is
+    already there; add any `tuning` key missing from it; drop any key that
+    is neither a known tuning key nor in RESERVED_CONFIG_KEYS (`cfg`,
+    `mode` — keys the board or the setup page writes outside of tuning);
+    never touch a value already present. `cfg` bumps only if the result
+    (minus `cfg`) differs from what was there. Any key present in both
+    where the value differs is printed as a `drift` line — a phone/field
+    edit the operator should see."""
     p = SENSORHUB / 'config' / ('%s.json' % manifest['id'])
     p.parent.mkdir(parents=True, exist_ok=True)
     old = {}
@@ -102,14 +207,112 @@ def write_server_config(manifest, tuning):
             old = json.loads(p.read_text())
         except ValueError:
             pass
-    body = dict(tuning)
-    if {k: v for k, v in old.items() if k != 'cfg'} == body:
+
+    if reset or not old:
+        body = dict(tuning)
+    else:
+        body = {k: v for k, v in old.items() if k in tuning or k in RESERVED_CONFIG_KEYS}
+        for k, v in tuning.items():
+            if k not in body:
+                body[k] = v
+            elif old[k] != v:
+                print('drift   %s: server=%s workstation=%s' % (k, old[k], v))
+
+    old_body = {k: v for k, v in old.items() if k != 'cfg'}
+    new_body = {k: v for k, v in body.items() if k != 'cfg'}
+    if new_body == old_body:
         body['cfg'] = int(old.get('cfg', 1))
         print('server  ->', p, 'unchanged (cfg %d)' % body['cfg'])
     else:
         body['cfg'] = int(old.get('cfg', 0)) + 1
         p.write_text(json.dumps(body) + '\n')
         print('server  ->', p, 'cfg %d' % body['cfg'])
+
+
+def tuning_schema(camera_dir, manifest):
+    """Pure function: camera.toml's [tuning] table -> the schema dict
+    written to <id>.schema.json, for the sensorhub to render a settings
+    form from. `type` is derived from the Python type of each camera.toml
+    default (bool checked before int, since bool is an int subclass);
+    `default` is that camera.toml value (the firmware default, NOT any
+    config.toml override); `help` is the trailing `# comment` on that key's
+    line in camera.toml, parsed from the raw text, or "" if none. Keys are
+    in the order they appear in camera.toml (dict order from tomllib, which
+    matches file order)."""
+    raw = (camera_dir / 'camera.toml').read_text()
+    help_by_key = {}
+    for line in raw.splitlines():
+        m = re.match(r'^(\w+)\s*=\s*(.*)$', line)
+        if not m:
+            continue
+        key, rest = m.group(1), m.group(2)
+        if '#' in rest:
+            help_by_key[key] = rest.split('#', 1)[1].strip()
+
+    keys = []
+    for name, default in manifest.get('tuning', {}).items():
+        if isinstance(default, bool):
+            t = 'bool'
+        elif isinstance(default, int):
+            t = 'int'
+        elif isinstance(default, float):
+            t = 'float'
+        elif isinstance(default, list):
+            t = 'list'
+        else:
+            t = 'str'
+        keys.append({'name': name, 'type': t, 'default': default, 'help': help_by_key.get(name, '')})
+
+    return {
+        'id': manifest['id'],
+        'camera': camera_dir.name,
+        'generated': datetime.date.today().isoformat(),
+        'keys': keys,
+    }
+
+
+def write_tuning_schema(camera_dir, manifest):
+    p = SENSORHUB / 'config' / ('%s.schema.json' % manifest['id'])
+    p.parent.mkdir(parents=True, exist_ok=True)
+    schema = tuning_schema(camera_dir, manifest)
+    p.write_text(json.dumps(schema, indent=2) + '\n')
+    print('schema  ->', p)
+    return schema
+
+
+def _c_escape(s):
+    """Escape a string for embedding as the contents of a C string literal
+    (backslash and double-quote only; the JSON text has no other bytes a C
+    compiler would choke on since json.dumps defaults to ensure_ascii)."""
+    return s.replace('\\', '\\\\').replace('"', '\\"')
+
+
+def stamp_tuning_schema_header(camera_dir, schema):
+    """docs/phone_app_plan.md decision 8: ship the schema in the firmware,
+    next to tuning_defaults.h, as the exact same object write_tuning_schema
+    wrote to <id>.schema.json (minified + C-escaped), so `cfg.schema` over
+    BLE and the sensorhub settings form describe identical keys. Adds
+    TUNING_SCHEMA_CFG only if the schema itself carries a `cfg`/`version`
+    field (it does not today)."""
+    minified = json.dumps(schema, separators=(',', ':'))
+    if len(minified) > 4096:
+        sys.exit('dustygen: tuning_schema.h JSON is %d bytes, over the 4 KB budget' % len(minified))
+    p = camera_dir / 'software' / 'app' / 'main' / 'tuning_schema.h'
+    p.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        '/* GENERATED by tools/dustygen from camera.toml — do not edit. */',
+        '#ifndef DUSTY_TUNING_SCHEMA_H',
+        '#define DUSTY_TUNING_SCHEMA_H',
+        '',
+        'static const char TUNING_SCHEMA_JSON[] = "%s";' % _c_escape(minified),
+    ]
+    cfg_val = schema.get('cfg', schema.get('version'))
+    if cfg_val is not None:
+        lines.append('static const int TUNING_SCHEMA_CFG = %d;' % int(cfg_val))
+    lines += ['', '#endif /* DUSTY_TUNING_SCHEMA_H */', '']
+    p.write_text('\n'.join(lines))
+    print('schema  ->', rel(p), '(%d bytes)' % len(minified))
+    return p
 
 
 def bundle(camera_dir):
@@ -128,26 +331,329 @@ def stage(manifest, app_py, version):
     print('staged  ->', d / ('%s.py' % manifest['id']), 'version', version)
 
 
+# shared by both runtimes ----------------------------------------------
+
+def ensure_ble_key(sec_path: Path, sec: dict):
+    """secrets.toml [ble] key: the one owner HMAC key used to authenticate
+    the phone app over BLE (docs/phone_app_plan.md decisions 5, 7). Returns
+    (key, generated). If secrets.toml has no [ble] key yet, generates one
+    with `secrets.token_hex(32)` (64 hex chars) and writes it back into the
+    file: under an existing `[ble]` header if there is one (e.g. the section
+    exists but is missing `key`), else as a new `[ble]` section appended at
+    the end. Never overwrites an existing key."""
+    ble = sec.get('ble', {})
+    key = ble.get('key')
+    if key:
+        return key, False
+    new_key = secrets.token_hex(32)
+    text = sec_path.read_text()
+    if re.search(r'^\[ble\]\s*$', text, re.M):
+        text = re.sub(r'(^\[ble\]\s*\n)', r'\1key = "%s"\n' % new_key, text, count=1, flags=re.M)
+    else:
+        if text and not text.endswith('\n'):
+            text += '\n'
+        text += '\n[ble]\nkey = "%s"\n' % new_key
+    sec_path.write_text(text)
+    return new_key, True
+
+
+def wifi_creds(sec, manifest):
+    """[hotspot] ssid/password when the manifest needs a phone hotspot,
+    else [wifi]. Shared by the micropython and espidf paths. Exits with a
+    clear message if [hotspot] is required but missing (or incomplete) in
+    secrets.toml."""
+    if 'hotspot' in manifest.get('capabilities', []):
+        hotspot = sec.get('hotspot') or {}
+        if not hotspot.get('ssid') or not hotspot.get('password'):
+            sys.exit(
+                "dustygen: %r needs a phone hotspot (capabilities include "
+                "\"hotspot\") but ~/.dusty/secrets.toml has no [hotspot].\n"
+                "Add to ~/.dusty/secrets.toml:\n"
+                "[hotspot]\nssid = \"...\"\npassword = \"...\"\n" % manifest['id']
+            )
+        return hotspot['ssid'], hotspot['password']
+    wifi = sec['wifi']
+    return wifi['ssid'], wifi['password']
+
+
+# ---------------------------------------------------------------- espidf ---
+
+def remove_stale_sdkconfig(app_dir: Path):
+    """ESP-IDF's kconfgen loads SDKCONFIG_DEFAULTS (sdkconfig.defaults,
+    sdkconfig.secrets) first and then any existing `sdkconfig`/
+    `sdkconfig.old` with replace=False -- so a stale `sdkconfig` WINS over
+    a freshly generated `sdkconfig.secrets`. Left alone, a `--blank` fleet
+    image build would ship whatever identity/ble_key/credentials happened
+    to be in the last `sdkconfig` (review finding: this shipped the owner's
+    ble_key and Wi-Fi/token in a "blank" .bin). Delete both generated
+    build-tree files (never `sdkconfig.defaults` or `sdkconfig.secrets`
+    themselves) so the next `idf.py build` regenerates `sdkconfig` from the
+    defaults alone. Generic on `app_dir` (the project's software/app/), so
+    it applies to any espidf camera dustygen targets, not just xiao_pantilt."""
+    removed = [name for name in ('sdkconfig', 'sdkconfig.old') if (app_dir / name).is_file()]
+    for name in removed:
+        (app_dir / name).unlink()
+    if removed:
+        print('sdkconfig -> removed stale %s in %s (rebuild regenerates from defaults)'
+              % (', '.join(removed), rel(app_dir)))
+
+
+def gen_secrets_espidf(camera_dir, conf, sec, manifest, public, blank=False, ble_key=''):
+    """blank=True builds the fleet image (docs/phone_app_plan.md decision
+    7): identity and credentials are written empty so one .bin can be
+    flashed to any board, then given identity later over BLE by the phone
+    app (NVS `ident`; NVS wins over these compiled-in `CONFIG_DUSTY_*`
+    fallbacks). SERVER_PORT/SERVER_TLS are not identity and stay as
+    computed either way. `ble_key` (secrets.toml [ble] key, see
+    ensure_ble_key) is always stamped in the non-blank case; blank leaves
+    it empty too, since an unprovisioned board must not carry the owner
+    key until `prov.set` writes it into NVS."""
+    srv = conf['server']
+    port = int(srv['public_port'] if public else srv.get('gate_port', 8089))
+    tls = bool(public)
+    if blank:
+        device, ssid, password, host, blob_token, ble_key_out = '', '', '', '', '', ''
+    else:
+        device = manifest['id']
+        ssid, password = wifi_creds(sec, manifest)
+        host = srv['public_host'] if public else srv['host']
+        blob_token = sec['sensorhub']['blob_token']
+        ble_key_out = ble_key
+    out = [
+        '# GENERATED by tools/dustygen from ~/.dusty/ — do not edit; not OTA-managed (flashed via sdkconfig, USB only).',
+        '# camera: %s  path: %s%s' % (camera_dir.name, 'public (Funnel, TLS)' if public else 'LAN (gate)',
+                                       '  (BLANK fleet image: identity empty)' if blank else ''),
+        '# Tuning is NOT here: it is stamped into main/tuning_defaults.h and served at /config/%s.' % manifest['id'],
+        '',
+        'CONFIG_DUSTY_DEVICE="%s"' % device,
+        'CONFIG_DUSTY_WIFI_SSID="%s"' % ssid,
+        'CONFIG_DUSTY_WIFI_PASS="%s"' % password,
+        'CONFIG_DUSTY_SERVER_HOST="%s"' % host,
+        'CONFIG_DUSTY_SERVER_PORT=%d' % port,
+        'CONFIG_DUSTY_SERVER_TLS=%s' % ('y' if tls else 'n'),
+        'CONFIG_DUSTY_BLOB_TOKEN="%s"' % blob_token,
+        'CONFIG_DUSTY_BLE_KEY="%s"' % ble_key_out,
+    ]
+    p = camera_dir / 'software' / 'app' / 'sdkconfig.secrets'
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text('\n'.join(out) + '\n')
+    print('secrets ->', rel(p), host or '(blank)', port, 'tls' if tls else 'plain')
+    remove_stale_sdkconfig(p.parent)
+    if blank:
+        print('secrets  -> after building, verify with: tools/dustygen --verify-blank %s' % rel(camera_dir))
+
+
+def _c_string(s):
+    return '"%s"' % str(s).replace('\\', '\\\\').replace('"', '\\"')
+
+
+def _c_float(v):
+    s = repr(float(v))
+    if '.' not in s and 'e' not in s and 'E' not in s:
+        s += '.0'
+    return s
+
+
+def _espidf_define(key, value):
+    """One tuning key -> a list of `#define DUSTY_DEF_<KEY> ...` lines."""
+    ident = 'DUSTY_DEF_' + key.upper()
+    if key == 'keep_labels':
+        items = ','.join(_c_string(v) for v in value)
+        return ['#define %s {%s}' % (ident, items),
+                '#define %s_N %d' % (ident, len(value))]
+    if isinstance(value, bool):
+        return ['#define %s %d' % (ident, 1 if value else 0)]
+    if isinstance(value, float):
+        return ['#define %s %s' % (ident, _c_float(value))]
+    if isinstance(value, int):
+        return ['#define %s %d' % (ident, value)]
+    if isinstance(value, str):
+        return ['#define %s %s' % (ident, _c_string(value))]
+    sys.exit('dustygen: tuning key %r has an unsupported type for espidf: %r' % (key, value))
+
+
+def stamp_tuning_espidf(camera_dir, tuning):
+    p = camera_dir / 'software' / 'app' / 'main' / 'tuning_defaults.h'
+    p.parent.mkdir(parents=True, exist_ok=True)
+    lines = [
+        '/* GENERATED by tools/dustygen from ~/.dusty/ and camera.toml — do not edit. */',
+        '#ifndef DUSTY_TUNING_DEFAULTS_H',
+        '#define DUSTY_TUNING_DEFAULTS_H',
+        '',
+    ]
+    for k, v in tuning.items():
+        lines += _espidf_define(k, v)
+    lines += ['', '#endif /* DUSTY_TUNING_DEFAULTS_H */', '']
+    p.write_text('\n'.join(lines))
+    print('tuning  ->', rel(p), tuning)
+
+
+def version_espidf(camera_dir):
+    p = camera_dir / 'software' / 'app' / 'version.txt'
+    if not p.is_file():
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text('0.1.0-xiao\n')
+        print('version ->', rel(p), '0.1.0-xiao (created)')
+    return p.read_text().strip()
+
+
+def stage_espidf(camera_dir, manifest, version):
+    b = camera_dir / 'software' / 'app' / 'build' / ('%s.bin' % manifest['id'])
+    if not b.is_file():
+        sys.exit('dustygen: %s not found; build the app first (`make -C %s build`)'
+                  % (rel(b), rel(camera_dir / 'software' / 'app')))
+    d = SENSORHUB / 'firmware'
+    d.mkdir(parents=True, exist_ok=True)
+    (d / ('%s.bin' % manifest['id'])).write_bytes(b.read_bytes())
+    (d / ('%s.version' % manifest['id'])).write_text(version + '\n')
+    print('staged  ->', d / ('%s.bin' % manifest['id']), 'version', version)
+
+
+def cmd_verify_blank(camera_dir, conf, sec, manifest):
+    """`dustygen --verify-blank <camera>`: after building a --blank fleet
+    image (`idf.py build`), check that `build/<id>.bin` embeds none of the
+    owner's secrets -- the review finding this closes (a stale `sdkconfig`
+    could win over `sdkconfig.secrets` and ship real identity/credentials
+    in a "blank" binary; see remove_stale_sdkconfig). Byte-searches the
+    raw .bin for each secret's UTF-8 bytes (no `strings` dependency).
+    Never prints a secret value: on failure, only the offending item's
+    name is reported."""
+    b = camera_dir / 'software' / 'app' / 'build' / ('%s.bin' % manifest['id'])
+    if not b.is_file():
+        sys.exit('dustygen: %s not found; build the blank image first (`idf.py build`)' % rel(b))
+    data = b.read_bytes()
+    ble_key, _generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
+    ssid, password = wifi_creds(sec, manifest)
+    token = sec['sensorhub']['blob_token']
+    checks = [
+        ('ble_key', ble_key),
+        ('wifi_pass', password),
+        ('token', token),
+        ('ssid', ssid),
+    ]
+    for name, secret in checks:
+        if secret and secret.encode('utf-8') in data:
+            sys.exit('dustygen: --verify-blank FAILED: %s embeds %s (value withheld; '
+                      'check for a stale sdkconfig -- see remove_stale_sdkconfig)' % (rel(b), name))
+    print('verify-blank -> OK:', rel(b), '(%d bytes, no ble_key/wifi_pass/token/ssid bytes found)' % len(data))
+
+
+def cmd_phone_json():
+    """docs/phone_app_plan.md decision 7: write ~/.dusty/dusty_phone.json,
+    the one file the Android app imports (system file picker) to learn the
+    server, hotspot creds, the owner's ble_key and the known camera ids.
+    Always the public (Funnel) server path: a field camera has no LAN to
+    reach a LAN gate on. `cameras` is every `runtime = "espidf"` manifest
+    under cameras/ — BLE (and so the phone app) is an ESP-IDF component;
+    no micropython/cpython camera has it. Prints only the path (mode 0600)."""
+    conf = tomllib.loads((DUSTY / 'config.toml').read_text())
+    sec = tomllib.loads((DUSTY / 'secrets.toml').read_text())
+    srv = conf['server']
+    hotspot = sec.get('hotspot') or {}
+    if not hotspot.get('ssid') or not hotspot.get('password'):
+        sys.exit(
+            "dustygen: --phone-json needs ~/.dusty/secrets.toml [hotspot] (ssid, password).\n"
+            "Add to ~/.dusty/secrets.toml:\n[hotspot]\nssid = \"...\"\npassword = \"...\"\n"
+        )
+    ble_key, _generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
+
+    cameras = []
+    for manifest_path in sorted(REPO.glob('cameras/*/camera.toml')):
+        m = tomllib.loads(manifest_path.read_text())
+        if m.get('runtime') == 'espidf':
+            cameras.append({'id': m['id']})
+
+    doc = {
+        'v': 1,
+        'server': {
+            'host': srv['public_host'],
+            'port': srv['public_port'],
+            'tls': True,
+            'token': sec['sensorhub']['blob_token'],
+        },
+        'hotspot': {'ssid': hotspot['ssid'], 'pass': hotspot['password']},
+        'ble_key': ble_key,
+        'cameras': cameras,
+    }
+    p = DUSTY / 'dusty_phone.json'
+    p.write_text(json.dumps(doc, indent=2) + '\n')
+    os.chmod(p, 0o600)
+    print(p)
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('camera', type=Path)
+    ap.add_argument('camera', type=Path, nargs='?', default=None,
+                     help='camera directory (not needed with --phone-json)')
     ap.add_argument('--public', action='store_true')
-    ap.add_argument('--stage', action='store_true', help='copy the bundle to /hd2/sensorhub/firmware for pull OTA')
+    ap.add_argument('--lan', action='store_true',
+                     help='force the LAN gate (overrides the --public default for hotspot cameras)')
+    ap.add_argument('--stage', action='store_true', help='copy the build to /hd2/sensorhub/firmware for pull OTA')
     ap.add_argument('--no-bundle', action='store_true')
+    ap.add_argument('--reset-config', action='store_true',
+                     help="overwrite <id>.json from the workstation tuning instead of seeding "
+                          "(today's old behaviour); discards any value edited from the device page")
+    ap.add_argument('--blank', action='store_true',
+                     help='espidf only: build a fleet image with identity/credentials empty, '
+                          'for NVS provisioning over BLE by the phone app')
+    ap.add_argument('--verify-blank', action='store_true',
+                     help="espidf only: after building a --blank image, check that "
+                          "build/<id>.bin embeds none of ble_key/wifi_pass/token/ssid "
+                          "(a stale sdkconfig can otherwise ship them; see remove_stale_sdkconfig)")
+    ap.add_argument('--phone-json', action='store_true',
+                     help='write ~/.dusty/dusty_phone.json for the Android app; no camera argument')
     a = ap.parse_args()
+
+    if a.phone_json:
+        cmd_phone_json()
+        return
+
+    if a.camera is None:
+        ap.error('the following arguments are required: camera')
     camera_dir = a.camera.resolve()
     conf, sec, manifest = load(camera_dir)
     runtime = manifest.get('runtime')
-    if runtime != 'micropython':
-        sys.exit('dustygen: runtime %r not implemented yet (micropython only)' % runtime)
-    gen_secrets_micropython(camera_dir, conf, sec, manifest, a.public)
-    tuning = tuning_for(camera_dir, conf, manifest)
-    version = stamp_tuning(camera_dir, tuning)
-    write_server_config(manifest, tuning)
-    if not a.no_bundle:
-        out = bundle(camera_dir)
+
+    if a.verify_blank:
+        if runtime != 'espidf':
+            sys.exit('dustygen: --verify-blank is only implemented for espidf cameras')
+        cmd_verify_blank(camera_dir, conf, sec, manifest)
+        return
+
+    if a.public and a.lan:
+        sys.exit('dustygen: --public and --lan are mutually exclusive')
+    # --public is the default for any camera whose capabilities include
+    # "hotspot" (it has no LAN to reach the gate on); --lan forces it off.
+    public = a.public or (not a.lan and 'hotspot' in manifest.get('capabilities', []))
+
+    if a.blank and runtime != 'espidf':
+        sys.exit('dustygen: --blank is only implemented for espidf cameras')
+
+    if runtime == 'micropython':
+        gen_secrets_micropython(camera_dir, conf, sec, manifest, public)
+        tuning = tuning_for(camera_dir, conf, manifest)
+        version = stamp_tuning(camera_dir, tuning)
+        write_server_config(manifest, tuning, reset=a.reset_config)
+        write_tuning_schema(camera_dir, manifest)
+        if not a.no_bundle:
+            out = bundle(camera_dir)
+            if a.stage:
+                stage(manifest, out, version)
+    elif runtime == 'espidf':
+        ble_key, ble_generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
+        gen_secrets_espidf(camera_dir, conf, sec, manifest, public, blank=a.blank, ble_key=ble_key)
+        if ble_generated:
+            print('ble_key ->', DUSTY / 'secrets.toml', '(generated new [ble] key)')
+        tuning = tuning_for(camera_dir, conf, manifest)
+        stamp_tuning_espidf(camera_dir, tuning)
+        write_server_config(manifest, tuning, reset=a.reset_config)
+        schema = write_tuning_schema(camera_dir, manifest)
+        stamp_tuning_schema_header(camera_dir, schema)
+        version = version_espidf(camera_dir)
         if a.stage:
-            stage(manifest, out, version)
+            stage_espidf(camera_dir, manifest, version)
+    else:
+        sys.exit('dustygen: runtime %r not implemented yet (micropython, espidf)' % runtime)
 
 
 if __name__ == '__main__':

@@ -119,6 +119,7 @@ sdkconfig
 
 # ESP-IDF regenerables (dependencies.lock pins them)
 managed_components/
+.idf_component_cache/
 # archived databases / firmware binaries ride on disk, not in git
 *.db
 *.uf2

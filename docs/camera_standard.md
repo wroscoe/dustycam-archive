@@ -201,7 +201,7 @@ shows `mode` and links to the board's setup page when it is on the LAN.
 
 | Tier | Examples | Lives in | Reaches the board by | Changes after flashing? |
 |---|---|---|---|---|
-| **identity + credentials** | device id, WiFi, server host/ports, tokens, MQTT creds | `~/.dusty/secrets.toml` + `[server]` in `config.toml` | generated secrets file, flashed over USB (or compiled in) | no |
+| **identity + credentials** | device id, WiFi, server host/ports, tokens, MQTT creds, `ble_key` | `~/.dusty/secrets.toml` + `[server]` in `config.toml` | generated secrets file, flashed over USB (or compiled in), **or** NVS identity written over BLE by the phone app (`dustygen --blank` fleet image); NVS wins | no |
 | **tuning** | period, diff threshold, heartbeat, telemetry cadence, capture size, setup secs, gate pct, wake interval, mode | `~/.dusty/config.toml` `[camera.<name>]` | stamped into the firmware as defaults **and** published to `/data/config/<device>.json` for pull | yes, without reflash |
 | **board facts** | pins, sensor, framesize names, LED/button names, deny-listed calls | the board adapter in the camera's software | with the firmware | with the firmware |
 
@@ -211,6 +211,20 @@ board's format (`secrets.py`, `sdkconfig.secrets`, `.env`), stamps the tuning
 defaults into the app, and writes the server config file. `--public`
 selects the Funnel host/port and TLS. A tuning change is: edit
 `config.toml`, run `dustygen`, and the board pulls it at its next contact.
+The server's `<id>.json` is the live tier-2 truth — `dustygen` only seeds
+missing keys into it (`--reset-config` to force it back to the workstation
+values) — and `<id>.schema.json`, rewritten on every run, describes it for
+the sensorhub's settings form. For an espidf board with `ble` (or the
+`hotspot`-era `capabilities`), `dustygen` also stamps that same schema
+object into `main/tuning_schema.h` so a field-provisioned id needs nothing
+pre-seeded on sensorhub (section 6). `~/.dusty/secrets.toml [ble] key` is
+the one owner HMAC key used to authenticate the phone app over BLE —
+`dustygen` generates it on first use if missing. `dustygen --blank <camera>`
+builds the fleet image (identity/credentials empty; the phone app writes
+them into NVS later — see the tier-1 table above). `dustygen --phone-json`
+writes `~/.dusty/dusty_phone.json` (server host/port/tls/token, hotspot
+ssid/pass, `ble_key`, known camera ids), the file the phone app imports
+once via the system file picker.
 
 ## 6. Folder layout
 
@@ -223,10 +237,17 @@ cameras/<camera>/
   hardware/            case, carrier, power, optics: sources + exports, README
   software/
     app/               what runs on the board: one app; the power model is a
-                       setting, not a second file
+                       setting, not a second file (espidf: `main/
+                       tuning_schema.h`, dustygen's stamped schema, lives
+                       next to `main/tuning_defaults.h`)
     host/              workstation tools: deploy, stage-firmware, bench, preview
   tests/               host-runnable pytest: parsers, trigger math, meta
                        builder, config merge, spool naming. No board needed.
+
+apps/<app>/            owner-facing apps that talk to more than one camera
+                       (e.g. `apps/dustyphone`, the BLE phone app); not a
+                       `cameras/<camera>/software/host/` tool because it is
+                       cross-camera and has its own container/keystore/build.
 ```
 
 `camera.toml`:

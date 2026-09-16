@@ -1,0 +1,41 @@
+# Camera manifest — see docs/camera_standard.md §6. xiaocam1: game_lowpower
+# on the Seeed XIAO ESP32S3 Sense, static in hardware/tubecase. Written
+# 2026-09-12 against PLAN.md; status "designed" — camera+SD proven on the
+# Arduino bench sketch, firmware unflashed. The pan-era id ("xiaopantilt")
+# was never deployed; that software is archived under archive/pantilt/.
+id = "xiaocam1"
+board = "Seeed Studio XIAO ESP32S3 Sense (OV3660, 8 MB flash, 8 MB PSRAM, microSD)"
+runtime = "espidf"          # micropython | espidf | cpython
+power = "wake_cycle"        # always_on | wake_cycle
+status = "designed"         # designed | built | live | archived
+sensors = ["light"]
+capabilities = ["motion", "full_res", "spool", "pull_config", "pull_firmware",
+                "setup_mode", "shoot", "deep_sleep", "sd", "light", "model",
+                "button", "hotspot"]
+
+[tuning]                    # docs/camera_operation.md §4.1, game_lowpower profile
+profile = "game_lowpower"
+mode = "live"               # live | setup
+period_s = 30                # wake interval
+interval_n = 120             # record a frame every N wakes even without motion (~1 h)
+heartbeat_s = 3600           # awake-time between forced frames
+diff_min_frac = 0.02
+diff_l_thresh = 8
+gate_pct = 60                 # model confidence to keep
+keep_labels = ["animal", "person"]  # the gate's classes (animal_model.md)
+keep_all = false              # keep frames the model rejects
+audit_n = 20                  # keep 1 in N rejected frames anyway
+debug_frames = false          # record the preview + diff of every wake
+debug_max = 500               # debug frames kept per contact interval
+upload_cap = 1000             # ranked frames uploaded per contact
+lum_night = 12                 # open: calibrate on real data
+lum_day = 25                   # hysteresis; must exceed lum_night
+night_confirm_n = 3
+night_margin_s = 2700          # wake this long before the learned dawn
+night_probe_s = 1200           # probe interval while dark and not yet at the learned dawn
+hotspot_join_s = 90            # how long to search for the phone at a contact
+contact_idle_s = 120           # end contact this long after the last request
+setup_secs = 300
+telemetry_s = 60               # only meaningful during contact
+led_capture = true
+spool_max_frames = 20000       # SD reclaim threshold (PLAN.md §10)

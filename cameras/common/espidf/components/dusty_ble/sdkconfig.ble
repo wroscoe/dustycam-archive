@@ -1,0 +1,69 @@
+# dusty_ble sdkconfig fragment (docs/phone_app_plan.md §3): the NimBLE
+# peripheral-only, no-pairing diet. Any project embedding dusty_ble
+# includes this in its -DSDKCONFIG_DEFAULTS list (bench/ble_spike's
+# sdkconfig.defaults copies these lines verbatim; see that file's header).
+# Not consumed automatically -- IDF sdkconfig fragments are not #included,
+# they are merged by idf.py from the SDKCONFIG_DEFAULTS list at configure
+# time, so every project that wants dusty_ble names this file there too.
+
+# ---- NimBLE peripheral only: no central/observer, no pairing (decision 5:
+# HMAC challenge with an owner key instead of LE Secure Connections) ----
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BT_NIMBLE_ROLE_CENTRAL=n
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=n
+CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y
+CONFIG_BT_NIMBLE_ROLE_BROADCASTER=n
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+CONFIG_BT_NIMBLE_MAX_BONDS=0
+CONFIG_BT_NIMBLE_MAX_CCCDS=4
+CONFIG_BT_NIMBLE_MSYS_1_BLOCK_COUNT=16
+# 8 was measured (review finding) to run out well before a thumb/frame
+# transfer (~250 KB/s of outgoing fragments vs. maybe ~40 KB/s the link
+# actually carries) drains it, showing up as BLE_HS_ENOMEM from
+# ble_gatts_notify_custom()/ble_hs_mbuf_from_flat() a few fragments in;
+# these blocks live in PSRAM (MEM_ALLOC_MODE_EXTERNAL below), so this is
+# cheap. notify_sink() in dusty_ble.c also retries on ENOMEM regardless.
+CONFIG_BT_NIMBLE_SECURITY_ENABLE=n
+CONFIG_BT_NIMBLE_NVS_PERSIST=n
+CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=517
+CONFIG_BT_NIMBLE_MEM_ALLOC_MODE_EXTERNAL=y
+CONFIG_BT_NIMBLE_LOG_LEVEL_WARNING=y
+CONFIG_BT_NIMBLE_HOST_TASK_STACK_SIZE=5120
+# default 4096; on_cmd_write() (dusty_ble.c) reassembles a ~518 B frame on
+# this task's stack and, on a badreq, used to notify from it too (that
+# path is now deferred to ble_req -- see dusty_ble.c -- but the bump stays
+# as headroom).
+CONFIG_BT_CTRL_BLE_MAX_ACT=2
+CONFIG_ESP_COEX_SW_COEXIST_ENABLE=n
+# Explicit, not just "unset": review finding -- with both BT and Wi-Fi
+# enabled, IDF 5.5 defaults this to y, contrary to decision 9 ("sequential
+# radios", never concurrent). Leaving it unset silently keeps coexistence
+# code enabled.
+
+# ---- Wi-Fi buffer trims (re-measured at XIAO gate 4, P1.4) ----
+CONFIG_ESP_WIFI_STATIC_RX_BUFFER_NUM=4
+CONFIG_ESP_WIFI_DYNAMIC_RX_BUFFER_NUM=8
+CONFIG_ESP_WIFI_DYNAMIC_TX_BUFFER_NUM=8
+CONFIG_ESP_WIFI_AMPDU_TX_ENABLED=n
+CONFIG_ESP_WIFI_AMPDU_RX_ENABLED=n
+CONFIG_SPIRAM_TRY_ALLOCATE_WIFI_LWIP=y
+
+# ---- TLS: dynamic buffers on; SSL_IN_CONTENT_LEN stays at the IDF default
+# (16384) until P1 verifies the Funnel endpoint honours a smaller
+# max_fragment_length (openssl s_client -maxfraglen 4096) ----
+CONFIG_MBEDTLS_DYNAMIC_BUFFER=y
+CONFIG_MBEDTLS_DYNAMIC_FREE_CONFIG_DATA=y
+# (CONFIG_MBEDTLS_DYNAMIC_FREE_CA_CERT depends on the above and already
+# defaults to y; there is no CONFIG_MBEDTLS_DYNAMIC_FREE_PEER_CERT symbol
+# in IDF 5.5 -- review finding, that line was a silently-ignored typo.)
+
+# ---- stacks / heap ----
+# Only for tasks that never write flash (the dusty_ble image worker); the
+# request task stays on an internal-RAM stack (see dusty_ble.c).
+CONFIG_FREERTOS_TASK_CREATE_ALLOW_EXT_MEM=y
+# Review finding: CONFIG_SPIRAM_ALLOW_STACK_EXTERNAL_MEMORY does not exist
+# on IDF 5.5 -- it was renamed to the symbol above. dusty_ble.c's own #if
+# checks the new name first and falls back to the old one.
+CONFIG_LOG_DEFAULT_LEVEL_WARN=y
+CONFIG_LOG_MAXIMUM_LEVEL_INFO=y

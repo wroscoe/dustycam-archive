@@ -1,0 +1,7 @@
+# build/, sdkconfig, sdkconfig.old, sdkconfig.secrets, managed_components/
+# are already ignored repo-wide (see the top-level .gitignore). This adds
+# the one thing specific to this project's Makefile: a writable bind-mount
+# target for the IDF component manager's root cache, needed because the
+# Docker image's IDF_TOOLS_PATH (/opt/esp) is root-owned and the build
+# runs as the host user (see Makefile).
+.idf_component_cache/
