@@ -98,6 +98,21 @@ make -C software/app build            # espressif/idf:release-v5.5, hermetic
 make -C software/app flash PORT=/dev/ttyACM1   # first flash over USB
 ```
 
+For the public, credential-free browser image:
+
+```bash
+make -C software/app web-release
+```
+
+That target regenerates blank identity defaults, builds the app, rejects an
+image containing owner credentials, merges the bootloader, custom partition
+table, initial OTA data and app into one ESP Web Tools factory image, and
+writes the manifest plus checksums under `software/app/build/web/`. A browser
+install erases the whole onboard flash so an earlier NVS identity cannot
+survive; DustyPhone provisions the blank camera over BLE afterward. Tagged
+`xiao-wildlife-v*` releases run the same path in
+`.github/workflows/xiao-wildlife-firmware.yml`.
+
 Component cache (`managed_components/`, `dependencies.lock`: esp32-camera
 2.1.7, esp-tflite-micro 1.3.7, esp-nn 1.2.5, esp_jpeg) is copied in ahead of
 time so the Docker build needs no network. Not yet run for real — the

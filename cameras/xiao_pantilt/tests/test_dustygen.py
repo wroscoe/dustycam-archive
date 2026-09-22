@@ -338,8 +338,11 @@ class DustygenEspidfTestCase(unittest.TestCase):
 
     def test_blank_does_not_require_hotspot_secrets(self):
         self._write_secrets(SECRETS_TOML_NO_HOTSPOT)
+        before = (self.dusty_dir / 'secrets.toml').read_text()
         p = self.run_dustygen('--blank')
         self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertEqual((self.dusty_dir / 'secrets.toml').read_text(), before)
+        self.assertNotIn('generated new [ble] key', p.stdout)
 
     # ---- ble_key (phone_app_plan.md decisions 5, 7) ----------------------------
 

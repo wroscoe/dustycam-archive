@@ -1,0 +1,66 @@
+name: XIAO wildlife firmware
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "xiao-wildlife-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out DustyCam
+        uses: actions/checkout@v7
+
+      - name: Create disposable blank-build configuration
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/dusty" "$RUNNER_TEMP/sensorhub"
+          printf '%s\n' \
+            '[server]' \
+            'host = "unused.invalid"' \
+            'public_host = "unused.invalid"' \
+            'public_port = 10000' \
+            'gate_port = 8089' \
+            '' \
+            '[camera.xiao_pantilt]' \
+            > "$RUNNER_TEMP/dusty/config.toml"
+          printf '%s\n' \
+            '[hotspot]' \
+            'ssid = "DUSTYCAM_RELEASE_SENTINEL_SSID"' \
+            'password = "DUSTYCAM_RELEASE_SENTINEL_PASS"' \
+            '' \
+            '[sensorhub]' \
+            'blob_token = "DUSTYCAM_RELEASE_SENTINEL_TOKEN"' \
+            > "$RUNNER_TEMP/dusty/secrets.toml"
+
+      - name: Test release tooling
+        run: python3 -m unittest cameras.xiao_pantilt.tests.test_web_firmware_package
+
+      - name: Build and package credential-free firmware
+        env:
+          DUSTY_DIR: ${{ runner.temp }}/dusty
+          SENSORHUB_DIR: ${{ runner.temp }}/sensorhub
+        run: make -C cameras/xiao_pantilt/software/app web-release
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: xiao-wildlife-web-firmware
+          path: cameras/xiao_pantilt/software/app/build/web/
+          if-no-files-found: error
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/xiao-wildlife-v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          cameras/xiao_pantilt/software/app/build/web/*
+          --verify-tag
+          --title "XIAO wildlife camera $GITHUB_REF_NAME"
+          --notes "Credential-free DustyCam factory image for browser USB flashing. Provision identity and network access with the DustyCam Android app after installation."

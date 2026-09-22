@@ -640,7 +640,13 @@ def main():
             if a.stage:
                 stage(manifest, out, version)
     elif runtime == 'espidf':
-        ble_key, ble_generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
+        # A public fleet image must not depend on, read into its generated
+        # config, or create an owner's BLE key. Non-blank builds keep the
+        # existing generate-once behavior.
+        if a.blank:
+            ble_key, ble_generated = '', False
+        else:
+            ble_key, ble_generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
         gen_secrets_espidf(camera_dir, conf, sec, manifest, public, blank=a.blank, ble_key=ble_key)
         if ble_generated:
             print('ble_key ->', DUSTY / 'secrets.toml', '(generated new [ble] key)')
