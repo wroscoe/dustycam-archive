@@ -45,13 +45,13 @@ jobs:
         env:
           DUSTY_DIR: ${{ runner.temp }}/dusty
           SENSORHUB_DIR: ${{ runner.temp }}/sensorhub
-        run: make -C cameras/xiao_pantilt/software/app web-release
+        run: make -C cameras/xiaocam1/software/app web-release
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
           name: xiao-wildlife-web-firmware
-          path: cameras/xiao_pantilt/software/app/build/web/
+          path: cameras/xiaocam1/software/app/build/web/
           if-no-files-found: error
 
       - name: Publish tagged release
@@ -60,7 +60,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >-
           gh release create "$GITHUB_REF_NAME"
-          cameras/xiao_pantilt/software/app/build/web/*
+          cameras/xiaocam1/software/app/build/web/*
           --verify-tag
           --title "XIAO wildlife camera $GITHUB_REF_NAME"
           --notes "Credential-free DustyCam factory image for browser USB flashing. Provision identity and network access with the DustyCam Android app after installation."

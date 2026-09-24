@@ -19,7 +19,7 @@ writing:
 | frame meta keys | `STANDARD_META` in three test files, `app.py` `build_meta()`'s format string, `dc_meta_t` in C, sensorhub's `ingest.py` reader |
 | BLE frame header, flags, size limits | `ble_frame.h` (`BLE_FRAME_*`) and `Framer.java` (`HEADER_LEN`, `FLAG_*`, `REQ_MAX`/`RSP_MAX`/`DATA_MAX`) — byte for byte the same numbers |
 | GATT UUIDs | `dusty_ble.c` (a comment) and `DustyLink.java` (`BASE_FMT`) |
-| mesh line grammar | `cameras/openmv_n6/hardware/lora_hat/PLAN.md` only — nothing parses it yet |
+| mesh line grammar | `cameras/n6cam/hardware/lora_hat/PLAN.md` only — nothing parses it yet |
 
 `build_meta()` does not even use a JSON library: it formats the frame meta with
 `'{"ts": %d, "seq": %d, ...}' % (...)`. Nothing checks that the result matches

@@ -16,17 +16,17 @@ phone hotspot `sweetpotato` 2.4 GHz. A 64 GB SD card went in for the evening pas
 | piece | where | state |
 |---|---|---|
 | Plan | `docs/phone_app_plan.md` | decided; §7 questions answered by default (see Open) |
-| BLE component | `cameras/common/espidf/components/dusty_ble/` | all §2 ops implemented; P0 subset proven, P1 ops partly proven |
+| BLE component | `runtime/espidf/components/dusty_ble/` | all §2 ops implemented; P0 subset proven, P1 ops partly proven |
 | Shared components | `dusty_config` (NVS identity, `cfg_src/cfg_base`), `dusty_uplink` (full Wi-Fi deinit, `post_json`, `wifi_scan`), `dusty_control` (`POST /ble`, UDP beacon, `/spool`, `/thumb`), `dusty_spool` (sdspi mount fix) | built; partly proven |
-| Bench firmware | `cameras/common/espidf/bench/ble_spike/` | proven (replaced on the XIAO by the real firmware this evening); README "Measured" has the numbers |
-| Real camera firmware | `cameras/xiao_pantilt/software/app/` (`radio.c`, `contact_run(mode)`, config push, BLE enabled) | **on the XIAO now**, proven this evening: cold boot opens the window; owner-key auth; `time.set`; Shoot → `spool/9/000000.jpg` on the card → `spool.list` → `thumb` over BLE (5.7 KB, 32 KB/s); View-over-Wi-Fi handoff → hotspot join → beacon → `/status 200` (`contact_mode:view`) → `POST /ble` → re-linked. Timer wakes don't advertise; deep sleep drops the USB port (expected) |
+| Bench firmware | `runtime/espidf/bench/ble_spike/` | proven (replaced on the XIAO by the real firmware this evening); README "Measured" has the numbers |
+| Real camera firmware | `cameras/xiaocam1/software/app/` (`radio.c`, `contact_run(mode)`, config push, BLE enabled) | **on the XIAO now**, proven this evening: cold boot opens the window; owner-key auth; `time.set`; Shoot → `spool/9/000000.jpg` on the card → `spool.list` → `thumb` over BLE (5.7 KB, 32 KB/s); View-over-Wi-Fi handoff → hotspot join → beacon → `/status 200` (`contact_mode:view`) → `POST /ble` → re-linked. Timer wakes don't advertise; deep sleep drops the USB port (expected) |
 | dustygen | `tools/dustygen` (`tuning_schema.h`, `--blank`, `--phone-json`, `[ble] key`, `--verify-blank`) | done, 42 tests; writing secrets now deletes the stale `sdkconfig` (the review's blank-image blocker) |
 | sensorhub | `ingest` `POST /config/<id>` (200/409/400) + `blobgate` proxy + blobgate `_drain` hang fix | done, 51 tests; **deployed 2026-09-15 night** (ingest + blobgate rebuilt, serving the real camera) |
 | Android app | `apps/dustyphone/` (Java, no Gradle, docker `dustybuild`, `make build/install`) | on the Pixel with the **owner profile imported** (`~/.dusty/dusty_phone.json` via menu → Provision → Import); scan/connect/auth/status/preview/settings/provision/handoff/cycle; request-queue timeout; `bye live/window` handled |
 | Docs | `docs/camera_standard.md` §5/§6, `docs/camera_operation.md` §1, `STATUS.md` | updated |
 | sarg lessons | `sargbench2/esp32-s3-nimble-notifications-over-244-b-payload`, `…nimble-stop-deinit`, `android-ble-rescan-after-5-startscan-in-30`, `esp32-camera-preview-colours-wrong…`, `esp-vfs-fat-sdmmc-mount-with-an-sdspi` | recorded (private) |
 
-Nothing is committed. `cameras/common/espidf/`, `cameras/xiao_pantilt/software/app/`,
+Nothing is committed. `runtime/espidf/`, `cameras/xiaocam1/software/app/`,
 `apps/` and the sensorhub `blobgate/` + `ingest/settings.py` are untracked
 alongside older uncommitted work — commit deliberately, by path.
 
@@ -72,7 +72,7 @@ even with `dtr=False, rts=False` set before `open()` — **resets the ESP32-S3**
 evening's captures, and the first "cold timer wake" this morning, were caused
 by the logger itself. Use a raw `os.open()` reader (sarg
 `sargbench2/esp32-s3-usb-serial-jtag-opening-the-port`; script kept as
-`cameras/xiao_pantilt/logs/safecap.py`). The crash loop itself predates any
+`cameras/xiaocam1/logs/safecap.py`). The crash loop itself predates any
 capture (telemetry, 21:13–21:18), and the 21:48 crash still happened 133 s
 after the reader's reset, so the diagnosis stands. The older note above that
 "a serial reader attached stalls the Wi-Fi join" may be this same reset and is
@@ -125,7 +125,7 @@ that line leaves RTC state whose CRC no longer matches, so the next boot reads
 as cold and bumps `boot_count`. In other words the board never reaches its
 sleep path.
 
-### The crash, caught 2026-09-15 21:48 (full log: `cameras/xiao_pantilt/logs/crash-2026-09-15-2148.log`)
+### The crash, caught 2026-09-15 21:48 (full log: `cameras/xiaocam1/logs/crash-2026-09-15-2148.log`)
 
 ```
 assert failed: vTaskGenericNotifyGiveFromISR tasks.c:6213
@@ -215,12 +215,12 @@ server today, and it burns the battery the whole design is built around.
 1. **Reopen the real firmware's window at the desk when needed**: press BOOT (this *is* XIAO gate 1 — BOOT-button wake from deep sleep, untested) or unplug/replug the XIAO (cold boot → 120 s window; a linked phone extends it). Timer wakes never advertise, by design, and deep sleep drops the USB port.
 2. ~~Deploy sensorhub / run P1.1b~~ — **done 2026-09-15 night**: `ingest` + `blobgate` rebuilt and up, both P1.1b halves proven (see the gate table). Note the accept path needed the phone hotspot's **"Turn off hotspot automatically" → OFF** (`soft_ap_timeout_enabled=0`); Android's 10-minute no-client shutdown killed two earlier attempts, and a self-contact with no hotspot just sleeps again with the edit still pending.
 3. ~~Insert an SD card~~ — **done**: 64 GB card in; shoot/spool.list/thumb proven on the real firmware. P1.4 (drain throughput with the trimmed Wi-Fi buffers) still needs a ≥ 200-frame spool.
-4. **P1.2 field provisioning**: `python3 tools/dustygen cameras/xiao_pantilt --blank` → `make build` → `python3 tools/dustygen cameras/xiao_pantilt --verify-blank` → `esptool erase-region 0xd000 0x6000` (NVS) → flash → expect `dc-new-<mac4>` → app row → Provision → restarts as `dc-xiaocam1` and contacts (`first_contact` NVS flag).
+4. **P1.2 field provisioning**: `python3 tools/dustygen cameras/xiaocam1 --blank` → `make build` → `python3 tools/dustygen cameras/xiaocam1 --verify-blank` → `esptool erase-region 0xd000 0x6000` (NVS) → flash → expect `dc-new-<mac4>` → app row → Provision → restarts as `dc-xiaocam1` and contacts (`first_contact` NVS flag).
 5. `wifi.scan` beside BLE: −9 KB internal after the first scan; measure a second scan on the same boot (one-time vs per-scan). `ble_req` stack is 10 KB now; high-water marks are logged at `dusty_ble_stop`.
 6. `ble_adv_s` as a real tuning key (dustygen + `dc_cfg_t`); plan text: `/status.mode` is `contact_mode`.
 7. P2 app polish (frames grid, preview view), P3 Wi-Fi viewing (MJPEG, full-res, mDNS, LOHS experiment), P4 field sessions + standard §9/§12 rows.
 8. Plan §7 questions were answered by default — confirm: one `ble_key` per owner; blank-image + NVS identity accepted; manual hotspot primary; full-res over BLE = late fallback; `cfg.set` during drain → busy; `POST /config` in P1.
-9. Commit: everything above is uncommitted, mixed with older untracked work in `cameras/common/espidf/` and `cameras/xiao_pantilt/software/app/` — commit by path.
+9. Commit: everything above is uncommitted, mixed with older untracked work in `runtime/espidf/` and `cameras/xiaocam1/software/app/` — commit by path.
 
 ### Fixed today from the P1 review (Opus; Fable hit its usage limit)
 - accepted config push no longer reverted by the stale pull; `refresh` won't clobber a pending BLE edit; GET /config 404 = "no config yet"
@@ -234,7 +234,7 @@ server today, and it burns the battery the whole design is built around.
 
 ```sh
 # firmware (Docker, no host toolchain)
-cd cameras/common/espidf/bench/ble_spike && make build   # or cameras/xiao_pantilt/software/app
+cd runtime/espidf/bench/ble_spike && make build   # or cameras/xiaocam1/software/app
 esptool --port /dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_1C:DB:D4:76:AF:3C-if00 \
   --baud 921600 write-flash 0x20000 build/ble_spike.bin   # stop any serial logger first
 # app

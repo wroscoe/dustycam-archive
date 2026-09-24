@@ -31,7 +31,7 @@ camera.toml, then, for `runtime = "micropython"`:
                   run: `{name, type, default, help}` per tuning key, in
                   camera.toml order, for the sensorhub to render a settings
                   form from. See `tuning_schema()`.
-  4. bundle    -> software/build/app.py via cameras/common/micropython/bundle.py
+  4. bundle    -> software/build/app.py via runtime/micropython/bundle.py
   --stage      -> copies build/app.py to /hd2/sensorhub/firmware/<id>.py and
                   writes <id>.version = APP_VERSION, so boards pull it
 
@@ -123,7 +123,7 @@ def bundle_script():
     env = os.environ.get('DUSTY_RUNTIME_DIR')
     if env:
         return Path(env) / 'micropython' / 'bundle.py'
-    return REPO / 'cameras' / 'common' / 'micropython' / 'bundle.py'
+    return REPO / 'runtime' / 'micropython' / 'bundle.py'
 
 
 def rel(p: Path):

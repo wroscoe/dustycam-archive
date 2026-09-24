@@ -26,7 +26,7 @@ frame rate to the server and the expected daily energy. If there is an
 on-device model, name its input size and where its weights live.
 
 **3. Lay out the folder** exactly as the standard says. Copy nothing from
-another camera's app; import from `cameras/common/<runtime>/` and list the
+another camera's app; import from `runtime/<runtime>/` and list the
 modules in `camera.toml`. Write the README skeleton with the "Standard
 mapping" table filled in with your intentions.
 

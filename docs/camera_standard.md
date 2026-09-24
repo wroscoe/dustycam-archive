@@ -271,7 +271,7 @@ setup_secs = 300
 wifi_linger_s = 0              # >0: radio off between contacts (low power)
 ```
 
-Shared code: `cameras/common/<runtime>/`.
+Shared code: `runtime/<runtime>/`.
 
 - `common/micropython/`: `uplink.py`, `spool.py`, `telemetry.py`,
   `control.py` (status/setup/stream listener), `motion.py`, `focus.py`,
@@ -284,8 +284,8 @@ Shared code: `cameras/common/<runtime>/`.
 
 ## 7. Reference implementation
 
-`cameras/openmv_rt1062` (2026-09-03): `software/app/board.py` + `app.py` on
-`cameras/common/micropython/` (uplink, spool, config, otapull, motion,
+`cameras/rt1062cam` (2026-09-03): `software/app/board.py` + `app.py` on
+`runtime/micropython/` (uplink, spool, config, otapull, motion,
 camera, focus, control), bundled by `bundle.py`, generated and staged by
 `tools/dustygen`. Two design notes that other MicroPython cameras inherit:
 

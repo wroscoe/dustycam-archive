@@ -1,6 +1,6 @@
 # Frame meta — the JSON object a camera sends with every uploaded frame, as the
 # X-Meta header (docs/camera_standard.md §4). Built by build_meta() in
-# cameras/common/micropython/app.py and by dc_meta_build() in C; read by
+# runtime/micropython/app.py and by dc_meta_build() in C; read by
 # sensorhub's ingest.
 #
 # `order` is authoritative: build_meta() formats the object by hand with a %

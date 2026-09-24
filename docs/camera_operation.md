@@ -11,8 +11,8 @@ different boards give the same user experience. Where this document
 changes the standard, section 9 lists the change.
 
 The two target cameras are the **Seeed XIAO ESP32S3 Sense**
-(`cameras/xiao_pantilt`, ESP32-S3, OV3660, SD card, deep sleep, one LED)
-and the **OpenMV N6** (`cameras/openmv_n6`, STM32N657 with a neural
+(`cameras/xiaocam1`, ESP32-S3, OV3660, SD card, deep sleep, one LED)
+and the **OpenMV N6** (`cameras/n6cam`, STM32N657 with a neural
 accelerator, 1280x800, no SD card fitted yet, RGB LED).
 
 ## 1. The deployment this is written for

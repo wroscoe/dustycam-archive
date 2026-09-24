@@ -1,7 +1,7 @@
 # Power puck v2 — bq25185 solar charger + 1S LiPo + DC jack, 4-part printed enclosure
 
 A stand-alone power supply in the same rounded-rectangle shape as the
-OpenMV N6 case (`cameras/openmv_n6/hardware/case/`), meant to sit behind a
+OpenMV N6 case (`cameras/n6cam/hardware/case/`), meant to sit behind a
 camera and feed it through a JST-PH LOAD lead out of its bottom. Coupling to
 the camera (a coupling plate replacing the front plate, or glue) is a later
 piece of work; the front plate is deliberately plain.

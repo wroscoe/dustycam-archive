@@ -166,7 +166,7 @@ LOAD_SLOT_XC = CX - 12.0
 LOAD_SLOT_W, LOAD_SLOT_H = 7.0, 6.0
 
 # ---------------------------------------------------------------------------
-# helpers (copied from cameras/openmv_n6/hardware/case/caselib.py style)
+# helpers (copied from cameras/n6cam/hardware/case/caselib.py style)
 # ---------------------------------------------------------------------------
 def _sk(w, l, r, z):
     """Rounded-rectangle sketch on a plane at height z, centred on the origin."""

@@ -20,14 +20,14 @@ sys.path.insert(0, str(ROOT / 'contracts' / 'gen' / 'python'))
 
 import dusty_contract as C  # noqa: E402
 
-BLE_FRAME_H = ROOT / 'cameras/common/espidf/components/dusty_ble/include/ble_frame.h'
+BLE_FRAME_H = ROOT / 'runtime/espidf/components/dusty_ble/include/ble_frame.h'
 FRAMER_JAVA = ROOT / 'apps/dustyphone/src/com/dustycam/phone/ble/Framer.java'
 DUSTYLINK_JAVA = ROOT / 'apps/dustyphone/src/com/dustycam/phone/ble/DustyLink.java'
-APP_PY = ROOT / 'cameras/common/micropython/app.py'
+APP_PY = ROOT / 'runtime/micropython/app.py'
 META_TESTS = [
-    ROOT / 'cameras/openmv_rt1062/tests/test_rt1062_app.py',
-    ROOT / 'cameras/openmv_n6/tests/test_n6_app.py',
-    ROOT / 'cameras/common/tests/test_game.py',
+    ROOT / 'cameras/rt1062cam/tests/test_rt1062_app.py',
+    ROOT / 'cameras/n6cam/tests/test_n6_app.py',
+    ROOT / 'runtime/tests/test_game.py',
 ]
 
 
@@ -56,7 +56,7 @@ def java_ints(path):
     return out
 
 
-# ---------- C: cameras/common/espidf/components/dusty_ble ----------
+# ---------- C: runtime/espidf/components/dusty_ble ----------
 
 def test_c_ble_frame_matches_contract():
     d = defines(BLE_FRAME_H)

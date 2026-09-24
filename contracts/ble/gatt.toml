@@ -1,5 +1,5 @@
 # The GATT service dustyphone speaks to an ESP-IDF camera.
-# Sources of truth today: cameras/common/espidf/components/dusty_ble/ (ble_frame.h,
+# Sources of truth today: runtime/espidf/components/dusty_ble/ (ble_frame.h,
 # dusty_ble.c) and apps/dustyphone/src/com/dustycam/phone/ble/{DustyLink,Framer}.java,
 # which carry the same numbers typed twice.
 

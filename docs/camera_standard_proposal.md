@@ -303,7 +303,7 @@ telemetry_s = 60
 setup_secs = 300
 ```
 
-Shared code lives in `cameras/common/` with one subdirectory per runtime:
+Shared code lives in `runtime/` with one subdirectory per runtime:
 
 - `common/micropython/`: `uplink.py` (raw-socket POST, gate/ingest, TLS),
   `spool.py`, `telemetry.py`, `control.py` (status/setup/stream listener),
@@ -348,7 +348,7 @@ is in place. It is written to be pasted into a session as the task brief.
 > on-device model, name its input size and where its weights live.
 >
 > **3. Lay out the folder** exactly as the standard says. Copy nothing from
-> another camera's app; import from `cameras/common/<runtime>/` instead and
+> another camera's app; import from `runtime/<runtime>/` instead and
 > list the modules in `camera.toml`. Write the README skeleton with the
 > "Standard mapping" table filled in with your intentions.
 >
@@ -404,7 +404,7 @@ board.
 with the token; `devices.json` `expect` for every camera; device page shows
 `mode` and a setup link. Output: remote boards can pull config and firmware.
 
-**Phase 2 — `tools/dustygen` + `cameras/common/micropython/`.** Build the
+**Phase 2 — `tools/dustygen` + `runtime/micropython/`.** Build the
 generator from the rt1062's `gen_secrets.py`; extract the rt1062 app into
 the common modules plus `bundle.py`; the bundled `app.py` must be
 byte-for-byte equivalent in behaviour (same meta, same endpoints). Add
@@ -451,6 +451,6 @@ days.
 5. **esp32_s3_cam:** camlogger (GOOUUU) only; the MicroPython logger and persondet_app move to `archive/` in phase 4; fix the Docker build path first.
 6. **Sensors:** cameras now, sensors later. The standard is written device-generic (Watch/Capture/Judge optional) so the sensors directory can follow once the recipe is proven.
 
-Phases 1–3 done 2026-09-03: gate GET proxies; `cameras/common/micropython/` + `tools/dustygen`; RT1062 (2.0.8-rt) and N6 (2.0.9-n6) both on the shared runtime with config pull, pull OTA and rollback proven on each; the N6 low-power variant became the `wifi_linger_s` setting. Left for the N6: button check, battery divider, a day of heartbeats.
+Phases 1–3 done 2026-09-03: gate GET proxies; `runtime/micropython/` + `tools/dustygen`; RT1062 (2.0.8-rt) and N6 (2.0.9-n6) both on the shared runtime with config pull, pull OTA and rollback proven on each; the N6 low-power variant became the `wifi_linger_s` setting. Left for the N6: button check, battery divider, a day of heartbeats.
 
 Phase 0 was done the same day: `docs/camera_standard.md`, `docs/camera_recipe.md`, `camera.toml` in every camera, "Standard mapping" README sections, the IDE protocol doc renamed, the empty `dusty/` directory removed.

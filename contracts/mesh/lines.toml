@@ -1,5 +1,5 @@
 # The LoRa text-line grammar a camera speaks over MeshCore, via the base
-# station. Extracted from cameras/openmv_n6/hardware/lora_hat/PLAN.md §1, which
+# station. Extracted from cameras/n6cam/hardware/lora_hat/PLAN.md §1, which
 # is where it was specified; nothing parses it yet — basestation.py stores the
 # message text and reads only the "Name: " sender prefix.
 #

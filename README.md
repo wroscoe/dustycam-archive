@@ -50,8 +50,8 @@ sensorhub's ingest serves to the boards.
 
 | Camera | Board | Software |
 |---|---|---|
-| [`openmv_rt1062/`](cameras/openmv_rt1062/) | OpenMV Cam RT1062 (R6) | **Live** on the shared MicroPython runtime (2.0.8-rt): motion-gated uploader, full-res 2592x1944 capture, phone setup page with focus score, config + firmware pull with rollback; the reference for the standard. Printed case in `case/` |
-| [`openmv_n6/`](cameras/openmv_n6/) | OpenMV N6 | **Live** on the same runtime (2.0.10-n6) since 2026-09-03: 1280x800 frames, battery/charge telemetry, `wifi_linger_s` low-power setting |
+| [`openmv_rt1062/`](cameras/rt1062cam/) | OpenMV Cam RT1062 (R6) | **Live** on the shared MicroPython runtime (2.0.8-rt): motion-gated uploader, full-res 2592x1944 capture, phone setup page with focus score, config + firmware pull with rollback; the reference for the standard. Printed case in `case/` |
+| [`openmv_n6/`](cameras/n6cam/) | OpenMV N6 | **Live** on the same runtime (2.0.10-n6) since 2026-09-03: 1280x800 frames, battery/charge telemetry, `wifi_linger_s` low-power setting |
 | [`esp32_s3_cam/`](cameras/esp32_s3_cam/) | GOOUUU ESP32-S3-CAM (goouuu1) | `software/camlogger/` ESP-IDF wake-cycle firmware: thumbnail motion diff, TFLite-micro animal gate, pull config + OTA. Silent since 2026-08-18, Docker build path broken (phase 4). Waveshare-era tracks in `archive/` |
 | [`pi5cam/`](cameras/pi5cam/) | Raspberry Pi 5 / Pi Zero 2 W | Linux + CPython node/pipeline prototype; the deployed unit uploads nothing. Parked until the Pi is on the bench; its README lists the bench steps in order (phase 6) |
 | [`n6_speedcam/`](cameras/n6_speedcam/) | OpenMV N6 + HLK-LD2415H 24 GHz speed radar, solar | Radar-triggered capture with vehicle speed; tscircuit carrier, DFR0535 solar/LiPo power, radome enclosure (designed 2026-09-02, unbuilt) |
@@ -84,8 +84,8 @@ and fill it in from `~/.dusty/`:
 
 | Board file | From template | For |
 |---|---|---|
-| `cameras/openmv_rt1062/software/app/secrets.py` | `tools/dustygen cameras/openmv_rt1062 [--public] [--stage]` | MicroPython, USB copy to `/flash`; the same run stamps tuning, publishes the server config and bundles/stages the app (camera standard §5) |
-| `cameras/openmv_n6/software/app/secrets.py` | `tools/dustygen cameras/openmv_n6 [--stage]` | same |
+| `cameras/rt1062cam/software/app/secrets.py` | `tools/dustygen cameras/rt1062cam [--public] [--stage]` | MicroPython, USB copy to `/flash`; the same run stamps tuning, publishes the server config and bundles/stages the app (camera standard §5) |
+| `cameras/n6cam/software/app/secrets.py` | `tools/dustygen cameras/n6cam [--stage]` | same |
 | `cameras/esp32_s3_cam/software/camlogger/sdkconfig.secrets` | hand-filled from `~/.dusty` (dustygen espidf: TODO, phase 4) | compiled into ESP-IDF firmware |
 | `sensors/*/sdkconfig.secrets` | hand-filled from `~/.dusty` | compiled into ESP-IDF firmware |
 
@@ -115,7 +115,7 @@ The repo root is not a Python package. The MicroPython cameras test on the
 host with board stubs and need only pytest:
 
 ```bash
-python -m pytest cameras/common/tests cameras/openmv_rt1062/tests cameras/openmv_n6/tests
+python -m pytest runtime/tests cameras/rt1062cam/tests cameras/n6cam/tests
 ```
 
 The Pi camera is its own package (`cameras/pi5cam/pyproject.toml`):

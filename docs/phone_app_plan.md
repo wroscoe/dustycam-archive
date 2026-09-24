@@ -1,7 +1,7 @@
 # dustyphone: Android app + BLE link for dustycam cameras — implementation plan
 
 Written 2026-09-14, revised 2026-09-15 (sequential radios) against `docs/camera_standard.md`,
-`docs/camera_operation.md` (§3, §5, §8, §10), `cameras/xiao_pantilt/PLAN.md`. First target:
+`docs/camera_operation.md` (§3, §5, §8, §10), `cameras/xiaocam1/PLAN.md`. First target:
 `xiaocam1` (ESP-IDF 5.5, unflashed; gate 1 pending). Three jobs: (a) provision a new camera in
 the field, (b) view/edit tuning, (c) look at imagery with no Wi-Fi/cell.
 Verified facts this plan leans on: app bin 2,028,672 B in a 3,145,728 B OTA slot; identity is
@@ -17,7 +17,7 @@ between the BT controller, Wi-Fi and the camera is taken off the table by constr
 
 1. **App lives at `~/code/dustycam/apps/dustyphone/`** (new top-level `apps/`, package
    `com.dustycam.phone`). Rejected `tools/`: workstation Python (dustygen, configurator); an
-   APK has its own container, keystore and build. Rejected `cameras/xiao_pantilt/software/host/`:
+   APK has its own container, keystore and build. Rejected `cameras/xiaocam1/software/host/`:
    the app is cross-camera. Standard §6 gains one line for `apps/`.
 2. **Java 11, no Gradle**, photodroid's `tools/build.sh` copied verbatim (aapt2/javac/d8/zipalign/
    apksigner in `eclipse-temurin:17-jdk`, new container `dustybuild` mounting `~/code/dustycam:/work`
@@ -168,7 +168,7 @@ Error codes: `auth denied badreq busy nofile sd wifi toolarge unsupported window
 
 ## 3. Firmware changes
 
-New component `cameras/common/espidf/components/dusty_ble/` (REQUIRES `bt nvs_flash mbedtls
+New component `runtime/espidf/components/dusty_ble/` (REQUIRES `bt nvs_flash mbedtls
 dusty_core dusty_config esp_timer`):
 - `include/dusty_ble.h`: `dusty_ble_start(const dusty_ble_hooks_t*)`, `dusty_ble_stop()` (blocks
   until the controller is idle and its heap is back), `dusty_ble_connected()`,
@@ -177,7 +177,7 @@ dusty_core dusty_config esp_timer`):
   prov_set time_set`. `handoff(mode, ssid, pass)` only *records* the request; the caller's
   state machine performs it after the reply and `bye` have been flushed.
 - `src/ble_frame.c` (+`include/ble_frame.h`): **portable, no IDF headers** — fragment/reassemble,
-  crc32; host-tested via ctypes (`cameras/common/espidf/tests/test_ble_frame.py`).
+  crc32; host-tested via ctypes (`runtime/espidf/tests/test_ble_frame.py`).
 - `src/dusty_ble.c`: NimBLE init/adv/GATT, request task (internal stack, 6 KB: it writes NVS,
   and flash writes are not allowed from a PSRAM stack), auth state, op dispatch. Image work
   (JPEG decode for `thumb`, `preview`) runs on a worker created with
@@ -370,7 +370,7 @@ base rule, writes `<id>.json` + `<id>.schema.json` when supplied.
 
 | # | package | proof (on hardware) | effort | blocked on |
 |---|---|---|---|---|
-| **P0 spike** | `cameras/common/espidf/bench/ble_spike/` IDF project with the sdkconfig diet above: NimBLE adv + `info`/`hello`/`auth`/`status`/`thumb`(from SD)/`preview`(lazy camera) over §2 framing, `wifi.up` handoff, minimal HTTP `/status` + `POST /ble`, radio state machine, `radio:` heap line at every transition. App: `ScanActivity` + bare `DustyLink`/`CamHttp`/`Session`: connect, MTU 517, auth, `status`, one `thumb`, `wifi.up`, poll `/status`, `POST /ble`, rescan-reconnect. | **P0.1a** BLE + lazy camera: internal free ≥ 80 KB with NimBLE up and the camera initialised; `thumb` 10/10 crc-ok at ≥ 10 KB/s (log KB/s); `preview` init/capture/deinit 20x with no SCCB hang. **P0.1b** handoff: BLE session → `wifi.up` → `esp_bt_controller_get_status()==IDLE`, hotspot joined, `/status` answers over the phone's Wi-Fi, `POST /ble` → Wi-Fi off, re-advertising within 3 s, app reconnects by address; **10 cycles without a reboot or leak** — internal free per state per cycle flat within ±2 KB. The spike prints the table `state | internal_free | largest_block` for SLEEP-side, BLE idle, BLE+camera, WIFI, WIFI+TLS(+camera) and it goes in the README + sarg. 3 walk-away disconnects each recover by re-advertise + rescan. | 3-4 d | first flash only (bench on USB; cold boot opens the window). Not gate 1. |
+| **P0 spike** | `runtime/espidf/bench/ble_spike/` IDF project with the sdkconfig diet above: NimBLE adv + `info`/`hello`/`auth`/`status`/`thumb`(from SD)/`preview`(lazy camera) over §2 framing, `wifi.up` handoff, minimal HTTP `/status` + `POST /ble`, radio state machine, `radio:` heap line at every transition. App: `ScanActivity` + bare `DustyLink`/`CamHttp`/`Session`: connect, MTU 517, auth, `status`, one `thumb`, `wifi.up`, poll `/status`, `POST /ble`, rescan-reconnect. | **P0.1a** BLE + lazy camera: internal free ≥ 80 KB with NimBLE up and the camera initialised; `thumb` 10/10 crc-ok at ≥ 10 KB/s (log KB/s); `preview` init/capture/deinit 20x with no SCCB hang. **P0.1b** handoff: BLE session → `wifi.up` → `esp_bt_controller_get_status()==IDLE`, hotspot joined, `/status` answers over the phone's Wi-Fi, `POST /ble` → Wi-Fi off, re-advertising within 3 s, app reconnects by address; **10 cycles without a reboot or leak** — internal free per state per cycle flat within ±2 KB. The spike prints the table `state | internal_free | largest_block` for SLEEP-side, BLE idle, BLE+camera, WIFI, WIFI+TLS(+camera) and it goes in the README + sarg. 3 walk-away disconnects each recover by re-advertise + rescan. | 3-4 d | first flash only (bench on USB; cold boot opens the window). Not gate 1. |
 | **P1 firmware** | `dusty_ble` full ops, `radio.c` in `main/`, `dusty_ident`, `--blank`/`--phone-json`/`tuning_schema.h` in dustygen, `contact_run(mode)` + `POST /ble` + config push + sensorhub POST route, `/spool` HTTP, lazy `judge_init`, full Wi-Fi deinit in `dusty_uplink_wifi_off`. Host tests: `test_ble_frame.py`, dustygen tests. | **P1.1** button → `dc-xiaocam1` visible within 3 s; `cfg.set period_s=45` → `cfg` N+1 in `status`, survives sleep/wake; `contact` handoff drains and the device page shows N+1 (push accepted); a server-side edit made first yields 409 → server value wins, visible as `cfg_src`. **P1.2** NVS-erased board + `--blank` image: `dc-new-…`, `prov.set` in window → restarts as `xiaocam1`, joins, drains. **P1.3** no phone: button alone still contacts after `ble_adv_s` (today's behaviour). **P1.4** XIAO gate 4 re-run with the trimmed Wi-Fi buffers (≥ 200-frame drain; if throughput drops > 30 %, AMPDU TX goes back on). | 3-4 d | **XIAO gate 1** for the button path (cold-boot path unblocked) |
 | **P2 app** | Full `CameraActivity`: settings form from schema, frames grid + thumbs, preview, handoff UX with `/status` polling and Bring-back, provisioning import, time sync, events, reconnect, Makefile/README. | **P2.1** provision a wiped camera from the phone alone, no USB, then see its frames on sensorhub. **P2.2** edit two keys off-grid (airplane mode), verify on the board, walk into cell, tap Contact → device page updates. **P2.3** 24 thumbnails browsed in < 20 s over BLE; app survives screen lock and returns; a handoff round-trip from the UI in < 30 s. | 4-5 d | P1 |
 | **P3 Wi-Fi viewing** | View mode polish: `FrameActivity` over HTTP, WebView MJPEG, `/thumb` in WIFI, mDNS `dc-<device>.local` (IDF `mdns` component; drop if it costs > 10 KB internal), LOHS experiment (`startLocalOnlyHotspot` → creds → `wifi.up`), slow BLE `frame`. | **P3.1** hotspot on, cell off: full-res frame in the app in < 2 s, MJPEG ≥ 3 fps, then Bring-back works. **P3.2** LOHS: does the ESP32 see it (band)? pass/fail in sarg; if fail, dropped and the README says so. **P3.3** full-res over BLE ≤ 20 s. | 2-3 d | P1, P2 partial |

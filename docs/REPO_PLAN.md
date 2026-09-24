@@ -63,8 +63,8 @@ rejected on evidence from this repo:
   case rev-E work that added the bq25185 charger and DC jack shipped with no
   `board.py` change — `board_sensors()` already read `CHG`/`BAT_ADC`.
 - The one cross-cutting feature in flight, the N6 LoRa hat, puts its hardware in
-  `cameras/openmv_n6/hardware/lora_hat/` and its firmware (`meshcore.py`) in
-  `cameras/common/micropython/` — it would straddle two repos under any split.
+  `cameras/n6cam/hardware/lora_hat/` and its firmware (`meshcore.py`) in
+  `runtime/micropython/` — it would straddle two repos under any split.
 
 What the per-camera idea got right, and what is adopted: **the camera id is the
 unit**. sensorhub keys `config/<id>.json` and `firmware/<id>.bin` by it, STATUS
@@ -272,9 +272,9 @@ Each independently testable, no structural change:
 Nothing is carved yet; this proves the whole layout in one tree where it can
 still be tested end to end.
 
-- `git mv cameras/common runtime`
-- `git mv cameras/openmv_n6 cameras/n6cam` (and the other id renames)
-- `git mv cameras/*/hardware hw/<id>/`, `cameras/openmv_rt1062/case
+- `git mv runtime runtime`
+- `git mv cameras/n6cam cameras/n6cam` (and the other id renames)
+- `git mv cameras/*/hardware hw/<id>/`, `cameras/rt1062cam/case
   hw/rt1062cam/case`, `hardware/{power_puck,tripod_mount} hw/puck/`,
   `cameras/hardware_common hw/common`, `tools/casereview hw/common/casereview`
 - Re-point the path couplings: `xiao .../CMakeLists.txt:8`
