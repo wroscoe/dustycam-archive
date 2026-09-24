@@ -1,5 +1,11 @@
 # puckcase v2.4
 
+> **v3 in progress (2026-09-15):** the v2.4 bay could not take the camera
+> and the bench board has no headers. v3 replaces the bay with a drop-in
+> C-channel **holder** + **backing block** (`v3lib.py`, `holder.step.py`,
+> `backing_plate.step.py`, `check_v3.py`, `DESIGN_v3.md` §13). Ring / front
+> plate not yet reworked; everything below describes v2.4.
+
 A sealed, camera-only case for the Seeed XIAO ESP32S3 Sense that presses into
 the **power puck**'s front mouth in place of the puck's own front plate. Same
 outline as the puck (47.21 × 80.80, R6, 2.4 walls), so the two boxes stack into

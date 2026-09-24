@@ -1,0 +1,167 @@
+menu "XIAO pan/tilt camera"
+
+config PANTILT_MOTOR_ENABLE
+    bool "Allow DRV8833 motor actuation"
+    default n
+    help
+        Safety interlock. The firmware never drives either H-bridge input
+        unless this is explicitly enabled. Leave off until all bench gates in
+        the firmware README have passed.
+
+config PANTILT_MOTOR_IN1_GPIO
+    int "DRV8833 AIN1 GPIO"
+    range -1 48
+    default -1
+
+config PANTILT_MOTOR_IN2_GPIO
+    int "DRV8833 AIN2 GPIO"
+    range -1 48
+    default -1
+
+config PANTILT_MOTOR_POSITIVE_DIRECTION
+    int "Electrical direction that increases logical pan (+1 or -1)"
+    range -1 1
+    default 1
+
+config PANTILT_PWM_HZ
+    int "DRV8833 PWM frequency (Hz)"
+    range 100 40000
+    default 18000
+
+config PANTILT_PWM_DUTY_PCT
+    int "DRV8833 PWM duty percent"
+    range 1 100
+    default 45
+
+config PANTILT_MAX_PULSE_MS
+    int "Maximum single visual-servo pulse (ms)"
+    range 10 2000
+    default 250
+
+config PANTILT_SETTLE_MS
+    int "Camera settling time after every motor pulse (ms)"
+    range 0 10000
+    default 350
+
+config PANTILT_NOMINAL_SPEED_DEG_S
+    int "Conservative nominal pan speed used only to size pulses (deg/s)"
+    range 1 180
+    default 20
+
+config PANTILT_MAX_STEP_DEG
+    int "Largest requested image-controlled step (deg)"
+    range 1 30
+    default 10
+
+config PANTILT_MAX_MOVE_PULSES
+    int "Maximum motor pulses for one anchor-to-anchor move"
+    range 1 60
+    default 18
+
+config PANTILT_MAX_MOVE_MOTION_MS
+    int "Maximum powered motor time for one move (ms)"
+    range 10 60000
+    default 12000
+
+config PANTILT_MAX_CYCLE_PULSES
+    int "Maximum motor pulses for a complete scan including recovery"
+    range 1 300
+    default 180
+
+config PANTILT_MAX_CYCLE_MOTION_MS
+    int "Maximum powered motor time for a complete scan (ms)"
+    range 10 170000
+    default 90000
+
+config PANTILT_MAX_MOVE_WALL_MS
+    int "Maximum wall-clock duration of one visual move (ms)"
+    range 100 120000
+    default 20000
+
+config PANTILT_MAX_CYCLE_WALL_MS
+    int "Maximum wall-clock duration of a complete scan/recovery (ms)"
+    range 1000 170000
+    default 150000
+
+config PANTILT_HOME_DIRECTION
+    int "Electrical direction toward home (-1 or +1)"
+    range -1 1
+    default -1
+
+config PANTILT_HOME_LIMIT_GPIO
+    int "Home limit-switch GPIO (-1 disables switch homing)"
+    range -1 48
+    default -1
+
+config PANTILT_HOME_LIMIT_ACTIVE_LOW
+    bool "Home limit switch is active low"
+    default y
+
+config PANTILT_HOME_MAX_MS
+    int "Maximum homing drive time (ms)"
+    range 10 30000
+    default 8000
+
+config PANTILT_HOME_BACKOFF_MS
+    int "Drive time away from an already-active home switch before re-approach (ms)"
+    range 10 5000
+    default 150
+
+config PANTILT_ALLOW_BENCH_TIMED_HOME
+    bool "BENCH ONLY: permit bounded timed-stop home without a limit switch"
+    default n
+    help
+        This is a temporary supervised bench mode. It does not sense a stop,
+        position, motor current, or encoder and emits a warning on every use.
+
+config PANTILT_LOGICAL_MIN_DEG
+    int "Configured safe logical pan minimum"
+    range -360 360
+    default 0
+
+config PANTILT_LOGICAL_MAX_DEG
+    int "Configured safe logical pan maximum"
+    range -360 360
+    default 180
+
+config PANTILT_SD_CS_GPIO
+    int "microSD SPI CS GPIO"
+    range 0 48
+    default 21
+
+config PANTILT_SD_SCK_GPIO
+    int "microSD SPI SCK GPIO"
+    range 0 48
+    default 7
+
+config PANTILT_SD_MISO_GPIO
+    int "microSD SPI MISO GPIO"
+    range 0 48
+    default 8
+
+config PANTILT_SD_MOSI_GPIO
+    int "microSD SPI MOSI GPIO"
+    range 0 48
+    default 9
+
+config PANTILT_TRACK_FOV_DEG
+    int "Calibrated horizontal camera FOV used by pinhole registration"
+    range 30 170
+    default 110
+
+config PANTILT_MIN_OVERLAP_DEG
+    int "Required overlap between adjacent scan views"
+    range 0 170
+    default 30
+
+config PANTILT_MIN_SCENE_COVERAGE_DEG
+    int "Required visible scene coverage across the scan"
+    range 1 360
+    default 290
+
+config PANTILT_MIN_REG_CONFIDENCE_PCT
+    int "Minimum visual-registration confidence percent"
+    range 1 99
+    default 40
+
+endmenu

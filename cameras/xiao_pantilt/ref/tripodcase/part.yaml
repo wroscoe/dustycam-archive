@@ -1,0 +1,69 @@
+id: xiao-esp32s3-sense-case
+kind: made
+name: Seeed XIAO ESP32S3 Sense tripod case (body + lid)
+aka: [xiao sense case, xiao esp32s3 sense enclosure]
+category: enclosure
+status: designed            # not yet printed / fit-tested
+for_parts: [seeed-xiao-esp32s3-sense]
+frame: "board frame: origin base-PCB plan bottom-left, +X along the long edge, USB-C on the X=0 end, Z=0 base-PCB bottom, lens +Z"
+
+body:
+  size_mm: [32.11, 22.58, 19.46]    # + 12.5 tripod boss on the -Y wall
+  outline: rect
+  corner_r: 3.0
+  notes: >
+    walls 2.0 (+X end wall 4.0, it carries two screws), floor 2.5, lid 2.0; pocket x -3.61..22.5,
+    y -0.4..18.18 (PCB 20.95 x 17.78 + 0.4/side; card tip -3.11 + 0.5; expansion edge 21.25 + 1.25);
+    inner floor Z 0 (PCB sits on it), wall top / lid underside Z 14.96 (lens top 13.96 + 1.0), lid top 16.96
+
+mounting:
+  holes:
+    - {xy: [8.5, -2.4], dia: 8.0, axis: y, notes: "1/4\"-20 heat-set insert (ruthex RX-1/4-20) in a dia 14 x 12.5 boss on the -Y wall, Z centre 6.23; camera then looks sideways"}
+  pattern: "lid: 4 x M2 x 8 self-tap (pilot 1.7 x 8) at (-2.01, 0.6), (-2.01, 17.18) in the USB-end blocks and (24.5, 2.5), (24.5, 15.28) in the 4 mm +X wall"
+
+interfaces:
+  board_retention: >
+    no screws (XIAO has no holes): the base PCB sits flat on the inner floor in a 0.4 mm/side pocket;
+    +X end: a stop rib x 21.3..22.5 (Z 0..3.63, under the expansion board) butts the PCB edge and two
+    hooks (x 20.0..22.5, y -0.4..2.0 and 16.0..18.18, Z 1.45..3.63) reach 0.95 over the PCB top
+    corners; USB end: two full-height corner blocks x -3.61..-0.4, y -0.4..1.9 (mirrored) stop the
+    PCB's X=0 edge, and two lid posts 2.2 x 1.8 land on the PCB corners at Z 1.35 (0.1 gap).
+    Insert nose-first under the hooks at <= 10 deg tilt with the edge ~0.3 short of the rib, drop the
+    USB end between the blocks, screw the lid on; X play 0.75
+  window: "dia 9 round at (3.53, 8.25) over the OV3660 lens (barrel 7.84, tip 6.0 at Z 13.96), 1 mm top chamfer"
+  usb_and_microsd: >
+    one 13.4 w x 10.7 h opening in the X=0 wall, y 2.2..15.6, Z -1.5..9.2, plus a floor relief to
+    x -1.0 (Z -1.5..0) so a 12.3 x 6.5 USB-C overmold reaches the receptacle face (x -1.53) - AND the
+    microSD card: the Sense socket is on TOP of the expansion board under the camera head, the card
+    slides in from the USB end and its tip sits at x -3.11, Z 6.85..8.5 (2.5 mm inside the outer face:
+    fingernail / tweezers)
+  antenna: "3.5 x 2.6 notch in the -Y wall at x 17..20.5, Z 1.4..4.0 for the U.FL pigtail (jack at (17.7..20.7, 2.6..5.7) on the base PCB under the expansion board); the flex antenna lives outside the case"
+  buttons: "RST/BOOT (x 0.3..2.9, y 2.2..3.8 / 14.0..15.6, Z < 2.0) are NOT reachable: RST is under the card, BOOT under nothing but 13 mm down; no holes cut (add a dia 2.2 pin hole at (1.59, 14.81) if wanted)"
+  mic: "PDM mic not in the vendor model; no hole cut (it is on the expansion board top near the FPC socket)"
+  lid: "1.2 thick x 1.5 tall lip, 0.2/side gap, cut back around the USB-end blocks"
+
+print:
+  orientation: "body floor-down (side tripod boss wants support or a 45-degree chamfer); lid top-down (posts print as 13.6 mm pillars - fine in PETG/PLA at 0.2)"
+  profile: "0.4 nozzle / 0.2 layer, PLA or PETG, >= 3 perimeters"
+  hardware: "4 x M2 x 8 self-tapping pan head; 1 x 1/4\"-20 heat-set insert (optional)"
+
+cad:
+  file: xiao_sense_case_body.step
+  files: [xiao_sense_case_body.step, xiao_sense_case_lid.step, xiao_sense_case_assembly.step, xiao_esp32s3_sense_board.step]
+  source: xiao_sense_case_common.py
+  fidelity: exact
+  verified: false
+
+sources:
+  - {facts: "all board geometry (PCB 20.95 x 17.78 x 1.25 r1.906, expansion PCB, USB shell, camera head + lens axis (3.53, 8.25), inserted microSD card, FPC socket/pins, B2B, U.FL, buttons)",
+     ref: "sargineer /m/sarg/seeed-xiao-esp32s3-sense/f/amz-xiao-esp32s3-sense.step (Seeed vendor model, rebased) - bounding boxes + lens circles measured; see xiao_board_ref.py",
+     date: 2026-08-21}
+  - {facts: "microSD socket on top of the expansion board, card inserted from the USB end; R at -Y, B at +Y; U.FL front side at the non-USB end",
+     ref: "wiki.seeedstudio.com xiao_esp32s3_sense_filesystem (66.jpg) + xiao_esp32s3_getting_started Sense front pinout", date: 2026-08-21}
+  - {facts: "case geometry", ref: "xiao_sense_case_common.py + XIAO_SENSE_CASE.md + verify.py", date: 2026-08-21}
+confidence: >
+  High for geometry: the case was checked against the real vendor STEP (not just an envelope) - zero
+  interference at the nominal position and at every in-pocket extreme (X -0.4/+0.35, Y +/-0.4), USB
+  overmold probe, card pull-out, hook gaps, and tilted insertion up to 10 deg all pass (verify.py).
+  Not yet printed: FDM shrink on the 0.4/side pocket, the 0.2 hook gap and the 13.6 mm lid posts are
+  the things to check on the first print. Mic/buttons intentionally not exposed.

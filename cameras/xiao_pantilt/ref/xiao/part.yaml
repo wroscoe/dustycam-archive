@@ -1,0 +1,62 @@
+id: seeed-xiao-esp32s3-sense
+name: Seeed Studio XIAO ESP32S3 Sense (camera + mic + SD)
+aka: [XIAO ESP32-S3 Sense, Seeed 113991115, XIAO S3 Sense]
+vendor: amazon
+sku: "B0C69FFVHH"
+url: https://www.amazon.com/dp/B0C69FFVHH
+qty_owned: 1
+category: board
+frame: "origin base-PCB plan bottom-left, Z=0 PCB bottom; USB-C edge at X=0"
+
+body:
+  size_mm: [20.95, 17.78, 13.96]  # full stack incl camera lens (vendor STEP, measured)
+  outline: rounded-rect
+  corner_r: 1.906                 # XIAO family standard
+  pcb_thickness: 1.25             # base PCB, measured from vendor STEP
+  max_height_top: 12.71           # camera lens top above PCB top face (measured)
+  max_height_bottom: 0            # underside flat: pads only
+
+mounting:
+  holes: []
+  pattern: "none - no mounting holes (XIAO form factor)"
+  notes: >
+    Same 7+7 castellated 2.54-pitch footprint as [[amz-xiao-esp32c3]].
+    Sense expansion board snaps on via B2B connector (z 4.18-5.43);
+    camera FPC connector overhangs the non-USB end, and the folded FPC
+    loop + camera head overhang the USB end by up to 3.1 (bbox x to
+    -3.11) - leave clearance above the USB in enclosures. Camera can
+    be unfolded away from the board on its FPC.
+
+ports:
+  - {type: usb-c, edge: "X=0", center_y: 8.89, center_z_above_pcb: 1.6,
+     w: 8.94, h: 3.2, overhang: 1.53, notes: "shell z 0.26-4.46 (measured)"}
+  - {type: microsd, edge: "expansion board top", notes: "up to 32GB FAT; on Sense expansion"}
+
+electrical:
+  vin: "5V USB-C / 1S LiPo via BAT +/- underside pads (negative pad closest to USB)"
+  logic_v: 3.3
+  protocols: [i2c, spi, uart]
+  notes: >
+    ESP32-S3R8: 8MB PSRAM + 8MB flash, WiFi b/g/n + BLE5 via U.FL
+    external antenna (included). Sense expansion: DVP camera + PDM
+    digital mic + microSD. Camera per listing is OV2640 1600x1200, but
+    Seeed discontinued OV2640 and ships OV3660 2048x1536 on newer
+    builds - check the module marking on the physical unit.
+
+cad:
+  file: amz-xiao-esp32s3-sense.step
+  fidelity: vendor
+  source: "Seeed wiki seeed-studio-xiao-esp32s3-sense-3d_model.zip sha256:a37c6b41d5660cd3310fea05edde0238762fe00da4de623936b7ca66814cb698"
+  verified: true   # rebased; bbox 20.95 x 17.78 base, 13.96 stack, PCB 1.25
+
+sources:
+  - {facts: "all geometry: outline, stack heights, USB shell, camera position",
+     ref: "vendor STEP (original in ref/), measured after rebase", date: 2026-08-08}
+  - {facts: "B2B expansion, SD 32GB, U.FL antenna, battery pad polarity, OV3660 change",
+     ref: "https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/", date: 2026-08-08}
+confidence: >
+  High - official Seeed 3D model, rebased to standard frame with the
+  original untouched in ref/. Note wiki quotes "21 x 17.8 x 15mm with
+  expansion" vs 13.96 measured on the model (likely incl B2B seating
+  tolerance) - trust the STEP for fits. Camera sensor variant
+  (OV2640 vs OV3660) needs a physical check.

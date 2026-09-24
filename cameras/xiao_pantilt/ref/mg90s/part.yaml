@@ -1,0 +1,36 @@
+id: mg90s-micro-servo
+name: 9g Micro Servo family (MG90S / FS90R / SG90 body)
+aka: [SG90, MG90S, FS90R, 9g servo, ada-2941 DC-in-servo-body]
+vendor: amazon
+url: null
+qty_owned: 6   # MG90S 4-pack + FS90R + ada-2941 (DC gearbox motor in same body)
+category: servo
+frame: "origin plan bottom-left (incl. flange ears), Z=0 body bottom; shaft axis up +Z at (5.9, 21.3)"
+
+body:
+  size_mm: [11.8, 32.4, 29.9]   # width x (body 22.6 + 2 flange ears ~4.9) x height incl output
+  outline: irregular
+  notes: "body between ears spans y=4.7..27.3; flange plate at z=15.9..18.4"
+
+mounting:
+  holes:
+    - {xy: [5.9, 2.4], dia: 2.0, thread: null, notes: "flange ear, screw from top"}
+    - {xy: [5.9, 29.6], dia: 2.0, thread: null, notes: "flange ear"}
+  pattern: "27.25 hole-to-hole (single row)"
+  shaft: {dia: 4.7, notes: "output spline axis at (5.9, 21.3) - 5.9 offset from near body end; horn adds ~3 height"}
+  notes: "servo pocket: 23.0 x 12.2 cutout with flange sitting on 15.9 shelf is the classic fit (add tolerances.md slide fit)"
+
+electrical:
+  vin: "4.8-6V"
+  protocols: [pwm]
+  notes: "MG90S metal gear 180deg; FS90R continuous rotation (same body); 3-wire lead exits low on one end"
+
+cad:
+  file: amz-mg90s-micro-servo.step
+  fidelity: vendor
+  source: "step.parts sg90_micro_servo sha256:7e9aeb4eebf5565e8dd049bb2697a001f2bbaf6de86ca118cef7e66e6268c19c (re-based; original in ref/)"
+  verified: true   # bbox [0,0,0]-[11.8,32.4,29.9]; flange holes measured (5.9,2.4)/(5.9,29.6) dia 2.0
+
+sources:
+  - {facts: "all geometry", ref: "step.parts SG90 STEP, measured after re-base", date: 2026-07-23}
+confidence: "model is SG90; MG90S/FS90R share the body class within ~0.3mm (community consensus) - caliper-check pocket fits before printing tight"

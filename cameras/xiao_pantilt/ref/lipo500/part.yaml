@@ -1,0 +1,31 @@
+id: ada-1578-lipo-500
+name: LiPo 500mAh 1S (Adafruit 1578)
+vendor: adafruit
+sku: "1578"
+url: https://www.adafruit.com/product/1578
+qty_owned: 1
+category: power
+frame: "origin plan bottom-left per vendor STEP, Z=0 bottom"
+
+body:
+  size_mm: [36.0, 29.0, 4.75]
+  outline: rounded-rect
+  notes: "JST-PH 2-pin lead ~100mm exits a short end"
+
+mounting:
+  holes: []
+  notes: "bay per hardware/batteries.md: height = 4.75 + 1.5 = 6.25; +0.5/side lateral; wire-exit gap >= 3, R1 edges"
+
+electrical:
+  vin: "1S 3.7V nominal, 500mAh"
+  connector: "JST-PH 2.0 2-pin"
+
+cad:
+  file: ada-1578-lipo-500.step
+  fidelity: vendor
+  source: "adafruit/Adafruit_CAD_Parts @ ab3dfc47c324, '1578 500mAh battery/...step' (original in ref/; frame kept)"
+  verified: true   # bbox 36 x 29 x 4.75 measured
+
+sources:
+  - {facts: "envelope", ref: "vendor STEP (measured)", date: 2026-07-23}
+confidence: "high; still apply batteries.md swell rule for the bay"

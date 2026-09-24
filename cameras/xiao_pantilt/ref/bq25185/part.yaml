@@ -1,0 +1,28 @@
+id: adafruit-6091-adafruit-bq25185-usb-dc-solar-lithium-ion-poly
+name: Adafruit bq25185 USB / DC / Solar Lithium Ion/Polymer charger
+vendor: adafruit
+sku: "6091"
+url: https://www.adafruit.com/product/6091
+qty_owned: 4
+category: board
+frame: "origin PCB plan bottom-left per vendor STEP, Z=0 PCB bottom"
+body:
+  size_mm: [31.75, 26.39, 6.37]
+  outline: rect
+  max_height_top: 6.37            # USB-C shell / JST connectors
+  max_height_bottom: 0
+mounting:
+  holes: "4 x 2.5 mm corner holes (vendor STEP)"
+ports:
+  - {type: usb-c, notes: "charge input"}
+  - {type: jst-ph2, notes: "battery + solar/DC inputs, 4 JST connectors on the board"}
+electrical:
+  vin: "4.5-6V USB/DC/solar"
+cad:
+  file: adafruit-6091-adafruit-bq25185-usb-dc-solar-lithium-ion-poly.step
+  fidelity: vendor
+  source: "adafruit/Adafruit_CAD_Parts main, '6091 bq25185 USB Charger/6091 bq25185 USB Charger.step' (original in ref/)"
+  verified: true    # bbox [0,0,0]-[31.75,26.386,6.37]; Adafruit lists 32.0 x 26.3 x 7.2 mm
+sources:
+  - {facts: "all geometry", ref: "vendor STEP (measured)", date: 2026-08-20}
+confidence: "high - official Adafruit model"

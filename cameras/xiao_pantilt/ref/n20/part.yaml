@@ -1,0 +1,34 @@
+id: n20-gearmotor
+name: N20 / GA12-N20 Micro Metal Gearmotor
+aka: [N20, GA12-N20, micro metal gearmotor]
+vendor: amazon
+url: null
+qty_owned: 3   # Acxico 3pcs 3-6V
+category: motor
+frame: "X=0 at gearbox mounting face (shaft overhangs to x=-10), gearbox x=0..9, motor can x=9..24; shaft axis (y=6, z=5)"
+pic: PXL_20260723_143630906.jpg   # motors organizer overview
+
+body:
+  size_mm: [34.0, 12.0, 10.0]   # 24 body + 10 shaft; face 12 x 10
+  outline: irregular
+  notes: "motor can is a 12-dia cylinder flattened to 10 tall; terminals at the x=24 rear end need ~4 solder clearance"
+
+mounting:
+  holes: []
+  pattern: "2x M1.6 tapped in gearbox face - NOT modeled"
+  shaft: {dia: 3.0, len: 10.0, flat: "D-flat 2.5 across"}
+  notes: "M1.6 face-hole positions ambiguous in drawing (7.5+/-0.3 diagonal per Handsontec) - CALIPER-VERIFY or clamp the gearbox block instead (common practice; gearbox length varies with ratio on other variants - these are 9)"
+
+electrical:
+  vin: "3-6V (Acxico variant; GA12-N20 family 6-12V)"
+  notes: "stall 0.67A typ; solder tab terminals"
+
+cad:
+  file: amz-n20-gearmotor.step
+  fidelity: envelope
+  source: amz-n20-gearmotor.py
+  verified: true   # bbox [-10,0,0]-[24,12,10]
+
+sources:
+  - {facts: "face 12x10, gearbox 9 long, motor 15, shaft 3x10 D-flat, total 34", ref: "https://www.handsontec.com/dataspecs/motor_fan/GA12-N20.pdf drawing", date: 2026-07-23}
+confidence: "face hole positions unmodeled (ambiguous drawing); Acxico variant assumed dimensionally = GA12-N20 family"
