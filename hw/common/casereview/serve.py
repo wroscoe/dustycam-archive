@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """casereview - browse the camera enclosure renders and pin comments on them.
 
-A review app for the enclosure work in cameras/*/hardware/case/. It serves the
+A review app for the enclosure work in hw/. It serves the
 rendered views, lets you click anywhere on one to drop a numbered pin with a
 note, and writes every pin to comments.json beside this file. That JSON is the
 point: it lives in the repo next to the CAD source, versions with it, and Claude
@@ -13,7 +13,7 @@ Stdlib only -- no Flask, nothing to install. Run:
     python3 tools/casereview/serve.py --port N
     python3 tools/casereview/serve.py --host 0.0.0.0   # reachable on the tailnet
 
-Renders are discovered, not configured: any cameras/<cam>/hardware/case/renders/
+Renders are discovered, not configured: any hw/<cam>/**/renders/
 file named <target>.<view>.png shows up automatically, so a new camera's case
 appears here as soon as it has renders.
 """
@@ -28,7 +28,7 @@ from pathlib import Path
 from urllib.parse import urlparse, unquote
 
 HERE = Path(__file__).resolve().parent
-REPO = HERE.parents[1]                       # .../dustycam
+REPO = HERE.parents[2]                       # .../dustycam (hw/common/casereview -> hw -> root)
 COMMENTS = HERE / "comments.json"
 PAGE = HERE / "index.html"
 
@@ -79,9 +79,19 @@ def pretty(target):
 
 
 def scan_renders():
-    """Every cameras/*/hardware/case/renders/<target>.<view>.png in the repo."""
+    """Every hw/*/**/renders/<target>.<view>.png in the repo.
+
+    NOTE (2026-09-24, the hw/ move): this finds nothing today. The convention
+    it looks for -- a `renders/` directory holding `<target>.<view>.png` -- was
+    the one esp32_s3_cam and n6_speedcam used, and both are archived. The three
+    live cameras write `review/`, `review_v<n>/` and `snaps/` instead, with
+    names like `iso_20260914T224206Z.png` and `bay_back.png` that RENDER_RE
+    does not match. The glob below is the faithful translation of the old path,
+    not a fix: deciding the one convention (and whether renders are release
+    artifacts per docs/REPO_PLAN.md §3) is still open.
+    """
     found = {}
-    for d in sorted((REPO / "cameras").glob("*/hardware/case/renders")):
+    for d in sorted((REPO / "hw").glob("*/**/renders")):
         for p in sorted(d.glob("*.png")):
             m = RENDER_RE.match(p.name)
             if not m:

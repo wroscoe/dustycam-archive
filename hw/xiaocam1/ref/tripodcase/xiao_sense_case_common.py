@@ -19,7 +19,7 @@ U.FL jack; a 1/4"-20 tripod boss sits on the -Y wall (lens then looks sideways).
 import sys
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
-sys.path[:0] = [str(HERE), str(HERE.parents[1])]
+sys.path[:0] = [str(HERE), str(HERE.parents[2] / 'common')]   # hw/common: caseskit, pcbkit
 from pcbkit import *
 from build123d import *
 import xiao_board_ref as B

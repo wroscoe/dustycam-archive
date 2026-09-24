@@ -15,7 +15,7 @@ Not in the vendor model: the PDM mic (tiny, top of the expansion board near the 
 import sys
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
-sys.path[:0] = [str(HERE), str(HERE.parents[1])]
+sys.path[:0] = [str(HERE), str(HERE.parents[2] / 'common')]   # hw/common: caseskit, pcbkit
 from pcbkit import *
 from build123d import *
 
