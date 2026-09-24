@@ -36,7 +36,7 @@ was removed; steps 2-3 currently run as the per-camera tooling under
 | [`sensors/`](sensors/) | Non-camera devices: `miclogger/` (XIAO S3 Sense continuous mic), `espnowbridge/` + `espnowmeter/` (its ESP-NOW repeater and signal meter), `plantlogger/` (FeatherS3 soil sensor). Status table in [`sensors/README.md`](sensors/README.md). |
 | [`mesh/`](mesh/) | LoRa / MeshCore device side: radio firmware images + hardware notes (T114, Heltec V4). |
 | [`tools/`](tools/) | `dustygen` (the one config/secrets/bundle/stage generator for every camera, standard §5), `casereview/` (markup of CAD renders), `configurator/` (static webapp weighing power × compute × optics × battery). |
-| [`apps/`](apps/) | User-facing applications: [`website/`](apps/website/) is the dependency-free DustyCam splash page; [`dustyphone/`](apps/dustyphone/) is the phone app. |
+| [`apps/`](apps/) | User-facing applications: [`dustyphone/`](apps/dustyphone/) is the phone app. The independently deployed splash site lives in the sibling [`dustycamsplash`](https://github.com/wroscoe/dustycamsplash) repository. |
 | [`server/`](server/) | Base station / ingest side — the thing cameras report *to*. In practice this is **sensorhub** (`~/code/sensorhub`, MQTT + blob ingest + pages UI); this dir holds only design notes. |
 | [`STATUS.md`](STATUS.md) | Every device with its status and the date it was last proven. |
 
