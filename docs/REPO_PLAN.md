@@ -307,6 +307,51 @@ and a bad carve costs nothing.
 Diff each carved HEAD against the `pre-split` checkout (`diff -r`) to confirm
 content identity.
 
+### Phase 3 results (carved 2026-09-24, nothing published)
+
+Carved in `claude-box` with `git-filter-repo` 2.47.0, from fresh clones, into
+`~/code/dusty/carve/`. The source repo was not rewritten.
+
+| Repo | Commits | `.git` | Verified against `pre-split` |
+|---|---|---|---|
+| `hardware` | 25 | 29 MB | identical to `hw/` |
+| `firmware` | 39 | **1.5 MB** (from 117 MB) | — |
+| `dustycli` | 7 | 228 KB | identical to `tools/dustycli/` |
+| `phone` | 4 | 320 KB | identical to `apps/dustyphone/` |
+| `contracts` | 2 | 212 KB | identical, plus `tools/contractgen` by design |
+
+The `--path-rename` map is what makes this work. Paths moved in phase 2, so
+filtering on `hw/` alone captures a single commit; each pre-move location
+(`cameras/openmv_n6/hardware/`, `cameras/xiao_pantilt/ref/`, `hardware/`,
+`cameras/hardware_common/`, …) is mapped to its post-move home, which
+reconstructs the layout across all 25 commits of CAD history. `git subtree
+split` cannot do this — it does not follow renames, and was tried first.
+
+**What the carve proved about the split's cost.** In the carved firmware repo,
+98 pytest and all 63 ESP-IDF host tests pass, but **46 tests fail**, every one
+of them a cross-repo path failure rather than a logic failure:
+
+- 39 dustygen tests (24 xiaocam1 + 15 n6cam) invoke `tools/dustycli/dusty.py`,
+  which is now a different repository.
+- 3 contract tests read `apps/dustyphone/.../Framer.java` and `DustyLink.java`
+  to prove the C and Java copies of the BLE constants agree — and those two
+  files are now in two different repositories.
+
+This is the predicted loss of atomicity, made concrete on day one. It defines
+the phase 4 work:
+
+1. **dustycli becomes a dependency, not a path.** The camera test suites should
+   resolve `dusty` from `PATH` (installed via `pip install -e`), skipping with a
+   clear message when it is absent, instead of reaching across the tree.
+2. **The contract cross-check splits three ways.** The C-side check stays in
+   firmware, the Java-side check moves to the phone repo, and each runs against
+   its *vendored* `contracts/gen/` rather than the other language's source. The
+   "C and Java agree with each other" test cannot survive the split in its
+   current form — the contract replaces it, which is the point.
+
+Until then the combined checkout (`~/code/dustycam-ws/`) is the only place the
+full suite runs green.
+
 ### Phase 4 — publish
 
 Rename `wroscoe/dustycam` → `wroscoe/dustycam-archive` on GitHub (the redirect
