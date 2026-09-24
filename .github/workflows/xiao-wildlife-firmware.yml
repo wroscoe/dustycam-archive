@@ -27,7 +27,7 @@ jobs:
             'public_port = 10000' \
             'gate_port = 8089' \
             '' \
-            '[camera.xiao_pantilt]' \
+            '[camera.xiaocam1]' \
             > "$RUNNER_TEMP/dusty/config.toml"
           printf '%s\n' \
             '[hotspot]' \
@@ -39,7 +39,7 @@ jobs:
             > "$RUNNER_TEMP/dusty/secrets.toml"
 
       - name: Test release tooling
-        run: python3 -m unittest cameras.xiao_pantilt.tests.test_web_firmware_package
+        run: python3 -m unittest cameras.xiaocam1.tests.test_web_firmware_package
 
       - name: Build and package credential-free firmware
         env:
