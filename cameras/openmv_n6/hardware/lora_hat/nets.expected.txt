@@ -1,0 +1,30 @@
+# N6 LoRa hat -- expected net membership (BUILD.md Phase 2 "Nets" table,
+# updated per review: C3/C4 deleted, J3 pin order changed).
+# One net per block; member list is order-independent (checked as a set).
+# NC = must NOT appear on any net above (BUILD.md's expected "not connected" list).
+
+GND: J1.GND_A, J2.GND_B, U2.GND1, U2.GND2, U2.GND3, U2.GND4, U2.GND5, U2.GND6, U2.GND7, U2.GND8, U2.GND9, U2.GND10, U1.GND, C1.pin2, C2.pin2, R3.pin2, R4.pin1, J4.GND, J3.pin10
+V3V3: J1.V3V3_A, J2.V3V3_B, U2.VCC, U1.VCC, C1.pin1, C2.pin1, R1.pin1, R2.pin1, J3.pin9
+SPI_MOSI: J1.P0_MOSI, U2.MOSI
+SPI_MISO: J1.P1_MISO, U2.MISO
+SPI_SCK: J1.P2_SCK, U2.SCK
+SPI_NSS: J1.P3_NSS, U2.NSS, R1.pin2
+RADIO_NRST: J2.P7_NRST, U2.NRST, R2.pin2
+RADIO_BUSY: J2.P8_BUSY, U2.BUSY
+RADIO_DIO1: J2.P9_DIO1, U2.DIO1
+DIO2_TXEN: U2.DIO2, U2.TXEN, U1.A, R3.pin1
+RXEN: U1.Y, U2.RXEN, R4.pin2
+RF_ANT: U2.ANT, R5.pin2
+RF_UFL: R5.pin1, J4.SIGNAL
+EXP_P4: J1.P4, J3.pin1
+EXP_P5: J1.P5, J3.pin2
+EXP_WKUP2: J1.WKUP2, J3.pin3
+EXP_RAW: J1.RAW, J3.pin4
+EXP_P13: J2.P13, J3.pin5
+EXP_P14: J2.P14, J3.pin6
+EXP_P11: J2.P11, J3.pin7
+EXP_BOOT0: J2.BOOT0, J3.pin8
+
+# not connected (BUILD.md Phase 2 "no-connect" row) -- these ports must not
+# be members of any net above:
+NC: J1.P6, J1.ETH_LED, J1.ETH_RXN, J1.ETH_RXP, J1.ETH_TXN, J1.ETH_TXP, J2.P15, J2.P16, J2.P17, J2.P18, J2.RESET, J2.P10, J2.VIN

@@ -1,0 +1,5 @@
+node_modules/
+.tscircuit/
+manual-edits.json
+dist/index/
+review_clearance/

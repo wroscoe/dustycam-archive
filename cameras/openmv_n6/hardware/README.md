@@ -18,6 +18,14 @@ board model (`openmv-n6.py` / `.step`, measured from OpenMV's GLB),
 vendor STEP itself is fetched with `sarg cad get`, not committed). Not
 printed yet. Regenerate with the `cad` skill; review with `cad-viewer`.
 
+## LoRa hat: [`lora_hat/`](lora_hat/) — planned 2026-09-13
+
+`lora_hat/PLAN.md`: an SX1262 (Ebyte E22-900M22S) hat on the N6's 2×8
+headers, driven over SPI2 from the MicroPython bundle (`meshcore.py`
+group-text packets on the existing MeshCore mesh), inside the camera puck
+with a flex antenna. tscircuit design, JLCPCB assembly. Nothing ordered yet;
+gates in the plan's §8.
+
 ## History: how the enclosure was unblocked
 
 **Update 2026-09-02: the mechanical data exists.** The N6 was measured from

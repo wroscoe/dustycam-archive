@@ -18,6 +18,13 @@ _spec = importlib.util.spec_from_file_location(
 _n6 = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_n6)
 
+_hat_spec = importlib.util.spec_from_file_location(
+    "lora_hat_mock",
+    str(__import__("pathlib").Path(__file__).resolve().parent.parent / "lora_hat" / "fit" / "lora_hat_mock.py"),
+)
+_hat = importlib.util.module_from_spec(_hat_spec)
+_hat_spec.loader.exec_module(_hat)
+
 
 def reference_parts():
     """Every non-printed occurrence in the fit-check, labelled."""
@@ -26,6 +33,12 @@ def reference_parts():
     parts.append(C.load_jst_plug_mock())
     parts.append(C.load_cable_mock())
     parts.append(C.usb_plug_mock())
+    # N6 LoRa hat (../lora_hat/): plugs onto the N6's SPI2 shield header, so
+    # it rides along with the N6 in the slide-in sweep automatically -- no
+    # MATED additions needed (the male header insulator only touches the
+    # female header top at z 9.80, zero volume; see lora_hat/BUILD.md
+    # Phase 5).
+    parts.append(_hat.hat_parts())
     return parts
 
 
