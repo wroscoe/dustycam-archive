@@ -1,22 +1,51 @@
-# Camera manifest — see docs/camera_standard.md §6. Truth as of 2026-09-03.
+# Camera manifest — see docs/camera_standard.md §6. Written 2026-09-13 for
+# the game_lowpower profile (docs/camera_operation.md §4.1, PLAN.md).
+# status = "designed": this profile is UNPROVEN — nothing below has been
+# flashed yet. The board's flash currently runs the monitor-profile
+# firmware (app 2.0.10-n6, power = "always_on", proven 2026-09-03); that
+# stays live until this bundle is staged and pulled. See STATUS.md.
 id = "n6cam"
 board = "OpenMV N6 (STM32N657, firmware 5.0.0, MicroPython 1.28; legacy sensor API)"
 runtime = "micropython"
-power = "always_on"       # wifi_linger_s > 0 in [tuning]/config.toml = the old low-power variant (radio off between contacts)
-status = "live"           # app 2.0.9-n6 on the shared runtime since 2026-09-03
-sensors = ["battery", "charge"]   # imu_speed of the 1.x app not carried over
-capabilities = ["preview", "focus_score", "motion", "full_res", "spool", "pull_config", "pull_firmware", "push_firmware", "setup_mode", "shoot"]
+power = "wake_cycle"      # was "always_on"; game_lowpower wakes on a timer + deep-sleeps between
+status = "designed"
+sensors = ["battery", "charge", "light"]
+capabilities = ["preview", "focus_score", "motion", "full_res", "spool", "pull_config",
+                "pull_firmware", "push_firmware", "setup_mode", "shoot",
+                "deep_sleep", "sd", "light", "model", "button", "hotspot"]
 [bundle]
-order = ["board.py", "common:uplink", "common:spool", "common:config", "common:otapull",
-         "common:motion", "common:camera", "common:focus", "common:control", "common:app"]
+order = ["board.py", "common:uplink", "common:spool", "common:gamespool", "common:config",
+         "common:otapull", "common:motion", "common:camera", "common:focus", "common:control",
+         "common:night", "common:rank", "common:persist", "common:led", "common:judge",
+         "common:contact", "common:wakecycle", "common:app"]
 
-[tuning]
-period_s = 10
-diff_min_frac = 0.005
-diff_l_thresh = 8
-heartbeat_s = 300
-telemetry_s = 60
-capture_framesize = "HD"      # 1280x800 native; RGB565 + software JPEG (CAPTURE_MODE in board.py)
-capture_settle_ms = 400
+[tuning]                      # docs/camera_operation.md §4.1, game_lowpower profile
+profile = "game_lowpower"
+period_s = 30                  # wake interval
+interval_n = 120               # record a frame every N wakes even without motion (~1 h)
+heartbeat_s = 3600             # awake-time between forced frames
+diff_min_frac = 0.02
+diff_l_thresh = 24            # bench 2026-09-13: each wake re-inits AWB/AGC; at 8 a static scene diffs 10-16 %, at 24 ~0
+gate_pct = 60                  # model confidence to keep
+keep_labels = ["animal", "person"]   # the gate's classes (animal_model.md)
+keep_all = false               # keep frames the model rejects
+audit_n = 20                   # keep 1 in N rejected frames anyway
+debug_frames = false           # record the preview + diff of every wake
+debug_max = 500                # debug frames kept per contact interval
+upload_cap = 1000              # ranked frames uploaded per contact
+lum_night = 12                 # open: calibrate on real data
+lum_day = 25                   # hysteresis; must exceed lum_night
+night_confirm_n = 3
+night_margin_s = 2700           # wake this long before the learned dawn
+night_probe_s = 1200            # probe interval while dark and not yet at the learned dawn
+hotspot_join_s = 90             # how long to search for the phone at a contact
+contact_idle_s = 120            # end contact this long after the last request
 setup_secs = 300
-wifi_linger_s = 0             # >0: radio off between contacts, kept up this long after each (low-power); 0 = always on
+telemetry_s = 60                # only meaningful during contact
+led_capture = true
+spool_max_frames = 20000        # SD reclaim threshold
+preview_settle_ms = 500
+capture_framesize = "HD"        # 1280x800 native; RGB565 + software JPEG (CAPTURE_MODE in board.py)
+capture_settle_ms = 400
+wifi_linger_s = 0               # monitor profile only; unused by game_lowpower (radio is off by default between wakes)
+bench_contact_n = 0             # >0: every N wakes, scan; if the LAN SSID is visible, run a contact (bench OTA/config without the button)
