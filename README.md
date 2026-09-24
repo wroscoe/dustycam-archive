@@ -32,7 +32,10 @@ was removed; steps 2-3 currently run as the per-camera tooling under
 | Path | Contents |
 |---|---|
 | [`docs/`](docs/) | All documentation: build guides, the one-shot workflow, architecture notes and plans. **Start with [`docs/camera_standard.md`](docs/camera_standard.md)** (pipeline, setup/live modes, device↔sensorhub contract, layout) and [`docs/camera_recipe.md`](docs/camera_recipe.md) (the brief for writing a new camera). |
-| [`cameras/`](cameras/) | One directory per camera. Each owns its `hardware/`, `software/`, and `tests/`, a `camera.toml` manifest, and a "Standard mapping" section in its README saying how it meets the standard and where it does not. |
+| [`cameras/`](cameras/) | One directory per camera, named by its **id**. Firmware only: `software/`, `tests/`, a `camera.toml` manifest, and a "Standard mapping" section in its README. The matching CAD is `hw/<id>/`. |
+| [`runtime/`](runtime/) | The shared camera runtimes: `micropython/` (inlined into each bundle by `bundle.py`) and `espidf/components/` (the `dusty_*` components), plus their host tests. |
+| [`hw/`](hw/) | All CAD and PCB work, mirrored by camera id: `hw/<id>/`, the shared `hw/puck/` mechanical family, and `hw/common/` (`caseskit`, `pcbkit`, `casereview`). |
+| [`contracts/`](contracts/) | The single source of truth for every format that crosses a boundary — frame meta, BLE GATT and framing, the LoRa line grammar — plus the generator that turns it into constants for each language. |
 | [`sensors/`](sensors/) | Non-camera devices: `miclogger/` (XIAO S3 Sense continuous mic), `espnowbridge/` + `espnowmeter/` (its ESP-NOW repeater and signal meter), `plantlogger/` (FeatherS3 soil sensor). Status table in [`sensors/README.md`](sensors/README.md). |
 | [`mesh/`](mesh/) | LoRa / MeshCore device side: radio firmware images + hardware notes (T114, Heltec V4). |
 | [`tools/`](tools/) | `dustycli/` (the `dusty` command: config, secrets, bundling, OTA staging — standard §5), `contractgen` (contracts/ -> generated constants). |
