@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M8,4 L0,0 L0,8 Z" fill="#334155"/>
+    </marker>
+    <style>
+      .part { fill:#dbeafe; stroke:#0f172a; stroke-width:3; }
+      .puck { fill:none; stroke:#94a3b8; stroke-width:2; stroke-dasharray:9 7; }
+      .cut { fill:#fff; stroke:#0f172a; stroke-width:3; }
+      .dim { stroke:#334155; stroke-width:2; marker-start:url(#arrow); marker-end:url(#arrow); }
+      .ext { stroke:#64748b; stroke-width:1.5; }
+      .label { font: 24px sans-serif; fill:#0f172a; }
+      .small { font: 19px sans-serif; fill:#334155; }
+      .title { font: 700 32px sans-serif; fill:#0f172a; }
+    </style>
+  </defs>
+
+  <text x="48" y="48" class="title">Universal glue-on 1/4-20 tripod pad — architecture checkpoint</text>
+
+  <!-- PLAN VIEW, scale 7 px/mm -->
+  <text x="70" y="95" class="label">Plan (tripod side)</text>
+  <rect x="89" y="120" width="330.5" height="565.6" rx="42" class="puck"/>
+  <rect x="114.25" y="290.8" width="280" height="224" rx="28" class="part"/>
+  <circle cx="254.25" cy="402.8" r="56" class="part"/>
+  <circle cx="254.25" cy="402.8" r="28" class="cut"/>
+  <line x1="114.25" y1="276" x2="114.25" y2="246" class="ext"/>
+  <line x1="394.25" y1="276" x2="394.25" y2="246" class="ext"/>
+  <line x1="114.25" y1="253" x2="394.25" y2="253" class="dim"/>
+  <text x="236" y="240" class="small">40</text>
+  <line x1="100" y1="290.8" x2="69" y2="290.8" class="ext"/>
+  <line x1="100" y1="514.8" x2="69" y2="514.8" class="ext"/>
+  <line x1="77" y1="290.8" x2="77" y2="514.8" class="dim"/>
+  <text x="46" y="410" class="small" transform="rotate(-90 46 410)">32</text>
+  <text x="288" y="391" class="small">Ø16 boss</text>
+  <text x="288" y="418" class="small">Ø8 insert pocket</text>
+  <text x="130" y="548" class="small">Dashed: common 47.21 × 80.80 puck face</text>
+
+  <!-- SECTION VIEW, scale 16 px/mm -->
+  <text x="560" y="95" class="label">Section through tripod axis</text>
+  <rect x="610" y="220" width="512" height="48" class="part"/>
+  <rect x="738" y="36" width="256" height="184" class="part"/>
+  <rect x="802" y="36" width="128" height="216" class="cut"/>
+  <line x1="610" y1="292" x2="1122" y2="292" stroke="#475569" stroke-width="5"/>
+  <text x="780" y="329" class="small">flat puck face / adhesive joint</text>
+  <line x1="1150" y1="220" x2="1150" y2="268" class="dim"/>
+  <text x="1165" y="252" class="small">3</text>
+  <line x1="1020" y1="36" x2="1020" y2="220" class="dim"/>
+  <text x="1035" y="137" class="small">11.5 boss</text>
+  <line x1="776" y1="36" x2="776" y2="252" class="dim"/>
+  <text x="710" y="145" class="small" transform="rotate(-90 710 145)">13.5 pocket</text>
+  <text x="739" y="364" class="small">1.0 mm minimum blind floor</text>
+  <text x="739" y="393" class="small">Insert installs from tripod side</text>
+
+  <text x="560" y="474" class="label">Mechanical contract</text>
+  <text x="560" y="512" class="small">• One printed part; support/location by the flat puck face; retention by adhesive.</text>
+  <text x="560" y="546" class="small">• Tripod retention: Ruthex RX-1/4-20 heat-set insert in a blind Ø8 × 13.5 pocket.</text>
+  <text x="560" y="580" class="small">• Print glue face down, boss up; no supports. PETG recommended.</text>
+  <text x="560" y="614" class="small">• Center on the plain face of either puck; roughen/clean both bonding surfaces.</text>
+  <text x="560" y="648" class="small">• CAD validates geometry only; adhesive/load capacity requires a physical test.</text>
+</svg>
