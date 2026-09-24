@@ -54,6 +54,20 @@ a real per-owner `dusty_phone.json` via `dustygen --phone-json`. The UI
 should label this key "DEV" wherever it's shown (P2 settings/about screen —
 not yet built in P0, since P0 has no settings screen).
 
+## Branding
+
+The app carries the DustyCam brand from `~/code/dustycamsplash/index.html`
+(palette in `res/values/colors.xml`, camera-glyph mark in
+`res/drawable/ic_camera_mark.xml`, header helper in `ui/Brand.java`).
+Framework widgets/themes only — no AndroidX/Material-Components, matching
+the aapt2-only build.
+
+Launcher icons (legacy per-density PNGs + the API 26+ adaptive icon layers)
+are generated, not hand-placed: `python3 tools/make_icons.py` draws the
+camera glyph with `PIL.ImageDraw` (supersampled 4x, no rsvg/inkscape/
+ImageMagick) and writes every `res/mipmap-*/ic_launcher*.png`. Re-run it
+after any palette or glyph change instead of editing the PNGs directly.
+
 ## Architecture (P0 subset of §4)
 
 - `ble/Framer.java` — pure Java (no Android imports) implementation of the

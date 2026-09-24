@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Adaptive icon (API 26+ — this is what almost every device shows, since
+  minSdkVersion is already 26). The clay background is a plain color; the
+  paper camera-glyph foreground is generated into the 66dp safe zone of the
+  108dp canvas by tools/make_icons.py so the OS mask/parallax never crops it.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import com.dustycam.phone.ble.Crypto;
 import com.dustycam.phone.ble.DustyLink;
+import com.dustycam.phone.ui.Brand;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -127,19 +128,27 @@ public class ProvisionActivity extends Activity {
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
+        root.addView(Brand.buildHeader(this, getString(R.string.kicker_provision)));
 
         status = new TextView(this);
         status.setPadding(dp(24), dp(16), dp(24), dp(8));
+        status.setTextColor(getColor(R.color.dc_ink));
         status.setText("Import dusty_phone.json to provision a camera.");
         root.addView(status);
 
         btnImport = new Button(this);
         btnImport.setText("Import profile…");
         btnImport.setOnClickListener(v -> pickProfile());
-        root.addView(btnImport);
+        Brand.styleButton(this, btnImport);
+        LinearLayout.LayoutParams importLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        importLp.setMargins(dp(24), dp(8), dp(24), dp(8));
+        root.addView(btnImport, importLp);
 
         deviceIdInput = new EditText(this);
         deviceIdInput.setHint("device id (e.g. xiaocam1)");
+        deviceIdInput.setTextColor(getColor(R.color.dc_ink));
+        deviceIdInput.setHintTextColor(getColor(R.color.dc_muted));
         deviceIdInput.setPadding(dp(24), dp(8), dp(24), dp(8));
         root.addView(deviceIdInput);
 
@@ -147,14 +156,22 @@ public class ProvisionActivity extends Activity {
         btnProvision.setText("Provision");
         btnProvision.setEnabled(false);
         btnProvision.setOnClickListener(v -> startProvisioning());
-        root.addView(btnProvision);
+        Brand.styleButton(this, btnProvision);
+        LinearLayout.LayoutParams provisionLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        provisionLp.setMargins(dp(24), dp(8), dp(24), dp(8));
+        root.addView(btnProvision, provisionLp);
 
         log = new TextView(this);
         log.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         log.setTypeface(android.graphics.Typeface.MONOSPACE);
+        log.setTextColor(getColor(R.color.dc_ink));
         log.setPadding(dp(12), dp(8), dp(12), dp(8));
         log.setMovementMethod(new ScrollingMovementMethod());
         logScroll = new ScrollView(this);
+        // Background lives on the scroll view, not the TextView: see
+        // CameraActivity's identical fix for why.
+        logScroll.setBackgroundColor(getColor(R.color.dc_paper));
         logScroll.addView(log, new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
         root.addView(logScroll, new LinearLayout.LayoutParams(

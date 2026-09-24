@@ -26,6 +26,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.dustycam.phone.ble.DustyLink;
+import com.dustycam.phone.ui.Brand;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -77,15 +78,27 @@ public class ScanActivity extends Activity {
 
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
+        root.addView(Brand.buildHeader(this, getString(R.string.kicker_scan)));
 
         status = new TextView(this);
         status.setGravity(Gravity.CENTER);
         status.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        status.setTextColor(getColor(R.color.dc_ink));
         status.setPadding(dp(24), dp(24), dp(24), dp(16));
         status.setText("Press the camera's button, then scan.");
         root.addView(status);
 
         ListView list = new ListView(this);
+        list.setDivider(new android.graphics.drawable.ColorDrawable(getColor(R.color.dc_line)));
+        list.setDividerHeight(1);
+        // Rows carry an opaque paper background (below), and ListView draws
+        // its selector *behind* items by default, so it was invisible under
+        // the row — a tap gave no feedback until the next activity opened.
+        // Chose drawSelectorOnTop over dropping the row background: the
+        // site's rows (.camera-card) are a distinct paper panel on a bone
+        // page, and this keeps that same contrast while still showing the
+        // press.
+        list.setDrawSelectorOnTop(true);
         listAdapter = new ScanAdapter();
         list.setAdapter(listAdapter);
         list.setOnItemClickListener((parent, view, pos, id) -> {
@@ -311,9 +324,20 @@ public class ScanActivity extends Activity {
             TextView tv = convert instanceof TextView ? (TextView) convert : new TextView(ScanActivity.this);
             tv.setPadding(dp(24), dp(16), dp(24), dp(16));
             tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+            tv.setBackgroundColor(getColor(R.color.dc_paper));
             Entry e = getItem(pos);
             String provStr = e.provFieldKnown ? (e.provisioned ? "provisioned" : "UNPROVISIONED") : "prov?";
-            tv.setText(e.name + "\n" + e.address + "   " + e.rssi + " dBm   " + provStr);
+            String meta = e.address + "   " + e.rssi + " dBm   " + provStr;
+            android.text.SpannableStringBuilder sb = new android.text.SpannableStringBuilder();
+            sb.append(e.name).append("\n").append(meta);
+            sb.setSpan(new android.text.style.ForegroundColorSpan(getColor(R.color.dc_ink)),
+                    0, e.name.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            sb.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                    0, e.name.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            int metaStart = e.name.length() + 1;
+            sb.setSpan(new android.text.style.ForegroundColorSpan(getColor(R.color.dc_muted)),
+                    metaStart, sb.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            tv.setText(sb);
             return tv;
         }
     }

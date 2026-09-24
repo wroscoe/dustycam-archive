@@ -28,6 +28,7 @@ import android.widget.TextView;
 import com.dustycam.phone.ble.DustyLink;
 import com.dustycam.phone.net.Beacon;
 import com.dustycam.phone.net.CamHttp;
+import com.dustycam.phone.ui.Brand;
 import com.dustycam.phone.ui.SettingsForm;
 
 import org.json.JSONArray;
@@ -181,26 +182,33 @@ public class CameraActivity extends Activity {
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
+        root.addView(Brand.buildHeader(this, getString(R.string.kicker_camera)));
 
         banner = new TextView(this);
         banner.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
         banner.setGravity(Gravity.CENTER);
         banner.setPadding(dp(16), dp(12), dp(16), dp(12));
-        banner.setBackgroundColor(0xFF263238);
-        banner.setTextColor(0xFFFFFFFF);
+        banner.setBackgroundColor(getColor(R.color.dc_clay_deep));
+        banner.setTextColor(getColor(R.color.dc_paper));
         root.addView(banner, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         image = new ImageView(this);
         image.setAdjustViewBounds(true);
-        image.setBackgroundColor(0xFFE0E0E0);
+        image.setBackgroundColor(getColor(R.color.dc_line));
 
         log = new TextView(this);
         log.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         log.setTypeface(android.graphics.Typeface.MONOSPACE);
+        log.setTextColor(getColor(R.color.dc_ink));
         log.setPadding(dp(12), dp(8), dp(12), dp(8));
         log.setMovementMethod(new ScrollingMovementMethod());
         logScroll = new ScrollView(this);
+        // Background lives on the scroll view, not the TextView: the TextView
+        // is only as tall as the log text, so a background on it grew a
+        // paper patch line-by-line against the bone window while the log was
+        // shorter than the viewport.
+        logScroll.setBackgroundColor(getColor(R.color.dc_paper));
         logScroll.addView(log, new ScrollView.LayoutParams(
                 ScrollView.LayoutParams.MATCH_PARENT, ScrollView.LayoutParams.WRAP_CONTENT));
 
@@ -262,9 +270,10 @@ public class CameraActivity extends Activity {
         Button b = new Button(this);
         b.setText(text);
         b.setOnClickListener(v -> onClick.run());
+        Brand.styleButton(this, b);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-        lp.setMargins(dp(4), 0, dp(4), 0);
+        lp.setMargins(dp(6), dp(4), dp(6), dp(4));
         b.setLayoutParams(lp);
         return b;
     }
@@ -280,12 +289,13 @@ public class CameraActivity extends Activity {
 
         settingsBanner = new TextView(this);
         settingsBanner.setPadding(dp(16), dp(8), dp(16), dp(4));
+        settingsBanner.setTextColor(getColor(R.color.dc_ink));
         settingsBanner.setText("Settings — open while READY to load cfg.schema / cfg.get");
         col.addView(settingsBanner);
 
         settingsBadge = new TextView(this);
         settingsBadge.setPadding(dp(16), 0, dp(16), dp(8));
-        settingsBadge.setTextColor(0xFF757575);
+        settingsBadge.setTextColor(getColor(R.color.dc_muted));
         settingsBadge.setText("cfg_src: ?");
         col.addView(settingsBadge);
 
@@ -296,13 +306,18 @@ public class CameraActivity extends Activity {
         btnSettingsSave = new Button(this);
         btnSettingsSave.setText("Save");
         btnSettingsSave.setOnClickListener(v -> onSettingsSave());
-        col.addView(btnSettingsSave);
+        Brand.styleButton(this, btnSettingsSave);
+        LinearLayout.LayoutParams saveLp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        saveLp.setMargins(dp(16), dp(8), dp(16), dp(12));
+        col.addView(btnSettingsSave, saveLp);
 
         return col;
     }
 
     private void refreshBanner() {
         banner.setText(session.banner());
+        banner.setBackgroundColor(Brand.bannerColor(this, session.getState()));
     }
 
     /**

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DustyCam brand palette, taken verbatim from dustycamsplash/index.html's
+  :root custom properties. Keep these two files in sync if the site's
+  palette ever changes.
+-->
+<resources>
+    <color name="dc_bone">#E9DFCD</color>
+    <color name="dc_paper">#FBF6ED</color>
+    <color name="dc_ink">#292925</color>
+    <color name="dc_muted">#5D594F</color>
+    <color name="dc_line">#BFB49F</color>
+    <color name="dc_clay">#934333</color>
+    <color name="dc_clay_deep">#703022</color>
+    <color name="dc_sage">#667258</color>
+    <color name="dc_sage_deep">#42503D</color>
+
+    <!-- Adaptive icon background layer (res/mipmap-anydpi-v26/ic_launcher.xml). -->
+    <color name="ic_launcher_background">#934333</color>
+</resources>

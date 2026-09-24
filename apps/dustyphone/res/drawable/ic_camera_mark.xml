@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DustyCam camera glyph (dustycamsplash/index.html .brand-mark svg),
+  viewBox 0 0 24 24, stroke-width 2.2, no fill. Used by
+  com.dustycam.phone.ui.Brand for the in-app header mark, drawn as a real
+  vector asset rather than a scaled launcher PNG.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:pathData="M3,8h4l2,-3h6l2,3h4v11H3z"
+        android:strokeColor="#FBF6ED"
+        android:strokeWidth="2.2"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M8.5,13.5A3.5,3.5 0,0 0,15.5 13.5A3.5,3.5 0,0 0,8.5 13.5"
+        android:strokeColor="#FBF6ED"
+        android:strokeWidth="2.2"
+        android:fillColor="#00000000" />
+</vector>

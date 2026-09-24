@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      DustyCam theme: framework Material Light, repainted with the
+      dustycamsplash palette (res/values/colors.xml). No AndroidX/
+      Material-Components — every item below is a framework (android:) attr,
+      per tools/build.sh's aapt2-only pipeline.
+
+      ScanActivity/CameraActivity/ProvisionActivity previously relied on
+      @android:style/Theme.Material.Light.NoActionBar directly for: a light
+      (near-white) window background behind their programmatically-built
+      LinearLayouts, default (light theme) AlertDialog styling in
+      CameraActivity's handoff dialog, and default Button/Switch/EditText
+      chrome. All of that still comes from the same Material Light lineage
+      here — only the specific colors below are repainted — so none of it
+      needed code changes.
+    -->
+    <style name="Theme.DustyCam" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/dc_bone</item>
+        <item name="android:textColorPrimary">@color/dc_ink</item>
+        <item name="android:textColorSecondary">@color/dc_muted</item>
+        <item name="android:colorPrimary">@color/dc_clay</item>
+        <item name="android:colorPrimaryDark">@color/dc_clay_deep</item>
+        <item name="android:colorAccent">@color/dc_clay</item>
+        <item name="android:colorButtonNormal">@color/dc_clay</item>
+        <item name="android:statusBarColor">@color/dc_ink</item>
+        <item name="android:navigationBarColor">@color/dc_ink</item>
+    </style>
+</resources>

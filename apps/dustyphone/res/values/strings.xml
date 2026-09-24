@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">dustycam</string>
+
+    <!-- Brand.java header kickers, one per screen (docs/phone_app_plan.md §4). -->
+    <string name="kicker_scan">Scan</string>
+    <string name="kicker_camera">Camera</string>
+    <string name="kicker_provision">Provision</string>
+</resources>
