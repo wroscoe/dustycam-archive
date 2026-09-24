@@ -17,7 +17,7 @@ Six repositories, all under the GitHub user **`wroscoe`**.
 | `dustycam-hardware` | CAD and PCB **sources**; exports are release artifacts, not commits | ~50 MB |
 | `dustycam-phone` | the Android app (`apps/dustyphone` today) | small |
 | `dustycam-site` | the splash site (`dustycamsplash` today, renamed) | ~3 MB |
-| `dustycli` | the `dusty` workstation/ops CLI (`tools/dustygen` today) | tiny |
+| `dustycli` | the `dusty` workstation/ops CLI (`tools/dustycli/dusty.py` today) | tiny |
 
 Plus, unchanged and separate:
 
@@ -183,7 +183,7 @@ three times in one week (6.3 + 6.3 + 4.7 MB) purely as a review-only export.
 
 ## 4. `dustycli`
 
-`tools/dustygen` becomes the `dusty` command in its own repo, `dustycli`. The
+`tools/dustycli/dusty.py` becomes the `dusty` command in its own repo, `dustycli`. The
 name change is overdue: it stages firmware for OTA, builds blank fleet images,
 seeds and drift-checks the hub's config, and writes the phone's profile JSON —
 operations, not generation.
@@ -302,7 +302,7 @@ and a bad carve costs nothing.
   yolov8n_saved_model --path mesh/firmware --invert-paths`, then
   `--strip-blobs-bigger-than 2M`. Target ~5 MB.
 - `dustycam-phone`: `--subdirectory-filter apps/dustyphone`.
-- `dustycli`: `--subdirectory-filter tools/dustygen`.
+- `dustycli`: `--subdirectory-filter tools/dustycli/dusty.py`.
 
 Diff each carved HEAD against the `pre-split` checkout (`diff -r`) to confirm
 content identity.

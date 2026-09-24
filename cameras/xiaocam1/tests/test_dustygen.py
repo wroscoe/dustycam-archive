@@ -1,9 +1,9 @@
-"""Host tests for `tools/dustygen`'s espidf runtime (xiaocam1).
+"""Host tests for `tools/dustycli/dusty.py`'s espidf runtime (xiaocam1).
 
 Runs dustygen as a real subprocess against a temp DUSTY_DIR, a temp
 SENSORHUB_DIR and a temp copy of the camera dir (env vars DUSTY_DIR /
 SENSORHUB_DIR override the real ~/.dusty and /hd2/sensorhub — see
-tools/dustygen). No board, no network, no real secrets are read or written.
+tools/dustycli/dusty.py). No board, no network, no real secrets are read or written.
 
     python3 -m unittest discover -s cameras/xiaocam1/tests -v
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]                      # .../tests -> xiaocam1 -> cameras -> repo root
-DUSTYGEN = REPO / 'tools' / 'dustygen'
+DUSTYGEN = REPO / 'tools' / 'dustycli' / 'dusty.py'
 REAL_MANIFEST = REPO / 'cameras' / 'xiaocam1' / 'camera.toml'
 
 CONFIG_TOML = """

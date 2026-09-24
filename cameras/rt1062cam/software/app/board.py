@@ -13,7 +13,7 @@ import machine
 
 APP_VERSION = '2.0.8-rt'
 
-# --- tuning: stamped by tools/dustygen from camera.toml [tuning] overridden by
+# --- tuning: stamped by tools/dustycli/dusty.py from camera.toml [tuning] overridden by
 # ~/.dusty/config.toml [camera.openmv_rt1062]; the same keys are served by
 # sensorhub at /config/rt1062cam and pulled at runtime (config.py).
 TUNING = {'period_s': 10, 'diff_min_frac': 0.04, 'diff_l_thresh': 20, 'heartbeat_s': 300, 'telemetry_s': 60, 'capture_framesize': 'WQXGA2', 'capture_settle_ms': 400, 'setup_secs': 300, 'wifi_linger_s': 0}

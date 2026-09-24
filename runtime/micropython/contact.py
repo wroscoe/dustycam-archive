@@ -11,7 +11,7 @@ caller. `telemetry_fn(mode_num, extra_dict)` sends one telemetry report;
 Two networks, chosen by a scan before joining: secrets carries both the
 hotspot/public path (WIFI_SSID/WIFI_PASS, SERVER_HOST/PORT/TLS, as before)
 and the home LAN path (LAN_SSID/LAN_PASS, LAN_HOST/LAN_PORT/LAN_TLS, added
-by tools/dustygen). `contact_scan()`/`contact_scan_lan()` below are shared
+by tools/dustycli/dusty.py). `contact_scan()`/`contact_scan_lan()` below are shared
 with wakecycle.py's `bench_contact_n` path. If LAN_SSID shows up in the
 scan, contact joins it and points uplink.py at LAN_HOST/PORT/TLS via
 `set_server()`; otherwise it joins the hotspot as before (even if the scan

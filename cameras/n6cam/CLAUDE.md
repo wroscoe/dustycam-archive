@@ -25,7 +25,7 @@ needs first.
   is the classic way to corrupt it). The `ota_main.py` (loader) change for
   this profile needs a USB copy to take effect — the loader is never OTA'd.
 - **Ship code:** bump `APP_VERSION` in `software/app/board.py`, run
-  `tools/dustygen cameras/n6cam --stage`, `POST /refresh`; `/status`
+  `tools/dustycli/dusty.py cameras/n6cam --stage`, `POST /refresh`; `/status`
   shows the new version within ~10 s and `fw_pending` clears after the first
   upload. A crash at import rolls back and blacklists — a wrong build costs
   one boot, not a USB session.
@@ -33,7 +33,7 @@ needs first.
   page's settings form, change a value there; it lands directly in
   `n6cam.json` on the sensorhub and applies at the next pull. Workstation
   path — edit `~/.dusty/config.toml` `[camera.openmv_n6]`, run
-  `tools/dustygen cameras/n6cam --no-bundle`, `POST /refresh`; this only
+  `tools/dustycli/dusty.py cameras/n6cam --no-bundle`, `POST /refresh`; this only
   *seeds* keys not already on the server (`--reset-config` to force the
   workstation's values back). Keys must exist in `camera.toml [tuning]`
   (firmware first, then config).

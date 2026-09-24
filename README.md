@@ -35,7 +35,7 @@ was removed; steps 2-3 currently run as the per-camera tooling under
 | [`cameras/`](cameras/) | One directory per camera. Each owns its `hardware/`, `software/`, and `tests/`, a `camera.toml` manifest, and a "Standard mapping" section in its README saying how it meets the standard and where it does not. |
 | [`sensors/`](sensors/) | Non-camera devices: `miclogger/` (XIAO S3 Sense continuous mic), `espnowbridge/` + `espnowmeter/` (its ESP-NOW repeater and signal meter), `plantlogger/` (FeatherS3 soil sensor). Status table in [`sensors/README.md`](sensors/README.md). |
 | [`mesh/`](mesh/) | LoRa / MeshCore device side: radio firmware images + hardware notes (T114, Heltec V4). |
-| [`tools/`](tools/) | `dustygen` (the one config/secrets/bundle/stage generator for every camera, standard §5), `casereview/` (markup of CAD renders), `configurator/` (static webapp weighing power × compute × optics × battery). |
+| [`tools/`](tools/) | `dustycli/` (the `dusty` command: config, secrets, bundling, OTA staging — standard §5), `contractgen` (contracts/ -> generated constants). |
 | [`apps/`](apps/) | User-facing applications: [`dustyphone/`](apps/dustyphone/) is the phone app. The independently deployed splash site lives in the sibling [`dustycamsplash`](https://github.com/wroscoe/dustycamsplash) repository. |
 | [`server/`](server/) | Base station / ingest side — the thing cameras report *to*. In practice this is **sensorhub** (`~/code/sensorhub`, MQTT + blob ingest + pages UI); this dir holds only design notes. |
 | [`STATUS.md`](STATUS.md) | Every device with its status and the date it was last proven. |
@@ -84,8 +84,8 @@ and fill it in from `~/.dusty/`:
 
 | Board file | From template | For |
 |---|---|---|
-| `cameras/rt1062cam/software/app/secrets.py` | `tools/dustygen cameras/rt1062cam [--public] [--stage]` | MicroPython, USB copy to `/flash`; the same run stamps tuning, publishes the server config and bundles/stages the app (camera standard §5) |
-| `cameras/n6cam/software/app/secrets.py` | `tools/dustygen cameras/n6cam [--stage]` | same |
+| `cameras/rt1062cam/software/app/secrets.py` | `tools/dustycli/dusty.py cameras/rt1062cam [--public] [--stage]` | MicroPython, USB copy to `/flash`; the same run stamps tuning, publishes the server config and bundles/stages the app (camera standard §5) |
+| `cameras/n6cam/software/app/secrets.py` | `tools/dustycli/dusty.py cameras/n6cam [--stage]` | same |
 | `cameras/esp32_s3_cam/software/camlogger/sdkconfig.secrets` | hand-filled from `~/.dusty` (dustygen espidf: TODO, phase 4) | compiled into ESP-IDF firmware |
 | `sensors/*/sdkconfig.secrets` | hand-filled from `~/.dusty` | compiled into ESP-IDF firmware |
 

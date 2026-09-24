@@ -41,7 +41,7 @@ except ImportError:                          # not present in the host test stub
 
 APP_VERSION = '2.2.2-n6'
 
-# --- tuning: stamped by tools/dustygen from camera.toml [tuning] overridden by
+# --- tuning: stamped by tools/dustycli/dusty.py from camera.toml [tuning] overridden by
 # ~/.dusty/config.toml [camera.openmv_n6]; served at /config/n6cam and pulled
 # at runtime (config.py).
 TUNING = {'profile': 'game_lowpower', 'period_s': 10, 'interval_n': 120, 'heartbeat_s': 300, 'diff_min_frac': 0.02, 'diff_l_thresh': 24, 'gate_pct': 60, 'keep_labels': ['animal', 'person'], 'keep_all': False, 'audit_n': 20, 'debug_frames': True, 'debug_max': 500, 'upload_cap': 1000, 'lum_night': 12, 'lum_day': 25, 'night_confirm_n': 3, 'night_margin_s': 2700, 'night_probe_s': 1200, 'hotspot_join_s': 90, 'contact_idle_s': 120, 'setup_secs': 240, 'telemetry_s': 60, 'led_capture': True, 'spool_max_frames': 20000, 'preview_settle_ms': 500, 'capture_framesize': 'HD', 'capture_settle_ms': 400, 'wifi_linger_s': 0, 'bench_contact_n': 20}

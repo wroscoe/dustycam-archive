@@ -76,7 +76,7 @@ Everything starts from `~/.dusty/config.toml` `[camera.xiao_pantilt]` and
 facts" below):
 
 ```bash
-tools/dustygen cameras/xiaocam1 --stage
+tools/dustycli/dusty.py cameras/xiaocam1 --stage
 ```
 
 writes `software/app/sdkconfig.secrets` (identity, WiFi, server host/port/TLS,

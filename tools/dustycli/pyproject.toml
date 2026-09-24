@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dustycli"
+version = "0.1.0"
+description = "dusty: the DustyCam workstation and fleet CLI (config, secrets, bundling, OTA staging)"
+requires-python = ">=3.11"          # tomllib
+dependencies = []                   # stdlib only, deliberately
+
+[project.scripts]
+dusty = "dusty:main"
+
+[tool.setuptools]
+py-modules = ["dusty"]
+
+[tool.setuptools.package-dir]
+"" = "."

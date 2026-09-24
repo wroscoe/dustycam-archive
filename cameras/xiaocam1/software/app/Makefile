@@ -23,7 +23,7 @@ build:            ## build firmware in Docker (no network: managed_components/ +
 	  $(IDF_IMG) bash -c "idf.py -DSDKCONFIG_DEFAULTS='sdkconfig.defaults;sdkconfig.secrets' build"
 
 web-package:      ## package an already-built, verified blank image for ESP Web Tools
-	$(ROOT)/tools/dustygen $(CAMERA_DIR) --verify-blank
+	$(ROOT)/tools/dustycli/dusty.py $(CAMERA_DIR) --verify-blank
 	docker run --rm -v $(ROOT):/work -w /work/cameras/xiaocam1/software/app \
 	  --user $$(id -u):$$(id -g) -e HOME=/tmp -e IDF_TOOLS_PATH=/opt/esp \
 	  $(IDF_IMG) bash -c "python -m esptool --chip esp32s3 merge_bin -o $(WEB_MERGED) \
@@ -36,7 +36,7 @@ web-package:      ## package an already-built, verified blank image for ESP Web 
 	  --app-dir $(CURDIR) --merged $(WEB_MERGED) --output-dir $(WEB_RELEASE_DIR)
 
 web-release:      ## generate blank defaults, build, verify, and package browser firmware
-	$(ROOT)/tools/dustygen $(CAMERA_DIR) --blank
+	$(ROOT)/tools/dustycli/dusty.py $(CAMERA_DIR) --blank
 	$(MAKE) build
 	$(MAKE) web-package
 

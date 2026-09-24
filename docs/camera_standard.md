@@ -205,7 +205,7 @@ shows `mode` and links to the board's setup page when it is on the LAN.
 | **tuning** | period, diff threshold, heartbeat, telemetry cadence, capture size, setup secs, gate pct, wake interval, mode | `~/.dusty/config.toml` `[camera.<name>]` | stamped into the firmware as defaults **and** published to `/data/config/<device>.json` for pull | yes, without reflash |
 | **board facts** | pins, sensor, framesize names, LED/button names, deny-listed calls | the board adapter in the camera's software | with the firmware | with the firmware |
 
-`tools/dustygen <camera>` (replaces the removed `dusty generate`) reads
+`tools/dustycli/dusty.py <camera>` (replaces the removed `dusty generate`) reads
 `~/.dusty` and the camera's `camera.toml`, writes the secrets file in the
 board's format (`secrets.py`, `sdkconfig.secrets`, `.env`), stamps the tuning
 defaults into the app, and writes the server config file. `--public`
@@ -287,7 +287,7 @@ Shared code: `runtime/<runtime>/`.
 `cameras/rt1062cam` (2026-09-03): `software/app/board.py` + `app.py` on
 `runtime/micropython/` (uplink, spool, config, otapull, motion,
 camera, focus, control), bundled by `bundle.py`, generated and staged by
-`tools/dustygen`. Two design notes that other MicroPython cameras inherit:
+`tools/dustycli/dusty.py`. Two design notes that other MicroPython cameras inherit:
 
 - **Port takeover.** The loader's `ota.py` listener on `:8266` is closed by
   `control_init()` and the app binds the same port, so the loader (never

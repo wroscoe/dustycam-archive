@@ -27,5 +27,5 @@ pages, OTA staging in `/hd2/sensorhub/`).
 
 `docs/camera_standard.md` is in force. Phases (from
 `docs/camera_standard_proposal.md` §9): 0 docs, 1 server gate, 2 shared
-MicroPython runtime + `tools/dustygen`, 3 N6 — **done 2026-09-03**;
+MicroPython runtime + `tools/dustycli/dusty.py`, 3 N6 — **done 2026-09-03**;
 4 esp32 camlogger, 5 speedcam from the recipe, 6 pi5cam — open.

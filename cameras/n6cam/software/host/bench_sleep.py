@@ -267,13 +267,13 @@ except OSError as e:
 
 def gate_wake_cost(port):
     """Runs the bundled app from RAM (software/build/app.py must already be
-    current — run tools/dustygen --no-stage first) with board_rest stubbed
+    current — run tools/dustycli/dusty.py --no-stage first) with board_rest stubbed
     to record its ms argument instead of sleeping, so this gate never
     actually puts the board to sleep."""
     unmount_pyboard()
     app_py = Path(__file__).resolve().parents[1] / 'software' / 'build' / 'app.py'
     if not app_py.is_file():
-        sys.exit('bench_sleep: %s not built; run tools/dustygen cameras/n6cam first' % app_py)
+        sys.exit('bench_sleep: %s not built; run tools/dustycli/dusty.py cameras/n6cam first' % app_py)
     with tempfile.NamedTemporaryFile('w', suffix='.py', delete=False) as f:
         f.write(app_py.read_text())
         f.write("""

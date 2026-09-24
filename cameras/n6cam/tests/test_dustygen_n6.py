@@ -1,10 +1,10 @@
-"""Host tests for `tools/dustygen`'s micropython runtime on n6cam (the
+"""Host tests for `tools/dustycli/dusty.py`'s micropython runtime on n6cam (the
 game_lowpower profile added `hotspot` to camera.toml's capabilities, so this
 camera now needs the same [hotspot] handling as xiao_pantilt's espidf path
 — see cameras/xiaocam1/tests/test_dustygen.py, which this mirrors).
 
 Runs dustygen as a real subprocess against a temp DUSTY_DIR and a temp
-SENSORHUB_DIR (env overrides — see tools/dustygen's DUSTY_DIR/SENSORHUB_DIR).
+SENSORHUB_DIR (env overrides — see tools/dustycli/dusty.py's DUSTY_DIR/SENSORHUB_DIR).
 NEVER run against the real ~/.dusty: it has no [hotspot] yet and dustygen
 would exit non-zero (see test_missing_hotspot_section_fails_with_hint below
 for exactly that behaviour, deliberately, in a temp dir).
@@ -29,7 +29,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[2]                      # .../tests -> n6cam -> cameras -> repo root
-DUSTYGEN = REPO / 'tools' / 'dustygen'
+DUSTYGEN = REPO / 'tools' / 'dustycli' / 'dusty.py'
 REAL_MANIFEST = REPO / 'cameras' / 'n6cam' / 'camera.toml'
 REAL_BOARD_PY = REPO / 'cameras' / 'n6cam' / 'software' / 'app' / 'board.py'
 
