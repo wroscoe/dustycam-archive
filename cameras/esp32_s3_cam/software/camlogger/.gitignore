@@ -1,5 +1,0 @@
-sdkconfig.secrets
-sdkconfig
-build/
-managed_components/
-dependencies.lock
