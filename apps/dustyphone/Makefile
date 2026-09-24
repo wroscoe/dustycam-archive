@@ -5,7 +5,11 @@ ADB     ?= /hd2/temp_data/android-sdk/platform-tools/adb
 PKG     := com.dustycam.phone
 CONTAINER := dustybuild
 SDKDIR  := /hd2/temp_data/android-sdk
-REPO    := $(HOME)/code/dustycam
+# The tree bind-mounted into the build container as /work. Derived from this
+# Makefile's own location rather than hardcoded, so it follows the repo through
+# the restructure (docs/REPO_PLAN.md) instead of depending on a ~/code/dustycam
+# symlink that is about to be removed. Override on the command line if needed.
+REPO    ?= $(realpath $(dir $(lastword $(MAKEFILE_LIST)))/../..)
 
 .PHONY: container build test install run log clean
 

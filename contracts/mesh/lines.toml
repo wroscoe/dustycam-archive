@@ -1,0 +1,41 @@
+# The LoRa text-line grammar a camera speaks over MeshCore, via the base
+# station. Extracted from cameras/openmv_n6/hardware/lora_hat/PLAN.md §1, which
+# is where it was specified; nothing parses it yet — basestation.py stores the
+# message text and reads only the "Name: " sender prefix.
+#
+# The hub-side parser (sensorhub meshdet, REPO_PLAN §6 phase 5) turns these
+# into <device>/<key> readings so a LoRa camera lands on the same device page
+# as a WiFi one.
+
+[uplink.det]
+example = "det animal 0.87 x=41 y=22 seq=118"
+pattern = '^det (?P<label>[a-z]+) (?P<conf>[0-9.]+) x=(?P<x>\d+) y=(?P<y>\d+) seq=(?P<seq>\d+)$'
+when = "a frame is kept by the judge (why=motion, gate >= gate_pct)"
+rate = "at most one per mesh_det_min_s (300 s)"
+
+[uplink.st]
+example = "st b=3.91 n=36 wake=1204 night=0 clk=set"
+pattern = '^st b=(?P<batt_v>[0-9.]+) n=(?P<n>\d+) wake=(?P<wake_s>\d+) night=(?P<night>[01]) clk=(?P<clk>\w+)$'
+when = "status"
+rate = "every mesh_status_s (3600 s) of awake-time, and once per contact"
+
+[uplink.boot]
+example = "boot 2.1.7-n6 cfg=8"
+pattern = '^boot (?P<version>\S+) cfg=(?P<cfg>\d+)$'
+when = "first boot / after a contact"
+rate = "once"
+
+[uplink.night]
+example = "night 1 lum=9"
+pattern = '^night (?P<night>[01]) lum=(?P<lum>\d+)$'
+when = "night enter / exit"
+rate = "at the transition"
+
+# Downlink: the base station answers inside the camera's mesh_rx_window_ms
+# (1500 ms) listen window with a channel message addressed to one device.
+# Anything not in `commands` is ignored by the camera.
+[downlink]
+format = "@<id> <cmd>"
+pattern = '^@(?P<id>[a-z0-9]+) (?P<cmd>.+)$'
+commands = ["contact", "shoot", "period", "status"]
+window_ms = 1500

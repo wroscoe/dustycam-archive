@@ -1,0 +1,33 @@
+# The GATT service dustyphone speaks to an ESP-IDF camera.
+# Sources of truth today: cameras/common/espidf/components/dusty_ble/ (ble_frame.h,
+# dusty_ble.c) and apps/dustyphone/src/com/dustycam/phone/ble/{DustyLink,Framer}.java,
+# which carry the same numbers typed twice.
+
+proto = 1
+
+[service]
+# 7d1e00XX-dc0a-4c9b-8f6e-2e9a0c5d1b00, XX per characteristic.
+uuid_base = "7d1e00%02x-dc0a-4c9b-8f6e-2e9a0c5d1b00"
+
+[characteristics]
+service = 0x01
+info    = 0x02
+cmd     = 0x03
+rsp     = 0x04
+data    = 0x05
+evt     = 0x06
+
+[frame]
+header_len     = 4      # BLE_FRAME_HDR_LEN / Framer.HEADER_LEN
+att_overhead   = 3      # Framer.ATT_OVERHEAD
+bin_prefix_len = 8      # BLE_FRAME_BIN_PREFIX_LEN
+
+[frame.flags]
+last = 0x01
+bin  = 0x02
+err  = 0x04
+
+[frame.limits]
+request  = 4096      # BLE_FRAME_LIMIT_REQUEST  / Framer.REQ_MAX
+response = 8192      # BLE_FRAME_LIMIT_RESPONSE / Framer.RSP_MAX
+data     = 524288    # BLE_FRAME_LIMIT_DATA     / Framer.DATA_MAX

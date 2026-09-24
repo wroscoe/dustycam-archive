@@ -1,0 +1,30 @@
+# Frame meta — the JSON object a camera sends with every uploaded frame, as the
+# X-Meta header (docs/camera_standard.md §4). Built by build_meta() in
+# cameras/common/micropython/app.py and by dc_meta_build() in C; read by
+# sensorhub's ingest.
+#
+# `order` is authoritative: build_meta() formats the object by hand with a %
+# format string rather than a JSON library, so the order is part of the wire
+# output and a reader comparing bytes depends on it.
+
+order = ["ts", "seq", "w", "h", "v", "cfg", "ip", "mode", "why",
+         "diff", "gate", "heartbeat", "buffered"]
+
+[keys]
+ts        = { type = "int",   help = "server timestamp of record (epoch seconds)" }
+seq       = { type = "int",   help = "per-boot frame sequence number" }
+w         = { type = "int",   help = "frame width in pixels" }
+h         = { type = "int",   help = "frame height in pixels" }
+v         = { type = "str",   help = "APP_VERSION of the running firmware" }
+cfg       = { type = "int",   help = "config generation the camera last applied" }
+ip        = { type = "str",   help = "the board's IP, so the device page and ota_push can reach it" }
+mode      = { type = "str",   help = "the camera's current run mode" }
+why       = { type = "str",   help = "what caused this frame" }
+diff      = { type = "float", help = "measured inter-frame difference fraction", fmt = "%.5f" }
+gate      = { type = "float", help = "the diff_min_frac the camera gated on", fmt = "%.4f" }
+heartbeat = { type = "bool",  help = "true when why == 'heartbeat'" }
+buffered  = { type = "bool",  help = "true when the frame was spooled to SD before upload" }
+
+# `why` is a closed set: a value outside it means a firmware/hub version skew.
+[why]
+values = ["motion", "heartbeat", "button", "boot", "shoot"]
