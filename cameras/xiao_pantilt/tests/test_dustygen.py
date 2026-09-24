@@ -29,7 +29,7 @@ public_host = "pub.example.test"
 public_port = 10000
 gate_port = 8089
 
-[camera.xiao_pantilt]
+[camera.xiaocam1]
 """
 
 SECRETS_TOML_WITH_HOTSPOT = """
@@ -163,7 +163,7 @@ class DustygenEspidfTestCase(unittest.TestCase):
         # server yet; period_s is already there, so it is left alone (the
         # device page's settings form is the live source of truth) -> no bump
         self._write_config(CONFIG_TOML.replace(
-            '[camera.xiao_pantilt]', '[camera.xiao_pantilt]\nperiod_s = 45'))
+            '[camera.xiaocam1]', '[camera.xiaocam1]\nperiod_s = 45'))
         p3 = self.run_dustygen()
         self.assertEqual(p3.returncode, 0, p3.stderr)
         self.assertIn('drift', p3.stdout)
@@ -217,7 +217,7 @@ class DustygenEspidfTestCase(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         schema = json.loads((self.sensorhub_dir / 'config' / 'xiaocam1.schema.json').read_text())
         self.assertEqual(schema['id'], 'xiaocam1')
-        self.assertEqual(schema['camera'], 'xiao_pantilt')
+        self.assertEqual(schema['camera'], 'xiaocam1')
         by_name = {k['name']: k for k in schema['keys']}
         self.assertEqual(by_name['period_s'],
                           {'name': 'period_s', 'type': 'int', 'default': 30, 'help': 'wake interval'})

@@ -40,7 +40,7 @@ public_host = "pub.example.test"
 public_port = 10000
 gate_port = 8089
 
-[camera.openmv_n6]
+[camera.n6cam]
 """
 
 SECRETS_TOML_WITH_HOTSPOT = """
@@ -212,7 +212,7 @@ class DustygenN6TestCase(unittest.TestCase):
         cfg_path = self.sensorhub_dir / 'config' / 'n6cam.json'
 
         self._write_config(CONFIG_TOML.replace(
-            '[camera.openmv_n6]', '[camera.openmv_n6]\nperiod_s = 45'))
+            '[camera.n6cam]', '[camera.n6cam]\nperiod_s = 45'))
         p2 = self.run_dustygen('--no-bundle')
         self.assertEqual(p2.returncode, 0, p2.stderr)
         self.assertIn('drift', p2.stdout)
@@ -227,7 +227,7 @@ class DustygenN6TestCase(unittest.TestCase):
         cfg_path = self.sensorhub_dir / 'config' / 'n6cam.json'
 
         self._write_config(CONFIG_TOML.replace(
-            '[camera.openmv_n6]', '[camera.openmv_n6]\nperiod_s = 45'))
+            '[camera.n6cam]', '[camera.n6cam]\nperiod_s = 45'))
         p2 = self.run_dustygen('--no-bundle', '--reset-config')
         self.assertEqual(p2.returncode, 0, p2.stderr)
         body2 = json.loads(cfg_path.read_text())
@@ -275,7 +275,7 @@ class DustygenN6TestCase(unittest.TestCase):
         self.assertEqual(p.returncode, 0, p.stderr)
         schema = json.loads((self.sensorhub_dir / 'config' / 'n6cam.schema.json').read_text())
         self.assertEqual(schema['id'], 'n6cam')
-        self.assertEqual(schema['camera'], 'openmv_n6')
+        self.assertEqual(schema['camera'], 'n6cam')
         self.assertTrue(schema['generated'])
         by_name = {k['name']: k for k in schema['keys']}
         self.assertEqual(by_name['period_s'],
