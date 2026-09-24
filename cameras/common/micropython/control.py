@@ -30,13 +30,14 @@ from otapull import *
 
 CONTROL_PORT = getattr(secrets, 'OTA_PORT', 8266)
 OTA_TOKEN = getattr(secrets, 'OTA_TOKEN', '')
-MODE_NUM = {'live': 0, 'setup': 1, 'recovery': 2}
+MODE_NUM = {'live': 0, 'setup': 1, 'recovery': 2, 'contact': 3}
 
 HOOKS = {}
 STATE = {'mode': 'live', 'score': 0.0, 'best': 0.0, 'until': 0, 'stop': False,
          'sessions': 0, 'frames': 0, 'viewer': False,
          'reqs': 0, 'req_timeouts': 0, 'last_req': '', 'last_end': '',
-         'ms_poll': 0, 'ms_tick': 0, 'ms_accept': 0, 'ms_frame': 0, 'ms_write': 0}
+         'ms_poll': 0, 'ms_tick': 0, 'ms_accept': 0, 'ms_frame': 0, 'ms_write': 0,
+         'live_req': 0}   # incremented on every GET /live, even outside a setup session (game_lowpower's contact.py)
 _srv = None
 _btn = None
 _btn_name = ''
@@ -254,6 +255,8 @@ def _dispatch(req, in_session):
             _reply(conn, '200 OK', 'text/html', setup_page(query))
         elif path in ('/live', '/stop'):
             STATE['stop'] = True
+            if path == '/live':
+                STATE['live_req'] += 1
             _reply(conn, '200 OK', 'text/html',
                    '<!doctype html><body style="background:#000;color:#eee;font:20px sans-serif;'
                    'text-align:center"><p>%s</p><p><a style="color:#8cf" href="/setup">setup again</a></p>'

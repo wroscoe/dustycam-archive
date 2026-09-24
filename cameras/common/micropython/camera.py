@@ -22,11 +22,11 @@ _fullres = False
 LAST_CAPTURE = ['']          # 'fullres WxH nB' | 'failed ... -> fallback ...', for /status
 
 
-def preview_init():
+def preview_init(settle_ms=1500):
     sensor.reset()
     sensor.set_pixformat(sensor.RGB565)
     sensor.set_framesize(getattr(sensor, PREVIEW_FRAMESIZE))
-    sensor.skip_frames(time=1500)
+    sensor.skip_frames(time=settle_ms)
     return sensor.width(), sensor.height()
 
 

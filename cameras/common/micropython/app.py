@@ -77,6 +77,13 @@ def sensors():
 
 
 def run(poll=lambda: None):
+    if TUNING.get('profile') == 'game_lowpower' and 'game_run' in globals():
+        return game_run(poll)
+    try:
+        import os
+        os.remove('/flash/wake_cycle')      # loader flag of the game_lowpower profile
+    except (OSError, ImportError):
+        pass
     # --- Boot
     rolled_back = fw_boot_check(APP_VERSION)
     cfg_init(TUNING)

@@ -20,6 +20,8 @@ def _coerce(default, value):
         return int(value)
     if isinstance(default, float):
         return float(value)
+    if isinstance(default, list):
+        return [str(x) for x in value]
     return str(value)
 
 
