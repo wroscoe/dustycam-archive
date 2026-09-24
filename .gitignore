@@ -108,7 +108,25 @@ Thumbs.db
 # alongside the CAD source it comments on. See tools/casereview/.
 !tools/casereview/comments.json
 *.jpg
-*.png    yolov8n.onnx
+*.png
+yolov8n.onnx
+
+# CAD build products. Regenerated from the *.step.py / caselib.py sources by
+# cadgen, and published as release assets on a <part>/vN tag — see
+# docs/REPO_PLAN.md §3. Ignored by EXTENSION, not by directory, because real
+# sources (section_*.step.py, coupon_*.step.py, _sectionlib.py) live inside
+# snaps/, print/ and review/ next to their exports.
+*.step
+*.stp
+*.stl
+*.3mf
+*.glb
+# ...except vendor/reference board models, which are INPUTS: a downloaded
+# openmv-n6.step or ada-1578-lipo-500.step cannot be regenerated from anything
+# in this repo. (REPO_PLAN §6 phase 5 moves these to /hd2 or `sarg cad get`.)
+!**/ref/*.step
+!**/ref/*.stp
+!**/ref/*.STEP
 
 # Device credentials — deployed to boards, never committed.
 # (secrets_example.py / sdkconfig.defaults are the safe templates and DO get tracked.)
