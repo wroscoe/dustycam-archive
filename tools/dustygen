@@ -105,7 +105,25 @@ from pathlib import Path
 DUSTY = Path(os.environ.get('DUSTY_DIR', str(Path.home() / '.dusty')))
 SENSORHUB = Path(os.environ.get('SENSORHUB_DIR', '/hd2/sensorhub'))
 REPO = Path(__file__).resolve().parents[1]
-BUNDLE = REPO / 'cameras' / 'common' / 'micropython' / 'bundle.py'
+
+# The newest camera.toml layout this tool understands. A manifest declares
+# `manifest = <n>`; anything newer is refused rather than half-read. See
+# docs/REPO_PLAN.md §4 — the manifest schema moves to dustycam-contracts, and
+# this becomes the check that the vendored contract matches.
+MANIFEST_VERSION = 1
+
+
+def bundle_script():
+    """Path to the MicroPython bundler.
+
+    DUSTY_RUNTIME_DIR overrides it, so this tool can be installed and run from
+    outside the firmware checkout (REPO_PLAN §4). The default is the runtime
+    that ships beside it in this repo.
+    """
+    env = os.environ.get('DUSTY_RUNTIME_DIR')
+    if env:
+        return Path(env) / 'micropython' / 'bundle.py'
+    return REPO / 'cameras' / 'common' / 'micropython' / 'bundle.py'
 
 
 def rel(p: Path):
@@ -121,6 +139,10 @@ def load(camera_dir: Path):
     conf = tomllib.loads((DUSTY / 'config.toml').read_text())
     sec = tomllib.loads((DUSTY / 'secrets.toml').read_text())
     manifest = tomllib.loads((camera_dir / 'camera.toml').read_text())
+    v = manifest.get('manifest', 1)
+    if v > MANIFEST_VERSION:
+        sys.exit('%s: manifest = %s, but this dustygen understands %s. Update the tool.'
+                 % (camera_dir / 'camera.toml', v, MANIFEST_VERSION))
     return conf, sec, manifest
 
 
@@ -323,7 +345,7 @@ def stamp_tuning_schema_header(camera_dir, schema):
 
 def bundle(camera_dir):
     out = camera_dir / 'software' / 'build' / 'app.py'
-    subprocess.run([sys.executable, str(BUNDLE), str(camera_dir), '-o', str(out)], check=True)
+    subprocess.run([sys.executable, str(bundle_script()), str(camera_dir), '-o', str(out)], check=True)
     return out
 
 
@@ -563,11 +585,20 @@ def cmd_phone_json():
         )
     ble_key, _generated = ensure_ble_key(DUSTY / 'secrets.toml', sec)
 
-    cameras = []
-    for manifest_path in sorted(REPO.glob('cameras/*/camera.toml')):
-        m = tomllib.loads(manifest_path.read_text())
-        if m.get('runtime') == 'espidf':
-            cameras.append({'id': m['id']})
+    # The fleet the phone should know about. `[phone] cameras = [...]` in
+    # config.toml is authoritative when present, so this tool can run outside a
+    # firmware checkout (REPO_PLAN §4). Without it, fall back to scanning the
+    # repo for BLE-capable cameras -- the runtime is a manifest fact, and
+    # config.toml does not carry it.
+    listed = (conf.get('phone') or {}).get('cameras')
+    if listed:
+        cameras = [{'id': i} for i in listed]
+    else:
+        cameras = []
+        for manifest_path in sorted(REPO.glob('cameras/*/camera.toml')):
+            m = tomllib.loads(manifest_path.read_text())
+            if m.get('runtime') == 'espidf':
+                cameras.append({'id': m['id']})
 
     doc = {
         'v': 1,
