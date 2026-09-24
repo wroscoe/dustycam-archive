@@ -109,6 +109,10 @@ Thumbs.db
 !tools/casereview/comments.json
 *.jpg
 *.png
+# ...except the phone app's resources: ic_launcher and friends are build INPUTS
+# for the APK (generated once by apps/dustyphone/tools/make_icons.py), not CAD
+# renders.
+!apps/**/*.png
 yolov8n.onnx
 
 # CAD build products. Regenerated from the *.step.py / caselib.py sources by
